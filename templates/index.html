@@ -54,8 +54,11 @@
 		<div class="row justify-content-center">
 			<div class="col-md-8">
 				<div class="card shadow mb-4">
-					<div class="card-header bg-primary text-white">
+					<div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
 						<h3 class="mb-0">치지직 생방송 다운로더</h3>
+						<button class="btn btn-light" data-bs-toggle="modal" data-bs-target="#settingsModal">
+							<i class="bi bi-gear"></i> 설정
+						</button>
 					</div>
 					<div class="card-body">
 						<form id="addStreamerForm" class="mb-4">
@@ -93,6 +96,36 @@
 							</div>
 						</div>
 					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- Settings Modal -->
+	<div class="modal fade" id="settingsModal" tabindex="-1" aria-labelledby="settingsModalLabel" aria-hidden="true">
+		<div class="modal-dialog">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h5 class="modal-title" id="settingsModalLabel">설정</h5>
+					<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+				</div>
+				<div class="modal-body">
+					<form id="settingsForm">
+						<div class="mb-3">
+							<label for="nidAut" class="form-label">NID_AUT</label>
+							<input type="text" class="form-control" id="nidAut" 
+								   placeholder="{{ settings.nid_aut if settings else 'NID_AUT 값을 입력하세요' }}">
+						</div>
+						<div class="mb-3">
+							<label for="nidSes" class="form-label">NID_SES</label>
+							<input type="text" class="form-control" id="nidSes" 
+								   placeholder="{{ settings.nid_ses if settings else 'NID_SES 값을 입력하세요' }}">
+						</div>
+					</form>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">닫기</button>
+					<button type="button" class="btn btn-primary" id="saveSettings">저장</button>
 				</div>
 			</div>
 		</div>
@@ -197,6 +230,50 @@
 		setInterval(checkStreamerStatus, 30000);
 		// 초기 상태 확인
 		checkStreamerStatus();
+
+		// 설정 저장
+		document.getElementById('saveSettings').addEventListener('click', async () => {
+			const nidAut = document.getElementById('nidAut').value;
+			const nidSes = document.getElementById('nidSes').value;
+
+			try {
+				const response = await fetch('/settings', {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+					},
+					body: JSON.stringify({
+						nid_aut: nidAut,
+						nid_ses: nidSes
+					})
+				});
+				const data = await response.json();
+
+				if (data.status === 'success') {
+					alert('설정이 저장되었습니다.');
+					const modal = bootstrap.Modal.getInstance(document.getElementById('settingsModal'));
+					modal.hide();
+				} else {
+					alert(data.message);
+				}
+			} catch (error) {
+				console.error('Error:', error);
+				alert('설정 저장 중 오류가 발생했습니다.');
+			}
+		});
+
+		// 설정 모달이 열릴 때 현재 설정값 로드
+		document.getElementById('settingsModal').addEventListener('show.bs.modal', async () => {
+			try {
+				const response = await fetch('/settings');
+				const data = await response.json();
+				
+				document.getElementById('nidAut').value = data.nid_aut;
+				document.getElementById('nidSes').value = data.nid_ses;
+			} catch (error) {
+				console.error('Error:', error);
+			}
+		});
 	</script>
 </body>
 

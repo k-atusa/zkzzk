@@ -19,6 +19,12 @@ class Streamer(db.Model):
     last_checked = db.Column(db.DateTime)
     last_live = db.Column(db.DateTime)
 
+class Settings(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    nid_aut = db.Column(db.String(200))
+    nid_ses = db.Column(db.String(200))
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
 def extract_channel_id(url):
     # URL에서 채널 ID 추출 (16진수 32자리)
     pattern = r'chzzk\.naver\.com/([a-f0-9]{32})'
@@ -53,7 +59,35 @@ with app.app_context():
 @app.route('/')
 def index():
     streamers = Streamer.query.filter_by(is_active=True).all()
-    return render_template('index.html', streamers=streamers)
+    settings = Settings.query.first()
+    return render_template('index.html', streamers=streamers, settings=settings)
+
+@app.route('/settings', methods=['GET', 'POST'])
+def settings():
+    if request.method == 'POST':
+        data = request.get_json()
+        nid_aut = data.get('nid_aut')
+        nid_ses = data.get('nid_ses')
+
+        settings = Settings.query.first()
+        if not settings:
+            settings = Settings()
+
+        settings.nid_aut = nid_aut
+        settings.nid_ses = nid_ses
+        db.session.add(settings)
+        db.session.commit()
+
+        return jsonify({
+            'status': 'success',
+            'message': '설정이 저장되었습니다.'
+        })
+
+    settings = Settings.query.first()
+    return jsonify({
+        'nid_aut': settings.nid_aut if settings else '',
+        'nid_ses': settings.nid_ses if settings else ''
+    })
 
 @app.route('/add_streamer', methods=['POST'])
 def add_streamer():
