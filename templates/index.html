@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>치지직 생방송 다운로더</title>
+	<!-- Bootstrap CSS -->
+	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+	<!-- Bootstrap Icons -->
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css">
+	<!-- Custom CSS -->
+	<style>
+		.status-indicator {
+			width: 15px;
+			height: 15px;
+			border-radius: 50%;
+			display: inline-block;
+			margin-right: 5px;
+		}
+
+		.status-live {
+			background-color: #28a745;
+			animation: pulse 1.5s infinite;
+		}
+
+		.status-offline {
+			background-color: #6c757d;
+		}
+
+		@keyframes pulse {
+			0% {
+				opacity: 1;
+			}
+
+			50% {
+				opacity: 0.5;
+			}
+
+			100% {
+				opacity: 1;
+			}
+		}
+
+		.streamer-list {
+			max-height: 400px;
+			overflow-y: auto;
+		}
+	</style>
+</head>
+
+<body>
+	<div class="container py-5">
+		<div class="row justify-content-center">
+			<div class="col-md-8">
+				<div class="card shadow mb-4">
+					<div class="card-header bg-primary text-white">
+						<h3 class="mb-0">치지직 생방송 다운로더</h3>
+					</div>
+					<div class="card-body">
+						<form id="addStreamerForm" class="mb-4">
+							<div class="row g-3">
+								<div class="col-md-10">
+									<label for="channelUrl" class="form-label">치지직 채널 URL</label>
+									<input type="url" class="form-control" id="channelUrl" placeholder="https://chzzk.naver.com/..."
+										required pattern="https?://chzzk\.naver\.com/.*">
+									<div class="form-text">채널 URL을 입력하면 자동으로 스트리머 정보를 가져옵니다.</div>
+								</div>
+								<div class="col-md-2 d-flex align-items-end">
+									<button type="submit" class="btn btn-primary w-100">추가</button>
+								</div>
+							</div>
+						</form>
+
+						<div class="streamer-list">
+							<h5 class="mb-3">등록된 스트리머 목록</h5>
+							<div id="streamerList" class="list-group">
+								{% for streamer in streamers %}
+								<div class="list-group-item d-flex justify-content-between align-items-center"
+									data-streamer-id="{{ streamer.id }}">
+									<div>
+										<span class="status-indicator status-offline"></span>
+										<span class="streamer-nickname">{{ streamer.nickname }}</span>
+										<small class="text-muted d-block">{{ streamer.channel_url }}</small>
+									</div>
+									<div>
+										<button class="btn btn-sm btn-danger remove-streamer">
+											<i class="bi bi-trash"></i>
+										</button>
+									</div>
+								</div>
+								{% endfor %}
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- Bootstrap Bundle with Popper -->
+	<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+	<!-- Custom JavaScript -->
+	<script>
+		// 스트리머 추가
+		document.getElementById('addStreamerForm').addEventListener('submit', async (e) => {
+			e.preventDefault();
+			const channelUrl = document.getElementById('channelUrl').value;
+
+			try {
+				const response = await fetch('/add_streamer', {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+					},
+					body: JSON.stringify({ channel_url: channelUrl })
+				});
+				const data = await response.json();
+
+				if (data.status === 'success') {
+					location.reload(); // 페이지 새로고침
+				} else {
+					alert(data.message);
+				}
+			} catch (error) {
+				console.error('Error:', error);
+				alert('스트리머 추가 중 오류가 발생했습니다.');
+			}
+		});
+
+		// 스트리머 제거 - 이벤트 위임 사용
+		document.getElementById('streamerList').addEventListener('click', async (e) => {
+			const removeButton = e.target.closest('.remove-streamer');
+			if (!removeButton) return;
+
+			const streamerItem = removeButton.closest('.list-group-item');
+			const streamerId = streamerItem.dataset.streamerId;
+
+			console.log(streamerItem);
+			console.log(streamerId);
+
+			if (confirm('정말로 이 스트리머를 제거하시겠습니까?')) {
+				try {
+					const response = await fetch(`/remove_streamer/${streamerId}`, {
+						method: 'POST',
+						headers: {
+							'Content-Type': 'application/json'
+						}
+					});
+					const data = await response.json();
+
+					if (data.status === 'success') {
+						streamerItem.remove();
+					} else {
+						alert(data.message);
+					}
+				} catch (error) {
+					console.error('Error:', error);
+					alert('스트리머 제거 중 오류가 발생했습니다.');
+				}
+			}
+		});
+
+		// 주기적으로 방송 상태 확인
+		async function checkStreamerStatus() {
+			const streamerItems = document.querySelectorAll('.list-group-item');
+
+			for (const item of streamerItems) {
+				const channelUrl = item.querySelector('.text-muted').textContent;
+				const statusIndicator = item.querySelector('.status-indicator');
+				const nickname = item.querySelector('.streamer-nickname');
+
+				try {
+					const response = await fetch('/check_status', {
+						method: 'POST',
+						headers: {
+							'Content-Type': 'application/json',
+						},
+						body: JSON.stringify({ channel_url: channelUrl })
+					});
+					const data = await response.json();
+
+					if (data.is_live) {
+						statusIndicator.className = 'status-indicator status-live';
+						nickname.style.color = '#28a745';
+					} else {
+						statusIndicator.className = 'status-indicator status-offline';
+						nickname.style.color = '';
+					}
+				} catch (error) {
+					console.error('Error:', error);
+				}
+			}
+		}
+
+		// 30초마다 상태 확인
+		setInterval(checkStreamerStatus, 30000);
+		// 초기 상태 확인
+		checkStreamerStatus();
+	</script>
+</body>
+
+</html>
