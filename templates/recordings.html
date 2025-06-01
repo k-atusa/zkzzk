@@ -117,7 +117,16 @@
 
 						if (data.status === 'success') {
 							// Remove the card from the UI
-							e.target.closest('.col').remove();
+							const card = e.target.closest('.col');
+							const streamerSection = card.closest('.streamer-section');
+							card.remove();
+							
+							// Check if this was the last recording in the section
+							const remainingCards = streamerSection.querySelectorAll('.col');
+							if (remainingCards.length === 0) {
+								// Remove the entire streamer section if no recordings left
+								streamerSection.remove();
+							}
 						} else {
 							alert(data.message);
 						}

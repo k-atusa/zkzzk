@@ -5,7 +5,6 @@ import re
 import requests
 import subprocess
 from datetime import datetime
-import glob
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///streamers.db'
@@ -89,7 +88,7 @@ def download_stream(channel_id, broadcast_title, streamer_nickname, streamer_id)
         if not settings or not settings.nid_aut or not settings.nid_ses:
             raise Exception("NID_AUT and NID_SES cookies are required for recording")
         
-        # Construct streamlink command
+        # Construct streamlink command with timestamp reset
         stream_url = f"https://chzzk.naver.com/live/{channel_id}"
         command = [
             'streamlink',
@@ -121,6 +120,41 @@ def download_stream(channel_id, broadcast_title, streamer_nickname, streamer_id)
             db.session.add(recording)
             db.session.commit()
             
+            # Start a background process to convert the file to MP4 when recording is done
+            def convert_to_mp4():
+                # Wait for the recording process to finish
+                process.wait()
+                
+                # Convert to MP4 with timestamp reset
+                mp4_filename = filename.replace('.ts', '.mp4')
+                mp4_filepath = os.path.join(streamer_dir, mp4_filename)
+                
+                try:
+                    # Use ffmpeg to convert and reset timestamps
+                    ffmpeg_command = [
+                        'ffmpeg',
+                        '-i', filepath,
+                        '-c', 'copy',  # Copy streams without re-encoding
+                        '-start_at_zero',  # Reset timestamps to start from 0
+                        '-y',  # Overwrite output file if it exists
+                        mp4_filepath
+                    ]
+                    subprocess.run(ffmpeg_command, check=True)
+                    
+                    # Delete the original .ts file
+                    os.remove(filepath)
+                    
+                    # Update the recording record with the new filename using app context
+                    with app.app_context():
+                        recording.filename = os.path.join(streamer_nickname, mp4_filename)
+                        db.session.commit()
+                except Exception as e:
+                    print(f"Error converting to MP4: {e}")
+            
+            # Start the conversion process in a separate thread
+            import threading
+            threading.Thread(target=convert_to_mp4, daemon=True).start()
+            
         return True
     except Exception as e:
         print(f"Error downloading stream: {e}")
@@ -146,7 +180,7 @@ def recordings():
     if os.path.exists('downloads'):
         for root, dirs, files in os.walk('downloads'):
             for filename in files:
-                if filename.endswith('.ts'):
+                if filename.endswith('.ts') or filename.endswith('.mp4'):
                     filepath = os.path.join(root, filename)
                     # Get file creation time
                     created_at = datetime.fromtimestamp(os.path.getctime(filepath))
@@ -294,11 +328,17 @@ def remove_streamer(streamer_id):
             try:
                 # Send SIGTERM to the process
                 os.kill(streamer.process_id, 15)
-                # Wait for the process to terminate
-                os.waitpid(streamer.process_id, 0)
+                # Wait for the process to terminate with a timeout
+                try:
+                    os.waitpid(streamer.process_id, 0)
+                except ChildProcessError:
+                    # Process has already terminated
+                    pass
             except ProcessLookupError:
                 # Process might have already terminated
                 pass
+            except Exception as e:
+                print(f"Warning: Error stopping recording process: {e}")
         
         # Delete all recordings for this streamer
         Recording.query.filter_by(streamer_id=streamer_id).delete()
@@ -391,11 +431,17 @@ def stop_recording(streamer_id):
             try:
                 # Send SIGTERM to the process
                 os.kill(streamer.process_id, 15)
-                # Wait for the process to terminate
-                os.waitpid(streamer.process_id, 0)
+                # Wait for the process to terminate with a timeout
+                try:
+                    os.waitpid(streamer.process_id, 0)
+                except ChildProcessError:
+                    # Process has already terminated
+                    pass
             except ProcessLookupError:
                 # Process might have already terminated
                 pass
+            except Exception as e:
+                print(f"Warning: Error stopping recording process: {e}")
             
             # Reset recording status
             streamer.is_recording = False
@@ -413,6 +459,7 @@ def stop_recording(streamer_id):
                 'message': '녹화 중이 아닙니다.'
             }), 400
     except Exception as e:
+        db.session.rollback()
         print(f"Error stopping recording: {e}")
         return jsonify({
             'status': 'error',
