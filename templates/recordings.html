@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>치지직 생방송 다운로더 - 녹화 영상</title>
+	<!-- Bootstrap CSS -->
+	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+	<!-- Bootstrap Icons -->
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css">
+	<!-- Custom CSS -->
+	<style>
+		.recording-card {
+			transition: transform 0.2s;
+		}
+
+		.recording-card:hover {
+			transform: translateY(-5px);
+		}
+
+		.video-player {
+			width: 100%;
+			aspect-ratio: 16/9;
+			background-color: #000;
+		}
+
+		.streamer-section {
+			margin-bottom: 2rem;
+		}
+
+		.streamer-header {
+			background-color: #f8f9fa;
+			padding: 1rem;
+			border-radius: 0.5rem;
+			margin-bottom: 1rem;
+		}
+	</style>
+</head>
+
+<body>
+	<!-- Navigation Bar -->
+	<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+		<div class="container">
+			<a class="navbar-brand" href="/">치지직 생방송 다운로더</a>
+			<button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+				<span class="navbar-toggler-icon"></span>
+			</button>
+			<div class="collapse navbar-collapse" id="navbarNav">
+				<ul class="navbar-nav">
+					<li class="nav-item">
+						<a class="nav-link" href="/live">라이브 녹화</a>
+					</li>
+					<li class="nav-item">
+						<a class="nav-link active" href="/recordings">녹화 영상</a>
+					</li>
+				</ul>
+			</div>
+		</div>
+	</nav>
+
+	<div class="container py-5">
+		{% for streamer_name, recordings in streamer_recordings.items() %}
+		<div class="streamer-section">
+			<div class="streamer-header">
+				<h3 class="mb-0">{{ streamer_name }}</h3>
+			</div>
+			<div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+				{% for recording in recordings %}
+				<div class="col">
+					<div class="card h-100 recording-card">
+						<div class="card-body">
+							<h5 class="card-title text-truncate">{{ recording.title }}</h5>
+							<p class="card-text">
+								<small class="text-muted">
+									<i class="bi bi-calendar"></i> {{ recording.created_at.strftime('%Y-%m-%d %H:%M:%S') }}
+								</small>
+							</p>
+							<video class="video-player mb-3" controls>
+								<source src="/recordings/{{ recording.filename }}" type="video/mp4">
+								Your browser does not support the video tag.
+							</video>
+							<div class="d-flex justify-content-between align-items-center">
+								<a href="/recordings/{{ recording.filename }}" class="btn btn-primary" download>
+									<i class="bi bi-download"></i> 다운로드
+								</a>
+								<button class="btn btn-danger delete-recording" data-filename="{{ recording.filename }}">
+									<i class="bi bi-trash"></i>
+								</button>
+							</div>
+						</div>
+					</div>
+				</div>
+				{% endfor %}
+			</div>
+		</div>
+		{% endfor %}
+	</div>
+
+	<!-- Bootstrap Bundle with Popper -->
+	<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+	<!-- Custom JavaScript -->
+	<script>
+		// Delete recording
+		document.querySelectorAll('.delete-recording').forEach(button => {
+			button.addEventListener('click', async (e) => {
+				if (confirm('정말로 이 녹화 영상을 삭제하시겠습니까?')) {
+					const filename = e.target.closest('.delete-recording').dataset.filename;
+					try {
+						const response = await fetch(`/delete_recording/${filename}`, {
+							method: 'POST',
+							headers: {
+								'Content-Type': 'application/json'
+							}
+						});
+						const data = await response.json();
+
+						if (data.status === 'success') {
+							// Remove the card from the UI
+							e.target.closest('.col').remove();
+						} else {
+							alert(data.message);
+						}
+					} catch (error) {
+						console.error('Error:', error);
+						alert('녹화 영상 삭제 중 오류가 발생했습니다.');
+					}
+				}
+			});
+		});
+	</script>
+</body>
+
+</html> 
