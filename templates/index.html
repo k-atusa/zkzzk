@@ -85,6 +85,8 @@
 										<span class="status-indicator status-offline"></span>
 										<span class="streamer-nickname">{{ streamer.nickname }}</span>
 										<small class="text-muted d-block">{{ streamer.channel_url }}</small>
+										<small class="broadcast-title text-success d-none"></small>
+										<small class="download-status text-info d-none"></small>
 									</div>
 									<div>
 										<button class="btn btn-sm btn-danger remove-streamer">
@@ -113,13 +115,13 @@
 					<form id="settingsForm">
 						<div class="mb-3">
 							<label for="nidAut" class="form-label">NID_AUT</label>
-							<input type="text" class="form-control" id="nidAut" 
-								   placeholder="{{ settings.nid_aut if settings else 'NID_AUT 값을 입력하세요' }}">
+							<input type="text" class="form-control" id="nidAut"
+								placeholder="{{ settings.nid_aut if settings else 'NID_AUT 값을 입력하세요' }}">
 						</div>
 						<div class="mb-3">
 							<label for="nidSes" class="form-label">NID_SES</label>
-							<input type="text" class="form-control" id="nidSes" 
-								   placeholder="{{ settings.nid_ses if settings else 'NID_SES 값을 입력하세요' }}">
+							<input type="text" class="form-control" id="nidSes"
+								placeholder="{{ settings.nid_ses if settings else 'NID_SES 값을 입력하세요' }}">
 						</div>
 					</form>
 				</div>
@@ -168,12 +170,26 @@
 
 			const streamerItem = removeButton.closest('.list-group-item');
 			const streamerId = streamerItem.dataset.streamerId;
-
-			console.log(streamerItem);
-			console.log(streamerId);
+			const isRecording = streamerItem.querySelector('.download-status').textContent.includes('녹화');
 
 			if (confirm('정말로 이 스트리머를 제거하시겠습니까?')) {
 				try {
+					// If recording, stop it first
+					if (isRecording) {
+						const stopResponse = await fetch(`/stop_recording/${streamerId}`, {
+							method: 'POST',
+							headers: {
+								'Content-Type': 'application/json'
+							}
+						});
+						const stopData = await stopResponse.json();
+						if (stopData.status !== 'success') {
+							alert(stopData.message);
+							return;
+						}
+					}
+
+					// Then remove the streamer
 					const response = await fetch(`/remove_streamer/${streamerId}`, {
 						method: 'POST',
 						headers: {
@@ -202,6 +218,8 @@
 				const channelUrl = item.querySelector('.text-muted').textContent;
 				const statusIndicator = item.querySelector('.status-indicator');
 				const nickname = item.querySelector('.streamer-nickname');
+				const broadcastTitle = item.querySelector('.broadcast-title');
+				const downloadStatus = item.querySelector('.download-status');
 
 				try {
 					const response = await fetch('/check_status', {
@@ -216,9 +234,28 @@
 					if (data.is_live) {
 						statusIndicator.className = 'status-indicator status-live';
 						nickname.style.color = '#28a745';
+						
+						// Show broadcast title
+						if (data.broadcast_title) {
+							broadcastTitle.textContent = `방송 제목: ${data.broadcast_title}`;
+							broadcastTitle.classList.remove('d-none');
+						}
+						
+						// Show recording status
+						if (data.is_recording) {
+							downloadStatus.textContent = '녹화 중...';
+							downloadStatus.classList.remove('d-none');
+						} else if (data.download_started) {
+							downloadStatus.textContent = '녹화 시작 중...';
+							downloadStatus.classList.remove('d-none');
+						} else {
+							downloadStatus.classList.add('d-none');
+						}
 					} else {
 						statusIndicator.className = 'status-indicator status-offline';
 						nickname.style.color = '';
+						broadcastTitle.classList.add('d-none');
+						downloadStatus.classList.add('d-none');
 					}
 				} catch (error) {
 					console.error('Error:', error);
@@ -267,7 +304,7 @@
 			try {
 				const response = await fetch('/settings');
 				const data = await response.json();
-				
+
 				document.getElementById('nidAut').value = data.nid_aut;
 				document.getElementById('nidSes').value = data.nid_ses;
 			} catch (error) {

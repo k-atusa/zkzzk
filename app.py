@@ -3,6 +3,7 @@ from flask_sqlalchemy import SQLAlchemy
 import os
 import re
 import requests
+import subprocess
 from datetime import datetime
 
 app = Flask(__name__)
@@ -18,6 +19,9 @@ class Streamer(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     last_checked = db.Column(db.DateTime)
     last_live = db.Column(db.DateTime)
+    is_recording = db.Column(db.Boolean, default=False)
+    current_broadcast_title = db.Column(db.String(200))
+    process_id = db.Column(db.Integer)
 
 class Settings(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -52,6 +56,46 @@ def get_channel_info(channel_id):
     except Exception as e:
         print(f"Error fetching channel info: {e}")
         return None
+
+def download_stream(channel_id, broadcast_title, streamer_nickname, streamer_id):
+    try:
+        # Create downloads directory if it doesn't exist
+        if not os.path.exists('downloads'):
+            os.makedirs('downloads')
+            
+        # Format filename: YYMMDD_HHMMSS <방송제목> [스트리머 닉네임].ts
+        current_date = datetime.now().strftime('%y%m%d_%H%M%S')
+        filename = f"{current_date} {broadcast_title} [{streamer_nickname}].ts"
+        # Remove any invalid characters from filename
+        filename = re.sub(r'[<>:"/\\|?*]', '', filename)
+        filepath = os.path.join('downloads', filename)
+        
+        # Construct streamlink command
+        stream_url = f"https://chzzk.naver.com/live/{channel_id}"
+        command = [
+            'streamlink',
+            '--ffmpeg-copyts',
+            '--progress', 'no',
+            stream_url,
+            'worst',
+            '--output', filepath
+        ]
+        
+        # Run streamlink in background
+        process = subprocess.Popen(command)
+        
+        # Update streamer's recording status
+        streamer = Streamer.query.get(streamer_id)
+        if streamer:
+            streamer.is_recording = True
+            streamer.current_broadcast_title = broadcast_title
+            streamer.process_id = process.pid
+            db.session.commit()
+            
+        return True
+    except Exception as e:
+        print(f"Error downloading stream: {e}")
+        return False
 
 with app.app_context():
     db.create_all()
@@ -155,8 +199,12 @@ def check_status():
         data = response.json()
 
         is_live = False
+        broadcast_title = None
+        download_started = False
+        
         if data.get('code') == 200 and data.get('content'):
             is_live = data['content'].get('status') == 'OPEN'
+            broadcast_title = data['content'].get('liveTitle')
             
             # DB 업데이트
             streamer = Streamer.query.filter_by(channel_url=channel_url).first()
@@ -164,16 +212,62 @@ def check_status():
                 streamer.last_checked = datetime.utcnow()
                 if is_live:
                     streamer.last_live = datetime.utcnow()
+                    # Start download only if not already recording
+                    if not streamer.is_recording:
+                        download_started = download_stream(channel_id, broadcast_title, streamer.nickname, streamer.id)
+                else:
+                    # Reset recording status when stream goes offline
+                    streamer.is_recording = False
+                    streamer.current_broadcast_title = None
                 db.session.commit()
 
         return jsonify({
             'status': 'success',
             'is_live': is_live,
+            'broadcast_title': broadcast_title,
+            'is_recording': streamer.is_recording if streamer else False,
+            'download_started': download_started,
             'message': '방송 상태를 확인했습니다.'
         })
     except Exception as e:
         print(f"Error checking status: {e}")
         return jsonify({'status': 'error', 'message': '방송 상태 확인 중 오류가 발생했습니다.'}), 500
 
+@app.route('/stop_recording/<int:streamer_id>', methods=['POST'])
+def stop_recording(streamer_id):
+    try:
+        streamer = Streamer.query.get_or_404(streamer_id)
+        if streamer.is_recording and streamer.process_id:
+            try:
+                # Send SIGTERM to the process
+                os.kill(streamer.process_id, 15)
+                # Wait for the process to terminate
+                os.waitpid(streamer.process_id, 0)
+            except ProcessLookupError:
+                # Process might have already terminated
+                pass
+            
+            # Reset recording status
+            streamer.is_recording = False
+            streamer.current_broadcast_title = None
+            streamer.process_id = None
+            db.session.commit()
+            
+            return jsonify({
+                'status': 'success',
+                'message': '녹화가 중지되었습니다.'
+            })
+        else:
+            return jsonify({
+                'status': 'error',
+                'message': '녹화 중이 아닙니다.'
+            }), 400
+    except Exception as e:
+        print(f"Error stopping recording: {e}")
+        return jsonify({
+            'status': 'error',
+            'message': '녹화 중지 중 오류가 발생했습니다.'
+        }), 500
+
 if __name__ == '__main__':
-    app.run(debug=True) 
+    app.run(debug=True, port=3000) 
