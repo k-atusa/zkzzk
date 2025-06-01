@@ -70,12 +70,19 @@ def download_stream(channel_id, broadcast_title, streamer_nickname, streamer_id)
         filename = re.sub(r'[<>:"/\\|?*]', '', filename)
         filepath = os.path.join('downloads', filename)
         
+        # Get cookie values from Settings
+        settings = Settings.query.first()
+        if not settings or not settings.nid_aut or not settings.nid_ses:
+            raise Exception("NID_AUT and NID_SES cookies are required for recording")
+        
         # Construct streamlink command
         stream_url = f"https://chzzk.naver.com/live/{channel_id}"
         command = [
             'streamlink',
             '--ffmpeg-copyts',
             '--progress', 'no',
+            '--http-cookie', f'NID_AUT={settings.nid_aut}',
+            '--http-cookie', f'NID_SES={settings.nid_ses}',
             stream_url,
             'worst',
             '--output', filepath
@@ -186,6 +193,15 @@ def check_status():
         return jsonify({'status': 'error', 'message': '올바른 치지직 URL이 아닙니다.'}), 400
 
     try:
+        # Check if cookies are set
+        settings = Settings.query.first()
+        if not settings or not settings.nid_aut or not settings.nid_ses:
+            return jsonify({
+                'status': 'error',
+                'error_code': 'missing_cookies',
+                'message': 'NID_AUT 또는 NID_SES 쿠키가 설정되지 않았습니다. 설정에서 쿠키 값을 입력해주세요.'
+            }), 400
+
         url = f'https://api.chzzk.naver.com/service/v3/channels/{channel_id}/live-detail'
         headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',

@@ -137,6 +137,9 @@
 	<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 	<!-- Custom JavaScript -->
 	<script>
+		let statusCheckInterval = null;
+		let isCheckingEnabled = true;
+
 		// 스트리머 추가
 		document.getElementById('addStreamerForm').addEventListener('submit', async (e) => {
 			e.preventDefault();
@@ -212,7 +215,10 @@
 
 		// 주기적으로 방송 상태 확인
 		async function checkStreamerStatus() {
+			if (!isCheckingEnabled) return;
+
 			const streamerItems = document.querySelectorAll('.list-group-item');
+			if (streamerItems.length === 0) return;
 
 			for (const item of streamerItems) {
 				const channelUrl = item.querySelector('.text-muted').textContent;
@@ -230,6 +236,24 @@
 						body: JSON.stringify({ channel_url: channelUrl })
 					});
 					const data = await response.json();
+
+					if (data.status === 'error') {
+						if (data.error_code === 'missing_cookies') {
+							alert(data.message);
+							// Open settings modal
+							const settingsModal = new bootstrap.Modal(document.getElementById('settingsModal'));
+							settingsModal.show();
+							// Stop checking status
+							isCheckingEnabled = false;
+							if (statusCheckInterval) {
+								clearInterval(statusCheckInterval);
+								statusCheckInterval = null;
+							}
+							return;
+						}
+						console.error('Error:', data.message);
+						continue;
+					}
 
 					if (data.is_live) {
 						statusIndicator.className = 'status-indicator status-live';
@@ -263,11 +287,6 @@
 			}
 		}
 
-		// 30초마다 상태 확인
-		setInterval(checkStreamerStatus, 30000);
-		// 초기 상태 확인
-		checkStreamerStatus();
-
 		// 설정 저장
 		document.getElementById('saveSettings').addEventListener('click', async () => {
 			const nidAut = document.getElementById('nidAut').value;
@@ -290,6 +309,15 @@
 					alert('설정이 저장되었습니다.');
 					const modal = bootstrap.Modal.getInstance(document.getElementById('settingsModal'));
 					modal.hide();
+					
+					// Resume status checking if it was stopped
+					if (!isCheckingEnabled) {
+						isCheckingEnabled = true;
+						// Start checking immediately
+						checkStreamerStatus();
+						// Then set up the interval
+						statusCheckInterval = setInterval(checkStreamerStatus, 30000);
+					}
 				} else {
 					alert(data.message);
 				}
@@ -311,6 +339,11 @@
 				console.error('Error:', error);
 			}
 		});
+
+		// Start status checking
+		statusCheckInterval = setInterval(checkStreamerStatus, 30000);
+		// Initial check
+		checkStreamerStatus();
 	</script>
 </body>
 
