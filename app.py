@@ -38,7 +38,6 @@ class Recording(db.Model):
     streamer = db.relationship('Streamer', backref=db.backref('recordings', lazy=True))
 
 def extract_channel_id(url):
-    # URL에서 채널 ID 추출 (16진수 32자리)
     pattern = r'chzzk\.naver\.com/([a-f0-9]{32})'
     match = re.search(pattern, url)
     if match:
@@ -67,28 +66,22 @@ def get_channel_info(channel_id):
 
 def download_stream(channel_id, broadcast_title, streamer_nickname, streamer_id):
     try:
-        # Create downloads directory if it doesn't exist
         if not os.path.exists('downloads'):
             os.makedirs('downloads')
             
-        # Create streamer's directory
         streamer_dir = os.path.join('downloads', streamer_nickname)
         if not os.path.exists(streamer_dir):
             os.makedirs(streamer_dir)
             
-        # Format filename: YYMMDD_HHMMSS <방송제목> [스트리머 닉네임].ts
         current_date = datetime.now().strftime('%y%m%d_%H%M%S')
         filename = f"{current_date} {broadcast_title} [{streamer_nickname}].ts"
-        # Remove any invalid characters from filename
         filename = re.sub(r'[<>:"/\\|?*]', '', filename)
         filepath = os.path.join(streamer_dir, filename)
         
-        # Get cookie values from Settings
         settings = Settings.query.first()
         if not settings or not settings.nid_aut or not settings.nid_ses:
             raise Exception("NID_AUT and NID_SES cookies are required for recording")
         
-        # Construct streamlink command with timestamp reset
         stream_url = f"https://chzzk.naver.com/live/{channel_id}"
         command = [
             'streamlink',
@@ -97,61 +90,51 @@ def download_stream(channel_id, broadcast_title, streamer_nickname, streamer_id)
             '--http-cookie', f'NID_AUT={settings.nid_aut}',
             '--http-cookie', f'NID_SES={settings.nid_ses}',
             stream_url,
-            'worst',
+            '720p',
             '--output', filepath
         ]
         
-        # Run streamlink in background
         process = subprocess.Popen(command)
         
-        # Update streamer's recording status
         streamer = Streamer.query.get(streamer_id)
         if streamer:
             streamer.is_recording = True
             streamer.current_broadcast_title = broadcast_title
             streamer.process_id = process.pid
             
-            # Create recording record
             recording = Recording(
                 streamer_id=streamer_id,
-                filename=os.path.join(streamer_nickname, filename),  # Store relative path
+                filename=os.path.join(streamer_nickname, filename),
                 title=broadcast_title
             )
             db.session.add(recording)
             db.session.commit()
             
-            # Start a background process to convert the file to MP4 when recording is done
             def convert_to_mp4():
-                # Wait for the recording process to finish
                 process.wait()
                 
-                # Convert to MP4 with timestamp reset
                 mp4_filename = filename.replace('.ts', '.mp4')
                 mp4_filepath = os.path.join(streamer_dir, mp4_filename)
                 
                 try:
-                    # Use ffmpeg to convert and reset timestamps
                     ffmpeg_command = [
                         'ffmpeg',
                         '-i', filepath,
-                        '-c', 'copy',  # Copy streams without re-encoding
-                        '-start_at_zero',  # Reset timestamps to start from 0
-                        '-y',  # Overwrite output file if it exists
+                        '-c', 'copy',
+                        '-start_at_zero',
+                        '-y',
                         mp4_filepath
                     ]
                     subprocess.run(ffmpeg_command, check=True)
                     
-                    # Delete the original .ts file
                     os.remove(filepath)
                     
-                    # Update the recording record with the new filename using app context
                     with app.app_context():
                         recording.filename = os.path.join(streamer_nickname, mp4_filename)
                         db.session.commit()
                 except Exception as e:
                     print(f"Error converting to MP4: {e}")
             
-            # Start the conversion process in a separate thread
             import threading
             threading.Thread(target=convert_to_mp4, daemon=True).start()
             
@@ -175,21 +158,16 @@ def live():
 
 @app.route('/recordings')
 def recordings():
-    # Get all recordings from downloads directory
     recordings = []
     if os.path.exists('downloads'):
         for root, dirs, files in os.walk('downloads'):
             for filename in files:
                 if filename.endswith('.ts') or filename.endswith('.mp4'):
                     filepath = os.path.join(root, filename)
-                    # Get file creation time
                     created_at = datetime.fromtimestamp(os.path.getctime(filepath))
-                    # Get relative path from downloads directory
                     rel_path = os.path.relpath(filepath, 'downloads')
-                    # Extract streamer name from path
                     streamer_name = os.path.dirname(rel_path)
-                    # Extract title from filename (format: YYMMDD_HHMMSS <title> [nickname].ts)
-                    title = ' '.join(filename.split(' ')[1:-1])  # Remove date and nickname
+                    title = ' '.join(filename.split(' ')[1:-1])
                     
                     recordings.append({
                         'filename': rel_path,
@@ -198,14 +176,12 @@ def recordings():
                         'streamer_name': streamer_name
                     })
     
-    # Group recordings by streamer
     streamer_recordings = {}
     for recording in recordings:
         if recording['streamer_name'] not in streamer_recordings:
             streamer_recordings[recording['streamer_name']] = []
         streamer_recordings[recording['streamer_name']].append(recording)
     
-    # Sort recordings by creation time (newest first) for each streamer
     for streamer_name in streamer_recordings:
         streamer_recordings[streamer_name].sort(key=lambda x: x['created_at'], reverse=True)
     
@@ -220,7 +196,6 @@ def delete_recording(filename):
     try:
         filepath = os.path.join('downloads', filename)
         
-        # Delete the file if it exists
         if os.path.exists(filepath):
             os.remove(filepath)
             return jsonify({
@@ -282,7 +257,6 @@ def add_streamer():
         'Referer': 'https://chzzk.naver.com/'
     }
     response = requests.get(url, headers=headers)
-    # response.raise_for_status()
     data = response.json()
     
     if data.get('code') != 200:
@@ -291,12 +265,10 @@ def add_streamer():
     if not channel_url:
         return jsonify({'status': 'error', 'message': '채널 URL이 필요합니다.'}), 400
 
-    # 채널 ID 추출
     channel_id = extract_channel_id(channel_url)
     if not channel_id:
         return jsonify({'status': 'error', 'message': '올바른 치지직 URL이 아닙니다.'}), 400
 
-    # API에서 닉네임 가져오기
     nickname = get_channel_info(channel_id)
     if not nickname:
         return jsonify({'status': 'error', 'message': '채널 정보를 가져올 수 없습니다.'}), 400
@@ -323,27 +295,20 @@ def remove_streamer(streamer_id):
     try:
         streamer = Streamer.query.get_or_404(streamer_id)
         
-        # If recording, stop it first
         if streamer.is_recording and streamer.process_id:
             try:
-                # Send SIGTERM to the process
                 os.kill(streamer.process_id, 15)
-                # Wait for the process to terminate with a timeout
                 try:
                     os.waitpid(streamer.process_id, 0)
                 except ChildProcessError:
-                    # Process has already terminated
                     pass
             except ProcessLookupError:
-                # Process might have already terminated
                 pass
             except Exception as e:
                 print(f"Warning: Error stopping recording process: {e}")
         
-        # Delete all recordings for this streamer
         Recording.query.filter_by(streamer_id=streamer_id).delete()
         
-        # Delete the streamer
         db.session.delete(streamer)
         db.session.commit()
         
@@ -361,13 +326,11 @@ def check_status():
     data = request.get_json()
     channel_url = data.get('channel_url')
     
-    # 채널 ID 추출
     channel_id = extract_channel_id(channel_url)
     if not channel_id:
         return jsonify({'status': 'error', 'message': '올바른 치지직 URL이 아닙니다.'}), 400
 
     try:
-        # Check if cookies are set
         settings = Settings.query.first()
         if not settings or not settings.nid_aut or not settings.nid_ses:
             return jsonify({
@@ -396,17 +359,14 @@ def check_status():
             is_live = data['content'].get('status') == 'OPEN'
             broadcast_title = data['content'].get('liveTitle')
             
-            # DB 업데이트
             streamer = Streamer.query.filter_by(channel_url=channel_url).first()
             if streamer:
                 streamer.last_checked = datetime.utcnow()
                 if is_live:
                     streamer.last_live = datetime.utcnow()
-                    # Start download only if not already recording
                     if not streamer.is_recording:
                         download_started = download_stream(channel_id, broadcast_title, streamer.nickname, streamer.id)
                 else:
-                    # Reset recording status when stream goes offline
                     streamer.is_recording = False
                     streamer.current_broadcast_title = None
                 db.session.commit()
@@ -429,21 +389,16 @@ def stop_recording(streamer_id):
         streamer = Streamer.query.get_or_404(streamer_id)
         if streamer.is_recording and streamer.process_id:
             try:
-                # Send SIGTERM to the process
                 os.kill(streamer.process_id, 15)
-                # Wait for the process to terminate with a timeout
                 try:
                     os.waitpid(streamer.process_id, 0)
                 except ChildProcessError:
-                    # Process has already terminated
                     pass
             except ProcessLookupError:
-                # Process might have already terminated
                 pass
             except Exception as e:
                 print(f"Warning: Error stopping recording process: {e}")
             
-            # Reset recording status
             streamer.is_recording = False
             streamer.current_broadcast_title = None
             streamer.process_id = None
@@ -467,4 +422,4 @@ def stop_recording(streamer_id):
         }), 500
 
 if __name__ == '__main__':
-    app.run(debug=True, port=3000) 
+    app.run(host='0.0.0.0', debug=True, port=3000) 
