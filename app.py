@@ -7,18 +7,21 @@ import subprocess
 from datetime import datetime
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger
+import pytz
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///streamers.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
+korea_tz = pytz.timezone('Asia/Seoul')
+
 class Streamer(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     channel_url = db.Column(db.String(200), unique=True, nullable=False)
     nickname = db.Column(db.String(100))
     is_active = db.Column(db.Boolean, default=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(korea_tz))
     last_checked = db.Column(db.DateTime)
     last_live = db.Column(db.DateTime)
     is_recording = db.Column(db.Boolean, default=False)
@@ -29,14 +32,14 @@ class Settings(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     nid_aut = db.Column(db.String(200))
     nid_ses = db.Column(db.String(200))
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=lambda: datetime.now(korea_tz), onupdate=lambda: datetime.now(korea_tz))
 
 class Recording(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     streamer_id = db.Column(db.Integer, db.ForeignKey('streamer.id'), nullable=False)
     filename = db.Column(db.String(200), nullable=False)
     title = db.Column(db.String(200))
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(korea_tz))
     streamer = db.relationship('Streamer', backref=db.backref('recordings', lazy=True))
 
 def extract_channel_id(url):
@@ -75,7 +78,7 @@ def download_stream(channel_id, broadcast_title, streamer_nickname, streamer_id)
         if not os.path.exists(streamer_dir):
             os.makedirs(streamer_dir)
             
-        current_date = datetime.now().strftime('%y%m%d_%H%M%S')
+        current_date = datetime.now(korea_tz).strftime('%y%m%d_%H%M%S')
         filename = f"{current_date} {broadcast_title} [{streamer_nickname}].ts"
         filename = re.sub(r'[<>:"/\\|?*]', '', filename)
         filepath = os.path.join(streamer_dir, filename)
@@ -174,9 +177,9 @@ def check_all_streamers():
                     is_live = data['content'].get('status') == 'OPEN'
                     broadcast_title = data['content'].get('liveTitle')
                     
-                    streamer.last_checked = datetime.utcnow()
+                    streamer.last_checked = datetime.now(korea_tz)
                     if is_live:
-                        streamer.last_live = datetime.utcnow()
+                        streamer.last_live = datetime.now(korea_tz)
                         if not streamer.is_recording:
                             download_stream(channel_id, broadcast_title, streamer.nickname, streamer.id)
                     else:
@@ -417,9 +420,9 @@ def check_status():
             
             streamer = Streamer.query.filter_by(channel_url=channel_url).first()
             if streamer:
-                streamer.last_checked = datetime.utcnow()
+                streamer.last_checked = datetime.now(korea_tz)
                 if is_live:
-                    streamer.last_live = datetime.utcnow()
+                    streamer.last_live = datetime.now(korea_tz)
                     if not streamer.is_recording:
                         download_started = download_stream(channel_id, broadcast_title, streamer.nickname, streamer.id)
                 else:
