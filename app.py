@@ -5,6 +5,8 @@ import re
 import requests
 import subprocess
 from datetime import datetime
+from apscheduler.schedulers.background import BackgroundScheduler
+from apscheduler.triggers.interval import IntervalTrigger
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///streamers.db'
@@ -143,8 +145,62 @@ def download_stream(channel_id, broadcast_title, streamer_nickname, streamer_id)
         print(f"Error downloading stream: {e}")
         return False
 
+def check_all_streamers():
+    with app.app_context():
+        streamers = Streamer.query.filter_by(is_active=True).all()
+        for streamer in streamers:
+            channel_id = extract_channel_id(streamer.channel_url)
+            if not channel_id:
+                continue
+
+            try:
+                settings = Settings.query.first()
+                if not settings or not settings.nid_aut or not settings.nid_ses:
+                    continue
+
+                url = f'https://api.chzzk.naver.com/service/v3/channels/{channel_id}/live-detail'
+                headers = {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
+                    'Accept': 'application/json',
+                    'Accept-Language': 'ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7',
+                    'Origin': 'https://chzzk.naver.com',
+                    'Referer': 'https://chzzk.naver.com/'
+                }
+                response = requests.get(url, headers=headers)
+                response.raise_for_status()
+                data = response.json()
+
+                if data.get('code') == 200 and data.get('content'):
+                    is_live = data['content'].get('status') == 'OPEN'
+                    broadcast_title = data['content'].get('liveTitle')
+                    
+                    streamer.last_checked = datetime.utcnow()
+                    if is_live:
+                        streamer.last_live = datetime.utcnow()
+                        if not streamer.is_recording:
+                            download_stream(channel_id, broadcast_title, streamer.nickname, streamer.id)
+                    else:
+                        streamer.is_recording = False
+                        streamer.current_broadcast_title = None
+                    db.session.commit()
+
+            except Exception as e:
+                print(f"Error checking streamer {streamer.nickname}: {e}")
+
+def init_scheduler():
+    scheduler = BackgroundScheduler()
+    scheduler.add_job(
+        func=check_all_streamers,
+        trigger=IntervalTrigger(seconds=30),
+        id='check_streamers',
+        name='Check all streamers status',
+        replace_existing=True
+    )
+    scheduler.start()
+
 with app.app_context():
     db.create_all()
+    init_scheduler()
 
 @app.route('/')
 def index():
