@@ -10,5 +10,7 @@
 
 #### v1.1
 - [ ] vod 다운로드
+
 #### v1.2
 - [ ] UI redesign
+- [ ] deprecated 된 함수 수정
