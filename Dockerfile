@@ -1,32 +1,22 @@
-# Use Alpine Linux as base image
-FROM alpine:3.19
+# Use Python 3.13.3 as base image
+FROM python:3.13.3-slim
 
 # Set working directory
 WORKDIR /app
 
-# Update and install basic packages
-RUN apk update && \
-    apk add --no-cache \
-    bash \
-    curl \
-    ca-certificates \
-    python3 \
-    py3-pip \
-    python3-dev \
+# Install system dependencies
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    ffmpeg \
+    libpq-dev \
     gcc \
-    musl-dev \
-    postgresql-dev \
-    ffmpeg
+    && rm -rf /var/lib/apt/lists/*
 
 RUN mkdir -p /app/downloads
 
 # Set environment variables
 ENV PATH="/app:${PATH}"
 ENV PYTHONUNBUFFERED=1
-
-# Create and activate virtual environment
-RUN python3 -m venv /opt/venv
-ENV PATH="/opt/venv/bin:$PATH"
 
 # Copy all application files
 COPY . .
@@ -41,4 +31,4 @@ RUN pip install --no-cache-dir streamlink
 EXPOSE 3000
 
 # Run the application
-CMD ["python3", "app.py"]
+CMD ["python", "app.py"]
