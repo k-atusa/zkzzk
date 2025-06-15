@@ -223,7 +223,7 @@ def recordings():
             for filename in files:
                 if filename.endswith('.ts') or filename.endswith('.mp4'):
                     filepath = os.path.join(root, filename)
-                    created_at = datetime.fromtimestamp(os.path.getctime(filepath))
+                    created_at = datetime.fromtimestamp(os.path.getctime(filepath), tz=korea_tz)
                     rel_path = os.path.relpath(filepath, 'downloads')
                     streamer_name = os.path.dirname(rel_path)
                     title = ' '.join(filename.split(' ')[1:-1])
