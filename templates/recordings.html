@@ -40,7 +40,7 @@
 		.glass {
 			background: rgba(255, 255, 255, 0.08);
 			border-radius: 20px;
-			box-shadow: 
+			box-shadow:
 				0 8px 32px 0 rgba(0, 0, 0, 0.37),
 				inset 0 1px 0 rgba(255, 255, 255, 0.1);
 			backdrop-filter: blur(20px);
@@ -51,7 +51,7 @@
 
 		.glass:hover {
 			background: rgba(255, 255, 255, 0.12);
-			box-shadow: 
+			box-shadow:
 				0 12px 40px 0 rgba(0, 0, 0, 0.45),
 				inset 0 1px 0 rgba(255, 255, 255, 0.15);
 		}
@@ -60,7 +60,7 @@
 		.recording-card {
 			background: rgba(255, 255, 255, 0.06);
 			border: 1px solid rgba(255, 255, 255, 0.1);
-			box-shadow: 
+			box-shadow:
 				0 8px 32px 0 rgba(0, 0, 0, 0.4),
 				inset 0 1px 0 rgba(255, 255, 255, 0.08);
 			border-radius: 20px;
@@ -121,6 +121,52 @@
 			border-radius: 12px;
 		}
 
+		.video-thumbnail {
+			width: 100%;
+			aspect-ratio: 16/9;
+			background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+			border-radius: 12px;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			cursor: pointer;
+			transition: all 0.3s ease;
+			border: 2px solid rgba(255, 255, 255, 0.1);
+		}
+
+		.video-thumbnail:hover {
+			border-color: rgb(113, 243, 166);
+			transform: scale(1.02);
+		}
+
+		.play-button {
+			width: 60px;
+			height: 60px;
+			background: rgba(113, 243, 166, 0.9);
+			border-radius: 50%;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			transition: all 0.3s ease;
+		}
+
+		.play-button:hover {
+			background: rgba(113, 243, 166, 1);
+			transform: scale(1.1);
+		}
+
+		.video-container {
+			position: relative;
+		}
+
+		.video-player.hidden {
+			display: none;
+		}
+
+		.video-thumbnail.hidden {
+			display: none;
+		}
+
 		/* 텍스트 색상 */
 		.text-muted {
 			color: rgba(255, 255, 255, 0.6);
@@ -169,24 +215,40 @@
 						<h3 class="text-lg font-semibold text-white mb-3 truncate">{{ recording.title }}</h3>
 						<p class="text-muted text-sm mb-4">
 							<svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+									d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
 							</svg>
 							{{ recording.created_at.strftime('%Y-%m-%d %H:%M:%S') }}
 						</p>
-						<video class="video-player mb-4" controls>
-							<source src="/recordings/{{ recording.filename }}" type="video/mp4">
-							Your browser does not support the video tag.
-						</video>
+						<div class="video-container mb-4">
+							<div class="video-thumbnail" data-filename="{{ recording.filename }}">
+								<div class="play-button">
+									<svg class="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+											d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.347a1.125 1.125 0 0 1 0 1.972l-11.54 6.347c-.75.412-1.667-.13-1.667-.986V5.653Z">
+										</path>
+									</svg>
+								</div>
+							</div>
+							<video class="video-player hidden" controls data-filename="{{ recording.filename }}">
+								<source src="/recordings/{{ recording.filename }}" type="video/mp4">
+								Your browser does not support the video tag.
+							</video>
+						</div>
 						<div class="flex justify-between items-center">
 							<a href="/recordings/{{ recording.filename }}" class="btn-primary px-4 py-2" download>
 								<svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+										d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+									</path>
 								</svg>
 								다운로드
 							</a>
 							<button class="btn-danger p-2 delete-recording" data-filename="{{ recording.filename }}">
 								<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+										d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">
+									</path>
 								</svg>
 							</button>
 						</div>
@@ -200,12 +262,10 @@
 
 	<!-- Custom JavaScript -->
 	<script>
-		// Mobile menu toggle
-		document.getElementById('mobile-menu-btn').addEventListener('click', function() {
+		document.getElementById('mobile-menu-btn').addEventListener('click', function () {
 			document.getElementById('mobile-menu').classList.toggle('hidden');
 		});
 
-		// Delete recording
 		document.querySelectorAll('.delete-recording').forEach(button => {
 			button.addEventListener('click', async (e) => {
 				if (confirm('정말로 이 녹화 영상을 삭제하시겠습니까?')) {
@@ -220,15 +280,12 @@
 						const data = await response.json();
 
 						if (data.status === 'success') {
-							// Remove the card from the UI
 							const card = e.target.closest('.recording-card');
 							const streamerSection = card.closest('.mb-8');
 							card.remove();
-							
-							// Check if this was the last recording in the section
+
 							const remainingCards = streamerSection.querySelectorAll('.recording-card');
 							if (remainingCards.length === 0) {
-								// Remove the entire streamer section if no recordings left
 								streamerSection.remove();
 							}
 						} else {
@@ -241,7 +298,21 @@
 				}
 			});
 		});
+
+		document.querySelectorAll('.video-thumbnail').forEach(thumbnail => {
+			thumbnail.addEventListener('click', function () {
+				const filename = this.dataset.filename;
+				const video = document.querySelector(`video[data-filename="${filename}"]`);
+				const thumbnailContainer = this.closest('.video-container');
+
+				document.querySelectorAll('.video-player').forEach(v => v.classList.add('hidden'));
+				document.querySelectorAll('.video-thumbnail').forEach(t => t.classList.remove('hidden'));
+
+				video.classList.remove('hidden');
+				this.classList.add('hidden');
+			});
+		});
 	</script>
 </body>
 
-</html> 
+</html>
