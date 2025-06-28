@@ -5,27 +5,156 @@
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title>치지직 생방송 다운로더</title>
-	<!-- Bootstrap CSS -->
-	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-	<!-- Bootstrap Icons -->
-	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css">
-	<!-- Custom CSS -->
+	<script src="https://cdn.tailwindcss.com"></script>
+	<script>
+		tailwind.config = {
+			theme: {
+				extend: {
+					colors: {
+						'accent': 'rgb(113, 243, 166)',
+						'accent-dark': 'rgb(89, 194, 133)',
+						'accent-light': 'rgb(137, 255, 179)',
+					}
+				}
+			}
+		}
+	</script>
+	<script src="https://unpkg.com/heroicons@2.0.18/24/outline/index.js"></script>
 	<style>
+		/* 어두운 테마 배경 */
+		body {
+			background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%);
+			min-height: 100vh;
+			color: #e0e0e0;
+		}
+
+		/* 네비게이션 바 */
+		.navbar {
+			background: rgba(15, 15, 35, 0.4);
+			backdrop-filter: blur(20px);
+			-webkit-backdrop-filter: blur(20px);
+			border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+		}
+
+		/* KATUSA 스타일 글래스모피즘 */
+		.glass {
+			background: rgba(255, 255, 255, 0.08);
+			border-radius: 20px;
+			box-shadow:
+				0 8px 32px 0 rgba(0, 0, 0, 0.37),
+				inset 0 1px 0 rgba(255, 255, 255, 0.1);
+			backdrop-filter: blur(20px);
+			-webkit-backdrop-filter: blur(20px);
+			border: 1px solid rgba(255, 255, 255, 0.12);
+			transition: all 0.3s ease;
+		}
+
+		.glass:hover {
+			background: rgba(255, 255, 255, 0.12);
+			box-shadow:
+				0 12px 40px 0 rgba(0, 0, 0, 0.45),
+				inset 0 1px 0 rgba(255, 255, 255, 0.15);
+		}
+
+		/* 폼 요소 */
+		.form-input {
+			background: rgba(255, 255, 255, 0.08);
+			border: 1px solid rgba(255, 255, 255, 0.1);
+			color: #e0e0e0;
+			border-radius: 12px;
+			padding: 0.75rem 1rem;
+			width: 100%;
+			transition: all 0.3s ease;
+		}
+
+		.form-input:focus {
+			background: rgba(255, 255, 255, 0.12);
+			border-color: rgb(113, 243, 166);
+			box-shadow: 0 0 0 3px rgba(113, 243, 166, 0.25);
+			color: #ffffff;
+			outline: none;
+		}
+
+		.form-input::placeholder {
+			color: rgba(255, 255, 255, 0.5);
+		}
+
+		/* 버튼 스타일 */
+		.btn-primary {
+			background: rgba(113, 243, 166, 0.8);
+			border: 1px solid rgba(113, 243, 166, 0.3);
+			backdrop-filter: blur(10px);
+			border-radius: 12px;
+			color: #0f0f23;
+			font-weight: 600;
+			transition: all 0.3s ease;
+		}
+
+		.btn-primary:hover {
+			background: rgba(113, 243, 166, 1);
+			border-color: rgba(113, 243, 166, 0.5);
+			transform: translateY(-1px);
+			box-shadow: 0 4px 12px rgba(113, 243, 166, 0.3);
+		}
+
+		.btn-secondary {
+			background: rgba(255, 255, 255, 0.1);
+			border: 1px solid rgba(255, 255, 255, 0.2);
+			color: #ffffff;
+			border-radius: 12px;
+			transition: all 0.3s ease;
+		}
+
+		.btn-secondary:hover {
+			background: rgba(255, 255, 255, 0.2);
+			border-color: rgba(255, 255, 255, 0.3);
+			color: #ffffff;
+		}
+
+		.btn-danger {
+			background: rgba(239, 68, 68, 0.8);
+			border: 1px solid rgba(239, 68, 68, 0.3);
+			backdrop-filter: blur(10px);
+			border-radius: 12px;
+			color: #ffffff;
+			transition: all 0.3s ease;
+		}
+
+		.btn-danger:hover {
+			background: rgba(239, 68, 68, 1);
+			border-color: rgba(239, 68, 68, 0.5);
+			transform: translateY(-1px);
+		}
+
+		/* 모달 스타일 */
+		.modal {
+			background: rgba(0, 0, 0, 0.5);
+			backdrop-filter: blur(10px);
+		}
+
+		.modal-content {
+			background: rgba(15, 15, 35, 0.95);
+			border: 1px solid rgba(255, 255, 255, 0.1);
+			box-shadow: 0 20px 60px 0 rgba(0, 0, 0, 0.6);
+			border-radius: 20px;
+		}
+
+		/* 상태 표시기 */
 		.status-indicator {
-			width: 15px;
-			height: 15px;
+			width: 12px;
+			height: 12px;
 			border-radius: 50%;
 			display: inline-block;
-			margin-right: 5px;
+			margin-right: 8px;
 		}
 
 		.status-live {
-			background-color: #28a745;
+			background-color: rgb(113, 243, 166);
 			animation: pulse 1.5s infinite;
 		}
 
 		.status-offline {
-			background-color: #6c757d;
+			background-color: #6b7280;
 		}
 
 		@keyframes pulse {
@@ -42,81 +171,110 @@
 			}
 		}
 
-		.streamer-list {
-			max-height: 400px;
-			overflow-y: auto;
+		/* 스트리머 리스트 */
+		.streamer-item {
+			background: rgba(255, 255, 255, 0.05);
+			border: 1px solid rgba(255, 255, 255, 0.08);
+			color: #e0e0e0;
+			border-radius: 12px;
+			margin-bottom: 8px;
+			transition: all 0.3s ease;
+		}
+
+		.streamer-item:hover {
+			background: rgba(255, 255, 255, 0.08);
+			border-color: rgba(255, 255, 255, 0.15);
+		}
+
+		/* 텍스트 색상 */
+		.text-muted {
+			color: rgba(255, 255, 255, 0.6);
+		}
+
+		.text-accent {
+			color: rgb(113, 243, 166);
 		}
 	</style>
 </head>
 
 <body>
 	<!-- Navigation Bar -->
-	<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
-		<div class="container">
-			<a class="navbar-brand" href="/">치지직 생방송 다운로더</a>
-			<button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-				<span class="navbar-toggler-icon"></span>
+	<nav class="navbar fixed top-0 w-full z-50 px-6 py-4">
+		<div class="max-w-7xl mx-auto flex justify-between items-center">
+			<a href="/" class="text-xl font-bold text-white">치지직 생방송 다운로더</a>
+			<div class="hidden md:flex space-x-6">
+				<a href="/live" class="text-white hover:text-accent transition-colors">라이브 녹화</a>
+				<a href="/recordings" class="text-white hover:text-accent transition-colors">녹화 영상</a>
+			</div>
+			<button class="md:hidden text-white" id="mobile-menu-btn">
+				<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+				</svg>
 			</button>
-			<div class="collapse navbar-collapse" id="navbarNav">
-				<ul class="navbar-nav">
-					<li class="nav-item">
-						<a class="nav-link active" href="/live">라이브 녹화</a>
-					</li>
-					<li class="nav-item">
-						<a class="nav-link" href="/recordings">녹화 영상</a>
-					</li>
-				</ul>
+		</div>
+		<!-- Mobile Menu -->
+		<div class="md:hidden hidden" id="mobile-menu">
+			<div class="px-2 pt-2 pb-3 space-y-1">
+				<a href="/live" class="block px-3 py-2 text-white hover:text-accent transition-colors">라이브 녹화</a>
+				<a href="/recordings" class="block px-3 py-2 text-white hover:text-accent transition-colors">녹화 영상</a>
 			</div>
 		</div>
 	</nav>
 
-	<div class="container py-5">
-		<div class="row justify-content-center">
-			<div class="col-md-8">
-				<div class="card shadow mb-4">
-					<div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-						<h3 class="mb-0">라이브 녹화</h3>
-						<button class="btn btn-light" data-bs-toggle="modal" data-bs-target="#settingsModal">
-							<i class="bi bi-gear"></i> 설정
-						</button>
-					</div>
-					<div class="card-body">
-						<form id="addStreamerForm" class="mb-4">
-							<div class="row g-3">
-								<div class="col-md-10">
-									<label for="channelUrl" class="form-label">치지직 채널 URL</label>
-									<input type="url" class="form-control" id="channelUrl" placeholder="https://chzzk.naver.com/..."
-										required pattern="https?://chzzk\.naver\.com/.*">
-									<div class="form-text">채널 URL을 입력하면 자동으로 스트리머 정보를 가져옵니다.</div>
-								</div>
-								<div class="col-md-2 d-flex align-items-end">
-									<button type="submit" class="btn btn-primary w-100">추가</button>
-								</div>
-							</div>
-						</form>
+	<div class="pt-20 pb-8 px-6">
+		<div class="max-w-4xl mx-auto">
+			<div class="glass p-8 mb-8">
+				<div class="flex justify-between items-center mb-6">
+					<h2 class="text-2xl font-bold text-white">라이브 녹화</h2>
+					<button class="btn-secondary px-4 py-2" onclick="openSettings()">
+						<svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+								d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z">
+							</path>
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+								d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+						</svg>
+						설정
+					</button>
+				</div>
 
-						<div class="streamer-list">
-							<h5 class="mb-3">등록된 스트리머 목록</h5>
-							<div id="streamerList" class="list-group">
-								{% for streamer in streamers %}
-								<div class="list-group-item d-flex justify-content-between align-items-center"
-									data-streamer-id="{{ streamer.id }}">
-									<div>
-										<span class="status-indicator status-offline"></span>
-										<span class="streamer-nickname">{{ streamer.nickname }}</span>
-										<small class="text-muted d-block">{{ streamer.channel_url }}</small>
-										<small class="broadcast-title text-success d-none"></small>
-										<small class="download-status text-info d-none"></small>
-									</div>
-									<div>
-										<button class="btn btn-sm btn-danger remove-streamer">
-											<i class="bi bi-trash"></i>
-										</button>
-									</div>
-								</div>
-								{% endfor %}
-							</div>
+				<form id="addStreamerForm" class="mb-8">
+					<div class="grid grid-cols-1 md:grid-cols-12 gap-4">
+						<div class="md:col-span-10">
+							<label for="channelUrl" class="block text-sm font-medium text-white mb-2">치지직 채널 URL</label>
+							<input type="url" class="form-input" id="channelUrl" placeholder="https://chzzk.naver.com/..." required
+								pattern="https?://chzzk\.naver\.com/.*">
+							<p class="text-muted text-sm mt-1">채널 URL을 입력하면 자동으로 스트리머 정보를 가져옵니다.</p>
 						</div>
+						<div class="md:col-span-2 flex items-end">
+							<button type="submit" class="btn-primary w-full py-3">추가</button>
+						</div>
+					</div>
+				</form>
+
+				<div class="streamer-list">
+					<h3 class="text-lg font-semibold text-white mb-4">등록된 스트리머 목록</h3>
+					<div id="streamerList" class="space-y-3">
+						{% for streamer in streamers %}
+						<div class="streamer-item p-4 flex justify-between items-center" data-streamer-id="{{ streamer.id }}">
+							<div class="flex-1">
+								<div class="flex items-center mb-1">
+									<span class="status-indicator status-offline"></span>
+									<span class="streamer-nickname font-medium text-white">{{ streamer.nickname }}</span>
+								</div>
+								<p class="text-muted text-sm">{{ streamer.channel_url }}</p>
+								<p class="broadcast-title text-accent text-sm hidden"></p>
+								<p class="download-status text-blue-400 text-sm hidden"></p>
+							</div>
+							<button class="btn-danger p-2 remove-streamer">
+								<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+										d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">
+									</path>
+								</svg>
+							</button>
+						</div>
+						{% endfor %}
 					</div>
 				</div>
 			</div>
@@ -124,41 +282,56 @@
 	</div>
 
 	<!-- Settings Modal -->
-	<div class="modal fade" id="settingsModal" tabindex="-1" aria-labelledby="settingsModalLabel" aria-hidden="true">
-		<div class="modal-dialog">
-			<div class="modal-content">
-				<div class="modal-header">
-					<h5 class="modal-title" id="settingsModalLabel">설정</h5>
-					<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+	<div id="settingsModal" class="modal fixed inset-0 z-50 hidden">
+		<div class="flex items-center justify-center min-h-screen p-4">
+			<div class="modal-content w-full max-w-md p-6">
+				<div class="flex justify-between items-center mb-4">
+					<h3 class="text-lg font-semibold text-white">설정</h3>
+					<button onclick="closeSettings()" class="text-white hover:text-accent">
+						<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+						</svg>
+					</button>
 				</div>
-				<div class="modal-body">
-					<form id="settingsForm">
-						<div class="mb-3">
-							<label for="nidAut" class="form-label">NID_AUT</label>
-							<input type="text" class="form-control" id="nidAut"
-								placeholder="{{ settings.nid_aut if settings else 'NID_AUT 값을 입력하세요' }}">
-						</div>
-						<div class="mb-3">
-							<label for="nidSes" class="form-label">NID_SES</label>
-							<input type="text" class="form-control" id="nidSes"
-								placeholder="{{ settings.nid_ses if settings else 'NID_SES 값을 입력하세요' }}">
-						</div>
-					</form>
-				</div>
-				<div class="modal-footer">
-					<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">닫기</button>
-					<button type="button" class="btn btn-primary" id="saveSettings">저장</button>
-				</div>
+				<form id="settingsForm">
+					<div class="mb-4">
+						<label for="nidAut" class="block text-sm font-medium text-white mb-2">NID_AUT</label>
+						<input type="text" class="form-input" id="nidAut"
+							placeholder="{{ settings.nid_aut if settings else 'NID_AUT 값을 입력하세요' }}">
+					</div>
+					<div class="mb-6">
+						<label for="nidSes" class="block text-sm font-medium text-white mb-2">NID_SES</label>
+						<input type="text" class="form-input" id="nidSes"
+							placeholder="{{ settings.nid_ses if settings else 'NID_SES 값을 입력하세요' }}">
+					</div>
+					<div class="flex justify-end space-x-3">
+						<button type="button" class="btn-secondary px-4 py-2" onclick="closeSettings()">닫기</button>
+						<button type="button" class="btn-primary px-4 py-2" onclick="saveSettings()">저장</button>
+					</div>
+				</form>
 			</div>
 		</div>
 	</div>
 
-	<!-- Bootstrap Bundle with Popper -->
-	<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 	<!-- Custom JavaScript -->
 	<script>
 		let statusCheckInterval = null;
 		let isCheckingEnabled = true;
+
+		// Mobile menu toggle
+		document.getElementById('mobile-menu-btn').addEventListener('click', function () {
+			document.getElementById('mobile-menu').classList.toggle('hidden');
+		});
+
+		// Settings modal functions
+		function openSettings() {
+			document.getElementById('settingsModal').classList.remove('hidden');
+			loadSettings();
+		}
+
+		function closeSettings() {
+			document.getElementById('settingsModal').classList.add('hidden');
+		}
 
 		// 스트리머 추가
 		document.getElementById('addStreamerForm').addEventListener('submit', async (e) => {
@@ -176,7 +349,7 @@
 				const data = await response.json();
 
 				if (data.status === 'success') {
-					location.reload(); // 페이지 새로고침
+					location.reload();
 				} else {
 					alert(data.message);
 				}
@@ -186,24 +359,21 @@
 			}
 		});
 
-		// 스트리머 제거 - 이벤트 위임 사용
+		// 스트리머 제거
 		document.getElementById('streamerList').addEventListener('click', async (e) => {
 			const removeButton = e.target.closest('.remove-streamer');
 			if (!removeButton) return;
 
-			const streamerItem = removeButton.closest('.list-group-item');
+			const streamerItem = removeButton.closest('.streamer-item');
 			const streamerId = streamerItem.dataset.streamerId;
 			const isRecording = streamerItem.querySelector('.download-status').textContent.includes('녹화');
 
 			if (confirm('정말로 이 스트리머를 제거하시겠습니까?')) {
 				try {
-					// If recording, stop it first
 					if (isRecording) {
 						const stopResponse = await fetch(`/stop_recording/${streamerId}`, {
 							method: 'POST',
-							headers: {
-								'Content-Type': 'application/json'
-							}
+							headers: { 'Content-Type': 'application/json' }
 						});
 						const stopData = await stopResponse.json();
 						if (stopData.status !== 'success') {
@@ -212,12 +382,9 @@
 						}
 					}
 
-					// Then remove the streamer
 					const response = await fetch(`/remove_streamer/${streamerId}`, {
 						method: 'POST',
-						headers: {
-							'Content-Type': 'application/json'
-						}
+						headers: { 'Content-Type': 'application/json' }
 					});
 					const data = await response.json();
 
@@ -237,7 +404,7 @@
 		async function checkStreamerStatus() {
 			if (!isCheckingEnabled) return;
 
-			const streamerItems = document.querySelectorAll('.list-group-item');
+			const streamerItems = document.querySelectorAll('.streamer-item');
 			if (streamerItems.length === 0) return;
 
 			for (const item of streamerItems) {
@@ -250,9 +417,7 @@
 				try {
 					const response = await fetch('/check_status', {
 						method: 'POST',
-						headers: {
-							'Content-Type': 'application/json',
-						},
+						headers: { 'Content-Type': 'application/json' },
 						body: JSON.stringify({ channel_url: channelUrl })
 					});
 					const data = await response.json();
@@ -260,10 +425,7 @@
 					if (data.status === 'error') {
 						if (data.error_code === 'missing_cookies') {
 							alert(data.message);
-							// Open settings modal
-							const settingsModal = new bootstrap.Modal(document.getElementById('settingsModal'));
-							settingsModal.show();
-							// Stop checking status
+							openSettings();
 							isCheckingEnabled = false;
 							if (statusCheckInterval) {
 								clearInterval(statusCheckInterval);
@@ -277,29 +439,27 @@
 
 					if (data.is_live) {
 						statusIndicator.className = 'status-indicator status-live';
-						nickname.style.color = '#28a745';
-						
-						// Show broadcast title
+						nickname.classList.add('text-accent');
+
 						if (data.broadcast_title) {
 							broadcastTitle.textContent = `방송 제목: ${data.broadcast_title}`;
-							broadcastTitle.classList.remove('d-none');
+							broadcastTitle.classList.remove('hidden');
 						}
-						
-						// Show recording status
+
 						if (data.is_recording) {
 							downloadStatus.textContent = '녹화 중...';
-							downloadStatus.classList.remove('d-none');
+							downloadStatus.classList.remove('hidden');
 						} else if (data.download_started) {
 							downloadStatus.textContent = '녹화 시작 중...';
-							downloadStatus.classList.remove('d-none');
+							downloadStatus.classList.remove('hidden');
 						} else {
-							downloadStatus.classList.add('d-none');
+							downloadStatus.classList.add('hidden');
 						}
 					} else {
 						statusIndicator.className = 'status-indicator status-offline';
-						nickname.style.color = '';
-						broadcastTitle.classList.add('d-none');
-						downloadStatus.classList.add('d-none');
+						nickname.classList.remove('text-accent');
+						broadcastTitle.classList.add('hidden');
+						downloadStatus.classList.add('hidden');
 					}
 				} catch (error) {
 					console.error('Error:', error);
@@ -308,34 +468,25 @@
 		}
 
 		// 설정 저장
-		document.getElementById('saveSettings').addEventListener('click', async () => {
+		async function saveSettings() {
 			const nidAut = document.getElementById('nidAut').value;
 			const nidSes = document.getElementById('nidSes').value;
 
 			try {
 				const response = await fetch('/settings', {
 					method: 'POST',
-					headers: {
-						'Content-Type': 'application/json',
-					},
-					body: JSON.stringify({
-						nid_aut: nidAut,
-						nid_ses: nidSes
-					})
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({ nid_aut: nidAut, nid_ses: nidSes })
 				});
 				const data = await response.json();
 
 				if (data.status === 'success') {
 					alert('설정이 저장되었습니다.');
-					const modal = bootstrap.Modal.getInstance(document.getElementById('settingsModal'));
-					modal.hide();
-					
-					// Resume status checking if it was stopped
+					closeSettings();
+
 					if (!isCheckingEnabled) {
 						isCheckingEnabled = true;
-						// Start checking immediately
 						checkStreamerStatus();
-						// Then set up the interval
 						statusCheckInterval = setInterval(checkStreamerStatus, 30000);
 					}
 				} else {
@@ -345,10 +496,10 @@
 				console.error('Error:', error);
 				alert('설정 저장 중 오류가 발생했습니다.');
 			}
-		});
+		}
 
-		// 설정 모달이 열릴 때 현재 설정값 로드
-		document.getElementById('settingsModal').addEventListener('show.bs.modal', async () => {
+		// 설정 로드
+		async function loadSettings() {
 			try {
 				const response = await fetch('/settings');
 				const data = await response.json();
@@ -358,11 +509,10 @@
 			} catch (error) {
 				console.error('Error:', error);
 			}
-		});
+		}
 
 		// Start status checking
 		statusCheckInterval = setInterval(checkStreamerStatus, 30000);
-		// Initial check
 		checkStreamerStatus();
 	</script>
 </body>
