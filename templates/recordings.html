@@ -23,7 +23,11 @@
 	<style>
 		/* 어두운 테마 배경 */
 		body {
-			background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%);
+			background:
+				radial-gradient(circle at 20% 20%, rgba(113, 243, 166, 0.15) 0%, transparent 40%),
+				radial-gradient(circle at 80% 80%, rgba(34, 197, 94, 0.15) 0%, transparent 40%),
+				radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+				linear-gradient(135deg, #0f0f23 0%, #0a0a0a 100%);
 			min-height: 100vh;
 			color: #e0e0e0;
 		}
@@ -58,7 +62,7 @@
 
 		/* 카드 스타일 */
 		.recording-card {
-			background: rgba(255, 255, 255, 0.06);
+			background: rgba(255, 255, 255, 0.03);
 			border: 1px solid rgba(255, 255, 255, 0.1);
 			box-shadow:
 				0 8px 32px 0 rgba(0, 0, 0, 0.4),
@@ -68,7 +72,7 @@
 		}
 
 		.recording-card:hover {
-			background: rgba(255, 255, 255, 0.1);
+			background: rgba(255, 255, 255, 0.06);
 			transform: translateY(-2px);
 		}
 

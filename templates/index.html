@@ -23,7 +23,11 @@
 	<style>
 		/* 어두운 테마 배경 */
 		body {
-			background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%);
+			background:
+				radial-gradient(circle at 20% 20%, rgba(113, 243, 166, 0.15) 0%, transparent 40%),
+				radial-gradient(circle at 80% 80%, rgba(34, 197, 94, 0.15) 0%, transparent 40%),
+				radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+				linear-gradient(135deg, #0f0f23 0%, #0a0a0a 100%);
 			min-height: 100vh;
 			color: #e0e0e0;
 		}
@@ -38,7 +42,7 @@
 
 		/* KATUSA 스타일 글래스모피즘 */
 		.glass {
-			background: rgba(255, 255, 255, 0.08);
+			background: rgba(255, 255, 255, 0.04);
 			border-radius: 20px;
 			box-shadow:
 				0 8px 32px 0 rgba(0, 0, 0, 0.37),
@@ -50,7 +54,7 @@
 		}
 
 		.glass:hover {
-			background: rgba(255, 255, 255, 0.12);
+			background: rgba(255, 255, 255, 0.08);
 			box-shadow:
 				0 12px 40px 0 rgba(0, 0, 0, 0.45),
 				inset 0 1px 0 rgba(255, 255, 255, 0.15);
@@ -239,16 +243,14 @@
 				</div>
 
 				<form id="addStreamerForm" class="mb-8">
-					<div class="grid grid-cols-1 md:grid-cols-12 gap-4">
-						<div class="md:col-span-10">
-							<label for="channelUrl" class="block text-sm font-medium text-white mb-2">치지직 채널 URL</label>
-							<input type="url" class="form-input" id="channelUrl" placeholder="https://chzzk.naver.com/..." required
-								pattern="https?://chzzk\.naver\.com/.*">
-							<p class="text-muted text-sm mt-1">채널 URL을 입력하면 자동으로 스트리머 정보를 가져옵니다.</p>
+					<div class="mb-4">
+						<label for="channelUrl" class="block text-lg font-semibold text-white mb-4">치지직 채널 URL</label>
+						<div class="flex gap-4">
+							<input type="url" class="form-input h-12 flex-1" id="channelUrl" placeholder="https://chzzk.naver.com/..."
+								required pattern="https?://chzzk\.naver\.com/.*">
+							<button type="submit" class="btn-primary h-12 px-6">추가</button>
 						</div>
-						<div class="md:col-span-2 flex items-end">
-							<button type="submit" class="btn-primary w-full py-3">추가</button>
-						</div>
+						<p class="text-muted text-sm mt-1">채널 URL을 입력하면 자동으로 스트리머 정보를 가져옵니다.</p>
 					</div>
 				</form>
 
