@@ -262,10 +262,18 @@
 							<div class="flex-1">
 								<div class="flex items-center mb-1">
 									<span class="status-indicator status-offline"></span>
-									<span class="streamer-nickname font-medium text-white">{{ streamer.nickname }}</span>
+									<a href="{{ streamer.channel_url }}" target="_blank" class="streamer-nickname font-medium text-white hover:text-accent transition-colors cursor-pointer">{{ streamer.nickname }}</a>
 								</div>
-								<p class="text-muted text-sm">{{ streamer.channel_url }}</p>
-								<p class="broadcast-title text-accent text-sm hidden"></p>
+								<p class="broadcast-title text-muted text-sm mb-1 truncate"></p>
+								<div class="broadcast-info hidden">
+									<p class="broadcast-date text-muted text-sm mb-1">
+										<svg class="w-3 h-3 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+											<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+										</svg>
+										<span class="date-text"></span>
+									</p>
+									<div class="broadcast-tags flex flex-wrap gap-1 mb-1"></div>
+								</div>
 								<p class="download-status text-blue-400 text-sm hidden"></p>
 							</div>
 							<button class="btn-danger p-2 remove-streamer">
@@ -410,17 +418,20 @@
 			if (streamerItems.length === 0) return;
 
 			for (const item of streamerItems) {
-				const channelUrl = item.querySelector('.text-muted').textContent;
+				const streamerId = item.dataset.streamerId;
 				const statusIndicator = item.querySelector('.status-indicator');
 				const nickname = item.querySelector('.streamer-nickname');
-				const broadcastTitle = item.querySelector('.broadcast-title');
 				const downloadStatus = item.querySelector('.download-status');
+				const broadcastInfo = item.querySelector('.broadcast-info');
+				const broadcastDate = item.querySelector('.broadcast-date .date-text');
+				const broadcastTitle = item.querySelector('.broadcast-title');
+				const broadcastTags = item.querySelector('.broadcast-tags');
 
 				try {
 					const response = await fetch('/check_status', {
 						method: 'POST',
 						headers: { 'Content-Type': 'application/json' },
-						body: JSON.stringify({ channel_url: channelUrl })
+						body: JSON.stringify({ streamer_id: streamerId })
 					});
 					const data = await response.json();
 
@@ -439,14 +450,49 @@
 						continue;
 					}
 
+					// 방송 제목 업데이트
+					if (data.broadcast_info && data.broadcast_info.title) {
+						broadcastTitle.textContent = data.broadcast_info.title;
+						broadcastTitle.classList.remove('hidden');
+					} else {
+						broadcastTitle.classList.add('hidden');
+					}
+
+					// 방송 정보 업데이트
+					if (data.broadcast_info && Object.keys(data.broadcast_info).length > 0) {
+						broadcastInfo.classList.remove('hidden');
+						
+						if (data.broadcast_info.open_date) {
+							broadcastDate.textContent = `마지막 방송: ${data.broadcast_info.open_date}`;
+						}
+						
+						// 태그 업데이트
+						broadcastTags.innerHTML = '';
+						if (data.broadcast_info.category) {
+							const categorySpan = document.createElement('span');
+							categorySpan.className = 'bg-accent bg-opacity-20 text-accent text-xs px-2 py-1 rounded-full';
+							categorySpan.textContent = data.broadcast_info.category;
+							broadcastTags.appendChild(categorySpan);
+						}
+						
+						if (data.broadcast_info.tags && data.broadcast_info.tags.length > 0) {
+							data.broadcast_info.tags.forEach(tag => {
+								const tagSpan = document.createElement('span');
+								tagSpan.className = 'bg-white bg-opacity-10 text-white text-xs px-2 py-1 rounded-full';
+								tagSpan.textContent = tag;
+								broadcastTags.appendChild(tagSpan);
+							});
+						}
+					} else {
+						broadcastInfo.classList.add('hidden');
+					}
+
 					if (data.is_live) {
 						statusIndicator.className = 'status-indicator status-live';
 						nickname.classList.add('text-accent');
-
-						if (data.broadcast_title) {
-							broadcastTitle.textContent = `방송 제목: ${data.broadcast_title}`;
-							broadcastTitle.classList.remove('hidden');
-						}
+						nickname.classList.remove('text-white');
+						broadcastTitle.classList.add('text-accent');
+						broadcastTitle.classList.remove('text-muted');
 
 						if (data.is_recording) {
 							downloadStatus.textContent = '녹화 중...';
@@ -460,7 +506,9 @@
 					} else {
 						statusIndicator.className = 'status-indicator status-offline';
 						nickname.classList.remove('text-accent');
-						broadcastTitle.classList.add('hidden');
+						nickname.classList.add('text-white');
+						broadcastTitle.classList.remove('text-accent');
+						broadcastTitle.classList.add('text-muted');
 						downloadStatus.classList.add('hidden');
 					}
 				} catch (error) {

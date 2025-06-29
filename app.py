@@ -383,9 +383,13 @@ def remove_streamer(streamer_id):
 @app.route('/check_status', methods=['POST'])
 def check_status():
     data = request.get_json()
-    channel_url = data.get('channel_url')
+    streamer_id = data.get('streamer_id')
     
-    channel_id = extract_channel_id(channel_url)
+    streamer = Streamer.query.get(streamer_id)
+    if not streamer:
+        return jsonify({'status': 'error', 'message': '스트리머를 찾을 수 없습니다.'}), 400
+
+    channel_id = extract_channel_id(streamer.channel_url)
     if not channel_id:
         return jsonify({'status': 'error', 'message': '올바른 치지직 URL이 아닙니다.'}), 400
 
@@ -413,29 +417,43 @@ def check_status():
         is_live = False
         broadcast_title = None
         download_started = False
+        broadcast_info = {}
         
         if data.get('code') == 200 and data.get('content'):
             is_live = data['content'].get('status') == 'OPEN'
             broadcast_title = data['content'].get('liveTitle')
             
-            streamer = Streamer.query.filter_by(channel_url=channel_url).first()
-            if streamer:
-                streamer.last_checked = datetime.now(korea_tz)
-                if is_live:
-                    streamer.last_live = datetime.now(korea_tz)
-                    if not streamer.is_recording:
-                        download_started = download_stream(channel_id, broadcast_title, streamer.nickname, streamer.id)
-                else:
-                    streamer.is_recording = False
-                    streamer.current_broadcast_title = None
-                db.session.commit()
+            # 방송 정보 수집
+            if data['content'].get('liveTitle'):
+                broadcast_info['title'] = data['content']['liveTitle']
+                broadcast_info['category'] = data['content'].get('liveCategoryValue', '')
+                broadcast_info['tags'] = data['content'].get('tags', [])
+                
+                # openDate가 있으면 파싱
+                if data['content'].get('openDate'):
+                    try:
+                        open_date = datetime.fromisoformat(data['content']['openDate'].replace('Z', '+00:00'))
+                        broadcast_info['open_date'] = open_date.astimezone(korea_tz).strftime('%Y-%m-%d %H:%M')
+                    except:
+                        pass
+            
+            streamer.last_checked = datetime.now(korea_tz)
+            if is_live:
+                streamer.last_live = datetime.now(korea_tz)
+                if not streamer.is_recording:
+                    download_started = download_stream(channel_id, broadcast_title, streamer.nickname, streamer.id)
+            else:
+                streamer.is_recording = False
+                streamer.current_broadcast_title = None
+            db.session.commit()
 
         return jsonify({
             'status': 'success',
             'is_live': is_live,
             'broadcast_title': broadcast_title,
-            'is_recording': streamer.is_recording if streamer else False,
+            'is_recording': streamer.is_recording,
             'download_started': download_started,
+            'broadcast_info': broadcast_info,
             'message': '방송 상태를 확인했습니다.'
         })
     except Exception as e:
