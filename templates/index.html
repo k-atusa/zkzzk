@@ -257,7 +257,7 @@
 				<h3 class="text-lg font-semibold text-white mb-4">등록된 스트리머 목록</h3>
 				<div id="streamerList" class="space-y-3">
 					{% for streamer in streamers %}
-					<div class="streamer-item p-4 flex justify-between items-center" data-streamer-id="{{ streamer.id }}">
+					<div class="streamer-item p-4 flex justify-between items-start" data-streamer-id="{{ streamer.id }}">
 						<div class="flex-1">
 							<div class="flex items-center mb-1">
 								<span class="status-indicator status-offline"></span>
@@ -278,11 +278,9 @@
 							</div>
 							<p class="download-status text-blue-400 text-sm hidden"></p>
 						</div>
-						<button class="btn-danger p-2 remove-streamer">
+						<button class="remove-streamer text-muted hover:text-red-400 transition-colors ml-4">
 							<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-									d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">
-								</path>
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
 							</svg>
 						</button>
 					</div>
@@ -464,7 +462,7 @@
 						broadcastInfo.classList.remove('hidden');
 
 						if (data.broadcast_info.open_date) {
-							broadcastDate.textContent = `마지막 방송: ${data.broadcast_info.open_date}`;
+							broadcastDate.textContent = `${data.broadcast_info.open_date}`;
 						}
 
 						// 태그 업데이트
