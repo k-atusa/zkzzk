@@ -2,12 +2,15 @@ from flask import Flask, render_template, jsonify, request, redirect, url_for, s
 from flask_sqlalchemy import SQLAlchemy
 import os
 import re
+import json
 import requests
 import subprocess
+import xml.etree.ElementTree as ET
 from datetime import datetime
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger
 import pytz
+import threading
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///streamers.db'
@@ -41,6 +44,10 @@ class Recording(db.Model):
     title = db.Column(db.String(200))
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(korea_tz))
     streamer = db.relationship('Streamer', backref=db.backref('recordings', lazy=True))
+
+
+
+
 
 def extract_channel_id(url):
     pattern = r'chzzk\.naver\.com/([a-f0-9]{32})'
@@ -497,6 +504,143 @@ def stop_recording(streamer_id):
             'status': 'error',
             'message': '녹화 중지 중 오류가 발생했습니다.'
         }), 500
+
+def clean_filename(filename):
+    """파일명에서 특수문자 제거"""
+    cleaned_filename = re.sub(r'[♥♡ღ⭐㉦✧》《♠♦❤️♣✿ꈍᴗ\/@!~*\[\]\#\$\%\^\&\(\)\-\_\=\+\<\>\?\;\:\'\"]', '', filename)
+    return cleaned_filename
+
+def get_vod_info(video_no):
+    """VOD 정보 가져오기"""
+    api_url = f"https://api.chzzk.naver.com/service/v2/videos/{video_no}"
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3'
+    }
+    
+    try:
+        response = requests.get(api_url, headers=headers)
+        response.raise_for_status()
+        
+        if response.status_code == 404:
+            return None
+            
+        content = response.json().get('content', {})
+        video_id = content.get('videoId')
+        in_key = content.get('inKey')
+        
+        if video_id is None or in_key is None:
+            # 로그인이 필요한 경우 쿠키 사용
+            settings = Settings.query.first()
+            if settings and settings.nid_aut and settings.nid_ses:
+                cookies = {
+                    'NID_AUT': settings.nid_aut,
+                    'NID_SES': settings.nid_ses
+                }
+                response = requests.get(api_url, cookies=cookies, headers=headers)
+                response.raise_for_status()
+                content = response.json().get('content', {})
+                video_id = content.get('videoId')
+                in_key = content.get('inKey')
+        
+        if video_id and in_key:
+            return {
+                'video_id': video_id,
+                'in_key': in_key,
+                'title': content.get('videoTitle'),
+                'author': content.get('channel', {}).get('channelName'),
+                'category': content.get('videoCategory')
+            }
+        
+        return None
+    except Exception as e:
+        print(f"Error fetching VOD info: {e}")
+        return None
+
+def get_vod_stream_url(video_id, in_key):
+    """VOD 스트림 URL 가져오기"""
+    vod_url = f"https://apis.naver.com/neonplayer/vodplay/v2/playback/{video_id}?key={in_key}"
+    
+    try:
+        response = requests.get(vod_url, headers={"Accept": "application/dash+xml"})
+        response.raise_for_status()
+        
+        root = ET.fromstring(response.text)
+        ns = {"mpd": "urn:mpeg:dash:schema:mpd:2011", "nvod": "urn:naver:vod:2020"}
+        
+        base_url_element = root.find(".//mpd:BaseURL", namespaces=ns)
+        if base_url_element is not None:
+            return base_url_element.text
+        
+        return None
+    except Exception as e:
+        print(f"Error getting VOD stream URL: {e}")
+        return None
+
+
+
+def _get_total_size(video_url):
+    """HEAD 요청으로 파일 크기를 구한다"""
+    try:
+        response = requests.head(video_url, timeout=30)
+        response.raise_for_status()
+        size = int(response.headers.get('content-length', 0))
+        
+        if size == 0:
+            # HEAD 요청으로 크기를 알 수 없는 경우 GET 요청으로 확인
+            response = requests.get(video_url, stream=True, timeout=30)
+            response.raise_for_status()
+            size = int(response.headers.get('content-length', 0))
+            response.close()
+        
+        return size
+    except Exception as e:
+        print(f"Error getting file size: {e}")
+        return 0
+
+@app.route('/vod')
+def vod():
+    return render_template('vod.html')
+
+@app.route('/get_vod_info', methods=['POST'])
+def get_vod_info_route():
+    data = request.get_json()
+    vod_url = data.get('vod_url')
+    
+    # URL에서 video_no 추출
+    match = re.match(r'https?://chzzk\.naver\.com/video/(\d+)', vod_url)
+    if not match:
+        return jsonify({'status': 'error', 'message': '올바른 치지직 VOD URL이 아닙니다.'}), 400
+    
+    video_no = match.group(1)
+    
+    try:
+        # VOD 정보 가져오기
+        vod_info = get_vod_info(video_no)
+        if not vod_info:
+            return jsonify({'status': 'error', 'message': 'VOD 정보를 가져올 수 없습니다. 로그인이 필요할 수 있습니다.'}), 400
+        
+        # 스트림 URL 가져오기
+        stream_url = get_vod_stream_url(vod_info['video_id'], vod_info['in_key'])
+        if not stream_url:
+            return jsonify({'status': 'error', 'message': '스트림 URL을 가져올 수 없습니다.'}), 400
+        
+        # 파일 크기 확인
+        file_size = _get_total_size(stream_url)
+        file_size_mb = round(file_size / 1024 / 1024, 1) if file_size > 0 else 0
+        
+        return jsonify({
+            'status': 'success',
+            'video_info': vod_info,
+            'stream_url': stream_url,
+            'file_size_mb': file_size_mb,
+            'message': 'VOD 정보를 성공적으로 가져왔습니다.'
+        })
+        
+    except Exception as e:
+        print(f"Error getting VOD info: {e}")
+        return jsonify({'status': 'error', 'message': f'VOD 정보 가져오기 중 오류가 발생했습니다: {str(e)}'}), 500
+
+
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', debug=True, port=3000) 
