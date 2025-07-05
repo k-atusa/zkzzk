@@ -4,7 +4,7 @@
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>치지직 생방송 다운로더 - 다시보기 다운로드</title>
+	<title>ZKZZK - 다시보기 다운로드</title>
 	<script src="https://cdn.tailwindcss.com"></script>
 	<script>
 		tailwind.config = {
@@ -127,11 +127,11 @@
 	<!-- Navigation Bar -->
 	<nav class="navbar fixed top-0 w-full z-50 px-6 py-4">
 		<div class="max-w-7xl mx-auto flex justify-between items-center">
-			<a href="/" class="text-xl font-bold text-white">치지직 생방송 다운로더</a>
+			<a href="/" class="text-xl font-bold text-white">ZKZZK</a>
 			<div class="hidden md:flex space-x-6">
 				<a href="/live" class="text-white hover:text-accent transition-colors">라이브 녹화</a>
 				<a href="/recordings" class="text-white hover:text-accent transition-colors">녹화 영상</a>
-				<a href="/vod" class="text-accent font-medium">다시보기 다운</a>
+				<a href="/vod" class="text-accent font-medium">다시보기 다운로드</a>
 			</div>
 			<button class="md:hidden text-white" id="mobile-menu-btn">
 				<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -144,7 +144,7 @@
 			<div class="px-2 pt-2 pb-3 space-y-1">
 				<a href="/live" class="block px-3 py-2 text-white hover:text-accent transition-colors">라이브 녹화</a>
 				<a href="/recordings" class="block px-3 py-2 text-white hover:text-accent transition-colors">녹화 영상</a>
-				<a href="/vod" class="block px-3 py-2 text-accent font-medium">다시보기 다운</a>
+				<a href="/vod" class="block px-3 py-2 text-accent font-medium">다시보기 다운로드</a>
 			</div>
 		</div>
 	</nav>
@@ -153,25 +153,19 @@
 		<div class="max-w-4xl mx-auto">
 			<div class="mb-8">
 				<h2 class="text-2xl font-bold text-white mb-2">다시보기 다운로드</h2>
-				<p class="text-muted">치지직 다시보기 URL을 입력하면 영상을 다운로드할 수 있습니다.</p>
 			</div>
 
 			<form id="vodInfoForm" class="mb-8">
 				<div class="mb-4">
 					<label for="vodUrl" class="block text-lg font-semibold text-white mb-4">치지직 다시보기 URL</label>
 					<div class="flex gap-4">
-						<input type="url" class="form-input h-12 flex-1" id="vodUrl" 
-							placeholder="https://chzzk.naver.com/video/..." required 
-							pattern="https?://chzzk\.naver\.com/video/.*">
+						<input type="url" class="form-input h-12 flex-1" id="vodUrl" placeholder="https://chzzk.naver.com/video/..."
+							required pattern="https?://chzzk\.naver\.com/video/.*">
 						<button type="submit" class="btn-primary h-12 px-6" id="getInfoBtn">
-							<svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-									d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-							</svg>
-							정보 가져오기
+							검색
 						</button>
 					</div>
-					<p class="text-muted text-sm mt-1">다시보기 URL을 입력하면 영상 정보와 다운로드 링크를 제공합니다.</p>
+					<p class="text-muted text-sm mt-1">치지직 다시보기 URL을 입력하면 영상 정보와 다운로드 링크를 제공합니다.</p>
 				</div>
 			</form>
 
@@ -182,51 +176,43 @@
 							<h3 class="text-lg font-semibold text-white mb-2" id="videoTitle">영상 제목</h3>
 							<div class="text-sm text-muted space-y-1">
 								<p id="videoAuthor"></p>
-								<p id="videoCategory">카테고리: </p>
-								<p id="videoSize">파일 크기: </p>
+								<div class="flex flex-wrap gap-1">
+									<div id="videoCategory" class="hidden">
+										<span class="bg-accent bg-opacity-20 text-accent text-xs px-2 py-1 rounded-full"
+											id="categoryTag"></span>
+									</div>
+									<div id="videoTags" class="hidden">
+										<div class="flex flex-wrap gap-1" id="tagsContainer"></div>
+									</div>
+								</div>
 							</div>
 						</div>
-						<div class="flex flex-col gap-2">
-							<a href="#" id="downloadLink" class="btn-primary px-4 py-2 text-sm" target="_blank">
-								<svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-										d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-								</svg>
-								다운로드
-							</a>
-							<button id="copyUrlBtn" class="bg-gray-600 hover:bg-gray-500 text-white px-4 py-2 rounded-lg text-sm transition-colors">
-								<svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-										d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
-								</svg>
-								URL 복사
-							</button>
+					</div>
+
+					<!-- 화질 선택 섹션 -->
+					<div class="mb-4">
+						<h4 class="text-md font-semibold text-white mb-3">화질 선택</h4>
+						<div id="resolutionOptions" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+							<!-- 화질 옵션들이 여기에 동적으로 추가됩니다 -->
 						</div>
 					</div>
-					<div class="bg-gray-800 rounded-lg p-3">
-						<p class="text-xs text-muted mb-2">다운로드 URL:</p>
+
+					<!-- 다운로드 버튼 -->
+					<div id="selectedQualityInfo" class="hidden mb-4">
 						<div class="flex gap-2">
-							<input type="text" id="streamUrl" class="form-input text-xs flex-1" readonly>
-							<button id="copyStreamUrlBtn" class="bg-gray-600 hover:bg-gray-500 text-white px-3 py-1 rounded text-xs transition-colors">
-								복사
+							<a href="#" id="downloadLink" class="btn-primary px-4 py-2 text-sm" target="_blank">
+								다운로드
+							</a>
+							<button id="copyUrlBtn"
+								class="bg-gray-600 hover:bg-gray-500 text-white px-4 py-2 rounded-xl text-sm transition-colors">
+								URL 복사
 							</button>
 						</div>
 					</div>
 				</div>
 			</div>
 
-			<div id="usageInfo" class="mt-8">
-				<div class="download-card p-6">
-					<h3 class="text-lg font-semibold text-white mb-4">사용 방법</h3>
-					<div class="text-sm text-muted space-y-2">
-						<p>1. 치지직 다시보기 URL을 입력하고 "정보 가져오기" 버튼을 클릭합니다.</p>
-						<p>2. 영상 정보와 다운로드 링크가 표시됩니다.</p>
-						<p>3. "다운로드" 버튼을 클릭하여 브라우저에서 직접 다운로드하거나,</p>
-						<p>4. "URL 복사" 버튼을 클릭하여 다운로드 링크를 복사할 수 있습니다.</p>
-						<p class="text-accent mt-4">💡 팁: 다운로드 링크는 일정 시간 후 만료될 수 있으니 빠르게 사용하세요.</p>
-					</div>
-				</div>
-			</div>
+
 		</div>
 	</div>
 
@@ -267,17 +253,35 @@
 					// VOD 정보 표시
 					document.getElementById('videoTitle').textContent = data.video_info.title;
 					document.getElementById('videoAuthor').textContent = `${data.video_info.author}`;
-					document.getElementById('videoCategory').textContent = `카테고리: ${data.video_info.category}`;
-					document.getElementById('videoSize').textContent = `파일 크기: ${data.file_size_mb} MB`;
-					
-					// 다운로드 링크 설정
-					const downloadLink = document.getElementById('downloadLink');
-					downloadLink.href = data.stream_url;
-					downloadLink.download = `${data.video_info.title}.mp4`;
-					
-					// 스트림 URL 표시
-					document.getElementById('streamUrl').value = data.stream_url;
-					
+
+					// 카테고리 표시
+					if (data.video_info.category) {
+						document.getElementById('categoryTag').textContent = data.video_info.category;
+						document.getElementById('videoCategory').classList.remove('hidden');
+					} else {
+						document.getElementById('videoCategory').classList.add('hidden');
+					}
+
+					// 태그 표시
+					if (data.video_info.tags && data.video_info.tags.length > 0) {
+						const tagsContainer = document.getElementById('tagsContainer');
+						tagsContainer.innerHTML = '';
+
+						data.video_info.tags.forEach(tag => {
+							const tagSpan = document.createElement('span');
+							tagSpan.className = 'bg-white bg-opacity-10 text-white text-xs px-2 py-1 rounded-full';
+							tagSpan.textContent = tag;
+							tagsContainer.appendChild(tagSpan);
+						});
+
+						document.getElementById('videoTags').classList.remove('hidden');
+					} else {
+						document.getElementById('videoTags').classList.add('hidden');
+					}
+
+					// 화질 옵션 생성
+					createResolutionOptions(data.resolutions, data.video_info.title);
+
 					vodInfoDiv.classList.remove('hidden');
 				} else {
 					alert(data.message);
@@ -287,21 +291,75 @@
 				alert('VOD 정보 가져오기 중 오류가 발생했습니다.');
 			} finally {
 				getInfoBtn.disabled = false;
-				getInfoBtn.innerHTML = `
-					<svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-							d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-					</svg>
-					정보 가져오기
-				`;
+				getInfoBtn.innerHTML = `검색`;
 			}
 		});
 
+		// 화질 옵션 생성 함수
+		function createResolutionOptions(resolutions, videoTitle) {
+			const container = document.getElementById('resolutionOptions');
+			container.innerHTML = '';
+
+			resolutions.forEach((resolution, index) => {
+				const optionDiv = document.createElement('div');
+				optionDiv.className = 'bg-gray-800 border border-gray-700 rounded-lg p-4 cursor-pointer transition-all hover:border-accent hover:bg-gray-700';
+				optionDiv.dataset.resolution = resolution.resolution;
+				optionDiv.dataset.downloadUrl = resolution.download_url;
+				optionDiv.dataset.estimatedSize = resolution.estimated_size_mb;
+
+				optionDiv.innerHTML = `
+					<div class="flex justify-between items-center mb-2">
+						<span class="text-white font-medium">${resolution.resolution}</span>
+						<span class="text-accent text-sm">${resolution.quality}</span>
+					</div>
+					<div class="text-sm text-muted space-y-1">
+						<p>비트레이트: ${(resolution.bandwidth / 1000).toFixed(0)} Kbps</p>
+						<p>예상 크기: ${resolution.estimated_size_mb} MB</p>
+					</div>
+				`;
+
+				// 클릭 이벤트 추가
+				optionDiv.addEventListener('click', () => {
+					// 모든 옵션에서 선택 상태 제거
+					document.querySelectorAll('#resolutionOptions > div').forEach(div => {
+						div.classList.remove('border-accent', 'bg-gray-700');
+						div.classList.add('border-gray-700', 'bg-gray-800');
+					});
+
+					// 선택된 옵션 강조
+					optionDiv.classList.remove('border-gray-700', 'bg-gray-800');
+					optionDiv.classList.add('border-accent', 'bg-gray-700');
+
+					// 선택된 화질 정보 표시
+					showSelectedQuality(resolution, videoTitle);
+				});
+
+				container.appendChild(optionDiv);
+
+				// 첫 번째 옵션을 기본으로 선택
+				if (index === 0) {
+					optionDiv.click();
+				}
+			});
+		}
+
+		// 선택된 화질 정보 표시 함수
+		function showSelectedQuality(resolution, videoTitle) {
+			const selectedQualityInfo = document.getElementById('selectedQualityInfo');
+			const downloadLink = document.getElementById('downloadLink');
+
+			downloadLink.href = resolution.download_url;
+			downloadLink.download = `${videoTitle}_${resolution.quality}.mp4`;
+
+			selectedQualityInfo.classList.remove('hidden');
+		}
+
 		// URL 복사 기능
 		document.getElementById('copyUrlBtn').addEventListener('click', async () => {
-			const streamUrl = document.getElementById('streamUrl').value;
+			const downloadLink = document.getElementById('downloadLink');
+			const url = downloadLink.href;
 			try {
-				await navigator.clipboard.writeText(streamUrl);
+				await navigator.clipboard.writeText(url);
 				alert('다운로드 URL이 클립보드에 복사되었습니다.');
 			} catch (error) {
 				console.error('Error copying URL:', error);
@@ -309,19 +367,8 @@
 			}
 		});
 
-		document.getElementById('copyStreamUrlBtn').addEventListener('click', async () => {
-			const streamUrl = document.getElementById('streamUrl').value;
-			try {
-				await navigator.clipboard.writeText(streamUrl);
-				alert('스트림 URL이 클립보드에 복사되었습니다.');
-			} catch (error) {
-				console.error('Error copying stream URL:', error);
-				alert('스트림 URL 복사 중 오류가 발생했습니다.');
-			}
-		});
-
 
 	</script>
 </body>
 
-</html> 
+</html>

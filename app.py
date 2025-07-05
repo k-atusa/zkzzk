@@ -548,7 +548,8 @@ def get_vod_info(video_no):
                 'in_key': in_key,
                 'title': content.get('videoTitle'),
                 'author': content.get('channel', {}).get('channelName'),
-                'category': content.get('videoCategory')
+                'category': content.get('videoCategory'),
+                'tags': content.get('tags', [])
             }
         
         return None
@@ -556,25 +557,209 @@ def get_vod_info(video_no):
         print(f"Error fetching VOD info: {e}")
         return None
 
-def get_vod_stream_url(video_id, in_key):
-    """VOD 스트림 URL 가져오기"""
+def get_vod_stream_urls(video_id, in_key):
+    """VOD 스트림 URL과 해상도 정보 가져오기"""
     vod_url = f"https://apis.naver.com/neonplayer/vodplay/v2/playback/{video_id}?key={in_key}"
     
     try:
-        response = requests.get(vod_url, headers={"Accept": "application/dash+xml"})
+        # 더 자세한 헤더 추가
+        headers = {
+            "Accept": "application/dash+xml",
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
+            "Accept-Language": "ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7",
+            "Origin": "https://chzzk.naver.com",
+            "Referer": "https://chzzk.naver.com/"
+        }
+        
+        response = requests.get(vod_url, headers=headers)
         response.raise_for_status()
         
-        root = ET.fromstring(response.text)
+        # 응답 내용 확인
+        if len(response.text) < 100:
+            return None
+        
+        # JSON 응답인지 확인
+        if response.text.strip().startswith('{'):
+            print("Received JSON response, trying to parse...")
+            try:
+                json_data = response.json()
+                print(f"JSON response: {json_data}")
+                
+                # JSON에서 BaseURL 찾기
+                if 'baseURL' in json_data:
+                    base_url = json_data['baseURL']
+                    if "pstatic.net" in base_url:
+                        # 기본 해상도로 URL 생성
+                        stream_urls = {
+                            "1280x720": {
+                                'download_url': base_url,
+                                'width': 1280,
+                                'height': 720,
+                                'bandwidth': 2000000,
+                                'quality': '720p'
+                            }
+                        }
+                        return stream_urls
+                
+                # JSON에서 representation 정보 찾기
+                if 'period' in json_data and 'adaptationSet' in json_data['period'][0]:
+                    stream_urls = {}
+                    adaptation_sets = json_data['period'][0]['adaptationSet']
+                    for adaptation_set in adaptation_sets:
+                        if adaptation_set.get('mimeType', '').startswith('video'):
+                            representations = adaptation_set.get('representation', [])
+                            for rep in representations:
+                                width = rep.get('width')
+                                height = rep.get('height')
+                                bandwidth = rep.get('bandwidth')
+                                
+                                if width and height:
+                                    resolution = f"{width}x{height}"
+                                    base_url = rep.get('baseURL', [{}])[0].get('value', '')
+                                    
+                                    if base_url and "pstatic.net" in base_url:
+                                        if int(height) >= 1080:
+                                            quality = "1080p"
+                                        elif int(height) >= 720:
+                                            quality = "720p"
+                                        elif int(height) >= 480:
+                                            quality = "480p"
+                                        elif int(height) >= 360:
+                                            quality = "360p"
+                                        else:
+                                            quality = "240p"
+                                        
+                                        stream_urls[resolution] = {
+                                            'download_url': base_url,
+                                            'width': int(width),
+                                            'height': int(height),
+                                            'bandwidth': int(bandwidth) if bandwidth else 0,
+                                            'quality': quality
+                                        }
+                                        print(f"Added download URL for {resolution} ({quality}): {base_url}")
+                    
+                    if stream_urls:
+                        return dict(sorted(stream_urls.items(), 
+                                         key=lambda x: (x[1]['height'], x[1]['width']), 
+                                         reverse=True))
+            except Exception as e:
+                print(f"JSON parsing error: {e}")
+                pass
+        
+        # XML 파싱 시도
+        try:
+            root = ET.fromstring(response.text)
+        except ET.ParseError as e:
+            print(f"XML parsing error: {e}")
+            return None
         ns = {"mpd": "urn:mpeg:dash:schema:mpd:2011", "nvod": "urn:naver:vod:2020"}
         
-        base_url_element = root.find(".//mpd:BaseURL", namespaces=ns)
-        if base_url_element is not None:
-            return base_url_element.text
+        # XML 구조 디버깅
+        print("XML Structure Debug:")
+        print(f"Root tag: {root.tag}")
         
-        return None
+        # 모든 BaseURL 찾기
+        all_base_urls = root.findall(".//mpd:BaseURL", namespaces=ns)
+        print(f"Found {len(all_base_urls)} BaseURL elements:")
+        for i, url in enumerate(all_base_urls):
+            print(f"  {i+1}: {url.text}")
+        
+        # 다양한 해상도의 스트림 URL 찾기
+        stream_urls = {}
+        
+        # AdaptationSet에서 Representation 찾기
+        adaptation_sets = root.findall(".//mpd:AdaptationSet", namespaces=ns)
+        
+        for i, adaptation_set in enumerate(adaptation_sets):
+            mime_type = adaptation_set.get('mimeType', '')
+            
+            # video/mp4 타입의 AdaptationSet만 처리 (첫 번째 AdaptationSet)
+            if mime_type == 'video/mp4':
+                print(f"Processing video/mp4 AdaptationSet {i+1}")
+                representations = adaptation_set.findall(".//mpd:Representation", namespaces=ns)
+                
+                for j, rep in enumerate(representations):
+                    width = rep.get('width')
+                    height = rep.get('height')
+                    bandwidth = rep.get('bandwidth')
+                    
+                    if width and height:
+                        resolution = f"{width}x{height}"
+                        
+                        # Representation 내부의 BaseURL 찾기
+                        base_url_element = rep.find(".//mpd:BaseURL", namespaces=ns)
+                        if base_url_element is not None:
+                            base_url = base_url_element.text
+                            print(f"Found BaseURL for {resolution}: {base_url}")
+                            
+                            # pstatic.net URL인지 확인
+                            if "pstatic.net" in base_url:
+                                # 화질 매핑
+                                if int(height) >= 1080:
+                                    quality = "1080p"
+                                elif int(height) >= 720:
+                                    quality = "720p"
+                                elif int(height) >= 480:
+                                    quality = "480p"
+                                elif int(height) >= 360:
+                                    quality = "360p"
+                                else:
+                                    quality = "240p"
+                                
+                                stream_urls[resolution] = {
+                                    'download_url': base_url,
+                                    'width': int(width),
+                                    'height': int(height),
+                                    'bandwidth': int(bandwidth) if bandwidth else 0,
+                                    'quality': quality
+                                }
+                                print(f"Added download URL for {resolution} ({quality}): {base_url}")
+                            else:
+                                print(f"BaseURL is not pstatic.net for {resolution}: {base_url}")
+                        else:
+                            print(f"No BaseURL found for {resolution}")
+                    else:
+                        print(f"Missing width or height for representation {j}")
+            else:
+                print(f"Skipping AdaptationSet {i+1} with mimeType: {mime_type}")
+        
+        print(f"Total stream URLs found: {len(stream_urls)}")
+        
+        # 해상도별로 정렬 (높은 해상도부터)
+        sorted_urls = dict(sorted(stream_urls.items(), 
+                                 key=lambda x: (x[1]['height'], x[1]['width']), 
+                                 reverse=True))
+        
+        # 만약 스트림 URL을 찾지 못했다면, 기본 해상도로 시도
+        if not sorted_urls:
+            print("No stream URLs found, using default quality...")
+            sorted_urls = {
+                "1280x720": {
+                    'download_url': f"https://apis.naver.com/neonplayer/vodplay/v2/playback/{video_id}?key={in_key}&quality=720p",
+                    'width': 1280,
+                    'height': 720,
+                    'bandwidth': 2000000,
+                    'quality': '720p'
+                }
+            }
+            print(f"Using default stream URL: {sorted_urls['1280x720']['download_url']}")
+        
+        return sorted_urls
+        
     except Exception as e:
-        print(f"Error getting VOD stream URL: {e}")
+        print(f"Error getting VOD stream URLs: {e}")
+        import traceback
+        traceback.print_exc()
         return None
+
+def get_vod_stream_url(video_id, in_key):
+    """VOD 스트림 URL 가져오기 (기본 해상도)"""
+    urls = get_vod_stream_urls(video_id, in_key)
+    if urls:
+        # 가장 높은 해상도 반환
+        first_resolution = list(urls.keys())[0]
+        return urls[first_resolution]['media_url_template']
+    return None
 
 
 
@@ -619,20 +804,36 @@ def get_vod_info_route():
         if not vod_info:
             return jsonify({'status': 'error', 'message': 'VOD 정보를 가져올 수 없습니다. 로그인이 필요할 수 있습니다.'}), 400
         
-        # 스트림 URL 가져오기
-        stream_url = get_vod_stream_url(vod_info['video_id'], vod_info['in_key'])
-        if not stream_url:
+        # 모든 해상도의 스트림 URL 가져오기
+        stream_urls = get_vod_stream_urls(vod_info['video_id'], vod_info['in_key'])
+        if not stream_urls:
             return jsonify({'status': 'error', 'message': '스트림 URL을 가져올 수 없습니다.'}), 400
         
-        # 파일 크기 확인
-        file_size = _get_total_size(stream_url)
-        file_size_mb = round(file_size / 1024 / 1024, 1) if file_size > 0 else 0
+        # 기본 해상도 (가장 높은 해상도)
+        default_resolution = list(stream_urls.keys())[0]
+        default_download_url = stream_urls[default_resolution]['download_url']
+        
+        # 해상도 정보 정리
+        resolutions = []
+        for resolution, info in stream_urls.items():
+            # 대략적인 파일 크기 계산 (bandwidth * duration / 8)
+            estimated_size_mb = round((info['bandwidth'] * 3600 / 8) / 1024 / 1024, 1) if info['bandwidth'] > 0 else 0
+            
+            resolutions.append({
+                'resolution': resolution,
+                'width': info['width'],
+                'height': info['height'],
+                'bandwidth': info['bandwidth'],
+                'quality': info['quality'],
+                'download_url': info['download_url'],
+                'estimated_size_mb': estimated_size_mb
+            })
         
         return jsonify({
             'status': 'success',
             'video_info': vod_info,
-            'stream_url': stream_url,
-            'file_size_mb': file_size_mb,
+            'resolutions': resolutions,
+            'default_resolution': default_resolution,
             'message': 'VOD 정보를 성공적으로 가져왔습니다.'
         })
         

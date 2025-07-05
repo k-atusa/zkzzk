@@ -4,7 +4,7 @@
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>치지직 생방송 다운로더 - 녹화 영상</title>
+	<title>ZKZZK - 녹화 영상</title>
 	<script src="https://cdn.tailwindcss.com"></script>
 	<script>
 		tailwind.config = {
@@ -186,10 +186,11 @@
 	<!-- Navigation Bar -->
 	<nav class="navbar fixed top-0 w-full z-50 px-6 py-4">
 		<div class="max-w-7xl mx-auto flex justify-between items-center">
-			<a href="/" class="text-xl font-bold text-white">치지직 생방송 다운로더</a>
+			<a href="/" class="text-xl font-bold text-white">ZKZZK</a>
 			<div class="hidden md:flex space-x-6">
 				<a href="/live" class="text-white hover:text-accent transition-colors">라이브 녹화</a>
 				<a href="/recordings" class="text-accent font-medium">녹화 영상</a>
+				<a href="/vod" class="text-white hover:text-accent transition-colors">다시보기 다운로드</a>
 			</div>
 			<button class="md:hidden text-white" id="mobile-menu-btn">
 				<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -202,6 +203,7 @@
 			<div class="px-2 pt-2 pb-3 space-y-1">
 				<a href="/live" class="block px-3 py-2 text-white hover:text-accent transition-colors">라이브 녹화</a>
 				<a href="/recordings" class="block px-3 py-2 text-accent font-medium">녹화 영상</a>
+				<a href="/vod" class="block px-3 py-2 text-white hover:text-accent transition-colors">다시보기 다운로드</a>
 			</div>
 		</div>
 	</nav>
@@ -241,11 +243,6 @@
 						</div>
 						<div class="flex justify-between items-center">
 							<a href="/recordings/{{ recording.filename }}" class="btn-primary px-4 py-2" download>
-								<svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-										d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
-									</path>
-								</svg>
 								다운로드
 							</a>
 							<button class="btn-danger p-2 delete-recording" data-filename="{{ recording.filename }}">
