@@ -10,6 +10,7 @@ RUN apt-get update && \
     ffmpeg \
     libpq-dev \
     gcc \
+    wget \
     && rm -rf /var/lib/apt/lists/*
 
 RUN mkdir -p /app/downloads
