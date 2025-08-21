@@ -9,7 +9,6 @@ import xml.etree.ElementTree as ET
 from datetime import datetime
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger
-import pytz
 import threading
 
 app = Flask(__name__)
@@ -17,14 +16,12 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///streamers.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
-korea_tz = pytz.timezone('Asia/Seoul')
-
 class Streamer(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     channel_url = db.Column(db.String(200), unique=True, nullable=False)
     nickname = db.Column(db.String(100))
     is_active = db.Column(db.Boolean, default=True)
-    created_at = db.Column(db.DateTime, default=lambda: datetime.now(korea_tz))
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now())
     last_checked = db.Column(db.DateTime)
     last_live = db.Column(db.DateTime)
     is_recording = db.Column(db.Boolean, default=False)
@@ -35,14 +32,14 @@ class Settings(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     nid_aut = db.Column(db.String(200))
     nid_ses = db.Column(db.String(200))
-    updated_at = db.Column(db.DateTime, default=lambda: datetime.now(korea_tz), onupdate=lambda: datetime.now(korea_tz))
+    updated_at = db.Column(db.DateTime, default=lambda: datetime.now(), onupdate=lambda: datetime.now())
 
 class Recording(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     streamer_id = db.Column(db.Integer, db.ForeignKey('streamer.id'), nullable=False)
     filename = db.Column(db.String(200), nullable=False)
     title = db.Column(db.String(200))
-    created_at = db.Column(db.DateTime, default=lambda: datetime.now(korea_tz))
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now())
     streamer = db.relationship('Streamer', backref=db.backref('recordings', lazy=True))
 
 
@@ -85,7 +82,7 @@ def download_stream(channel_id, broadcast_title, streamer_nickname, streamer_id)
         if not os.path.exists(streamer_dir):
             os.makedirs(streamer_dir)
             
-        current_date = datetime.now(korea_tz).strftime('%y%m%d_%H%M%S')
+        current_date = datetime.now().strftime('%y%m%d_%H%M%S')
         filename = f"{current_date} {broadcast_title} [{streamer_nickname}].ts"
         filename = re.sub(r'[<>:"/\\|?*]', '', filename)
         filepath = os.path.join(streamer_dir, filename)
@@ -184,9 +181,9 @@ def check_all_streamers():
                     is_live = data['content'].get('status') == 'OPEN'
                     broadcast_title = data['content'].get('liveTitle')
                     
-                    streamer.last_checked = datetime.now(korea_tz)
+                    streamer.last_checked = datetime.now()
                     if is_live:
-                        streamer.last_live = datetime.now(korea_tz)
+                        streamer.last_live = datetime.now()
                         if not streamer.is_recording:
                             download_stream(channel_id, broadcast_title, streamer.nickname, streamer.id)
                     else:
@@ -230,7 +227,7 @@ def recordings():
             for filename in files:
                 if filename.endswith('.ts') or filename.endswith('.mp4'):
                     filepath = os.path.join(root, filename)
-                    created_at = datetime.fromtimestamp(os.path.getctime(filepath), tz=korea_tz)
+                    created_at = datetime.fromtimestamp(os.path.getctime(filepath), tz=datetime.now().tzinfo)
                     rel_path = os.path.relpath(filepath, 'downloads')
                     streamer_name = os.path.dirname(rel_path)
                     title = ' '.join(filename.split(' ')[1:-1])
@@ -439,13 +436,13 @@ def check_status():
                 if data['content'].get('openDate'):
                     try:
                         open_date = datetime.fromisoformat(data['content']['openDate'].replace('Z', '+00:00'))
-                        broadcast_info['open_date'] = open_date.astimezone(korea_tz).strftime('%Y-%m-%d %H:%M')
+                        broadcast_info['open_date'] = open_date.astimezone(datetime.now().tzinfo).strftime('%Y-%m-%d %H:%M')
                     except:
                         pass
             
-            streamer.last_checked = datetime.now(korea_tz)
+            streamer.last_checked = datetime.now()
             if is_live:
-                streamer.last_live = datetime.now(korea_tz)
+                streamer.last_live = datetime.now()
                 if not streamer.is_recording:
                     download_started = download_stream(channel_id, broadcast_title, streamer.nickname, streamer.id)
             else:
@@ -552,7 +549,7 @@ def get_vod_info(video_no):
             if publish_date:
                 try:
                     publish_datetime = datetime.fromisoformat(publish_date.replace('Z', '+00:00'))
-                    formatted_publish_date = publish_datetime.astimezone(korea_tz).strftime('%Y-%m-%d %H:%M')
+                    formatted_publish_date = publish_datetime.astimezone(datetime.now().tzinfo).strftime('%Y-%m-%d %H:%M')
                     print(f"[VOD INFO] Publish date: {formatted_publish_date}")
                 except Exception as e:
                     print(f"[VOD INFO] Error parsing publish date: {e}")
