@@ -28,9 +28,9 @@
 <body>
 	{% include 'navbar.html' %}
 
-	<div class="pt-20 pb-8 px-6">
+	<div class="pt-28 pb-8 px-6">
 		<div class="max-w-4xl mx-auto">
-			<div class="flex justify-between items-center mb-6">
+			<div class="mb-8">
 				<h2 class="text-2xl font-bold text-white">라이브 녹화</h2>
 			</div>
 
@@ -87,15 +87,9 @@
 		</div>
 	</div>
 
-
-
-	<!-- Custom JavaScript -->
 	<script>
 		let statusCheckInterval = null;
 
-
-
-		// 스트리머 추가
 		document.getElementById('addStreamerForm').addEventListener('submit', async (e) => {
 			e.preventDefault();
 			const channelUrl = document.getElementById('channelUrl').value;
@@ -121,7 +115,6 @@
 			}
 		});
 
-		// 스트리머 제거
 		document.getElementById('streamerList').addEventListener('click', async (e) => {
 			const removeButton = e.target.closest('.remove-streamer');
 			if (!removeButton) return;
@@ -162,7 +155,6 @@
 			}
 		});
 
-		// 주기적으로 방송 상태 확인
 		async function checkStreamerStatus() {
 			if (!isCheckingEnabled) return;
 
@@ -201,7 +193,6 @@
 						continue;
 					}
 
-					// 방송 제목 업데이트
 					if (data.broadcast_info && data.broadcast_info.title) {
 						broadcastTitle.textContent = data.broadcast_info.title;
 						broadcastTitle.classList.remove('hidden');
@@ -209,7 +200,6 @@
 						broadcastTitle.classList.add('hidden');
 					}
 
-					// 방송 정보 업데이트
 					if (data.broadcast_info && Object.keys(data.broadcast_info).length > 0) {
 						broadcastInfo.classList.remove('hidden');
 
@@ -217,7 +207,6 @@
 							broadcastDate.textContent = `${data.broadcast_info.open_date}`;
 						}
 
-						// 태그 업데이트
 						broadcastTags.innerHTML = '';
 						if (data.broadcast_info.category) {
 							const categorySpan = document.createElement('span');
@@ -268,9 +257,6 @@
 			}
 		}
 
-
-
-		// Start status checking
 		statusCheckInterval = setInterval(checkStreamerStatus, 30000);
 		checkStreamerStatus();
 	</script>

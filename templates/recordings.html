@@ -29,12 +29,12 @@
 </head>
 
 <body>
-	<!-- Navigation Bar -->
+
 	{% include 'navbar.html' %}
 
 
 
-	<div class="pt-20 pb-8 px-6">
+	<div class="pt-28 pb-8 px-6">
 		<div class="max-w-7xl mx-auto">
 			{% for streamer_name, recordings in streamer_recordings.items() %}
 			<div class="mb-8">
@@ -48,14 +48,16 @@
 						<p class="text-muted text-sm mb-4">
 							<svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-									d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+									d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z">
+								</path>
 							</svg>
 							{{ recording.created_at.strftime('%Y-%m-%d %H:%M:%S') }}
 						</p>
 						<div class="video-container mb-4">
 							<div class="video-thumbnail" data-filename="{{ recording.filename }}">
 								<div class="play-button">
-									<svg class="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+									<svg class="w-12 h-12 text-white" fill="none" stroke="currentColor"
+										viewBox="0 0 24 24">
 										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
 											d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.347a1.125 1.125 0 0 1 0 1.972l-11.54 6.347c-.75.412-1.667-.13-1.667-.986V5.653Z">
 										</path>
@@ -87,65 +89,8 @@
 		</div>
 	</div>
 
-	<!-- Custom JavaScript -->
+
 	<script>
-		document.getElementById('mobile-menu-btn').addEventListener('click', function () {
-			document.getElementById('mobile-menu').classList.toggle('hidden');
-		});
-
-		function openSettings() {
-			document.getElementById('settingsModal').classList.remove('hidden');
-			loadSettings();
-		}
-
-		function closeSettings() {
-			document.getElementById('settingsModal').classList.add('hidden');
-		}
-
-		async function saveSettings() {
-			const nidAut = document.getElementById('nidAut').value;
-			const nidSes = document.getElementById('nidSes').value;
-			const accessPassword = document.getElementById('accessPassword').value;
-			try {
-				const response = await fetch('/settings', {
-					method: 'POST',
-					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify({ nid_aut: nidAut, nid_ses: nidSes, access_password: accessPassword })
-				});
-				const data = await response.json();
-				if (data.status === 'success') {
-					alert('설정이 저장되었습니다.');
-					closeSettings();
-				}
-			} catch (e) {
-				console.error(e);
-				alert('설정 저장 중 오류가 발생했습니다.');
-			}
-		}
-
-		async function loadSettings() {
-			try {
-				const res = await fetch('/settings');
-				const data = await res.json();
-				document.getElementById('nidAut').value = data.nid_aut || '';
-				document.getElementById('nidSes').value = data.nid_ses || '';
-				const pwInput = document.getElementById('accessPassword');
-				pwInput.value = '';
-				pwInput.placeholder = data.access_password_set ? '설정됨 (변경하려면 새 비밀번호 입력)' : '비밀번호를 입력하세요 (비우면 해제)';
-				const logoutBtn = document.getElementById('logoutButton');
-				if (logoutBtn) {
-					if (data.access_password_set) logoutBtn.classList.remove('hidden');
-					else logoutBtn.classList.add('hidden');
-				}
-			} catch (e) {
-				console.error(e);
-			}
-		}
-
-		async function logoutSession() {
-			try { await fetch('/logout', { method: 'POST' }); } catch (e) {}
-			window.location.href = '/login';
-		}
 
 		document.querySelectorAll('.delete-recording').forEach(button => {
 			button.addEventListener('click', async (e) => {

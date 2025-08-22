@@ -1,4 +1,4 @@
-/* 네비게이션 바 */
+
 .navbar {
 	background: rgba(15, 15, 35, 0.4);
 	backdrop-filter: blur(20px);
@@ -6,7 +6,7 @@
 	border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-/* KATUSA 스타일 글래스모피즘 */
+
 .glass {
 	background: rgba(255, 255, 255, 0.04);
 	border-radius: 20px;
@@ -26,7 +26,7 @@
 		inset 0 1px 0 rgba(255, 255, 255, 0.15);
 }
 
-/* 폼 요소 */
+
 .form-input {
 	background: rgba(255, 255, 255, 0.08);
 	border: 1px solid rgba(255, 255, 255, 0.1);
@@ -49,7 +49,7 @@
 	color: rgba(255, 255, 255, 0.5);
 }
 
-/* 버튼 스타일 */
+
 .btn-primary {
 	background: rgba(113, 243, 166, 0.8);
 	border: 1px solid rgba(113, 243, 166, 0.3);
@@ -102,25 +102,25 @@
 	transform: translateY(-1px);
 }
 
-/* 모달 스타일 */
+
 .modal {
-	background: rgba(0, 0, 0, 0.35); /* 더 투명하게 */
-	backdrop-filter: blur(4px);      /* 블러 효과 약화 */
+	background: rgba(0, 0, 0, 0.35);
+	backdrop-filter: blur(4px);
 	-webkit-backdrop-filter: blur(4px);
 }
 
-/* glassmorphism 스타일의 팝업 */
+
 .modal-content {
-	background: rgba(255, 255, 255, 0.10); /* 더 밝고 투명하게 */
+	background: rgba(255, 255, 255, 0.10);
 	border-radius: 20px;
-	box-shadow: 0 8px 32px 0 rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.10);
+	box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.10);
 	backdrop-filter: blur(16px);
 	-webkit-backdrop-filter: blur(16px);
-	border: 1px solid rgba(255,255,255,0.18);
+	border: 1px solid rgba(255, 255, 255, 0.18);
 	transition: all 0.3s;
 }
 
-/* 텍스트 색상 */
+
 .text-muted {
 	color: rgba(255, 255, 255, 0.6);
 }
@@ -129,7 +129,7 @@
 	color: rgb(113, 243, 166);
 }
 
-/* 다운로드 카드 */
+
 .download-card {
 	background: rgba(255, 255, 255, 0.03);
 	border: 1px solid rgba(255, 255, 255, 0.1);
@@ -142,7 +142,7 @@
 	transform: translateY(-2px);
 }
 
-/* 녹화 카드 */
+
 .recording-card {
 	background: rgba(255, 255, 255, 0.03);
 	border: 1px solid rgba(255, 255, 255, 0.1);
@@ -158,7 +158,7 @@
 	transform: translateY(-2px);
 }
 
-/* 스트리머 헤더 */
+
 .streamer-header {
 	background: rgba(113, 243, 166, 0.15);
 	border: 1px solid rgba(255, 255, 255, 0.1);
@@ -166,7 +166,7 @@
 	border-radius: 20px;
 }
 
-/* 비디오 썸네일 */
+
 .video-thumbnail {
 	position: relative;
 	width: 100%;
@@ -200,7 +200,7 @@
 	transform: translate(-50%, -50%) scale(1.1);
 }
 
-/* 녹화 페이지 전용 스타일 */
+
 .video-thumbnail {
 	width: 100%;
 	aspect-ratio: 16/9;

@@ -1,20 +1,28 @@
-<!-- Navigation Bar CSS -->
 <link rel="stylesheet" href="/static/navbar.css">
 
-<!-- Navigation Bar -->
+
 <nav class="navbar fixed top-0 w-full z-50 px-6 py-4">
 	<div class="max-w-7xl mx-auto flex justify-between items-center">
 		<a href="/" class="text-xl font-bold text-white">ZKZZK</a>
 		<div class="hidden md:flex items-center space-x-4">
 			<div class="flex space-x-6">
-				<a href="/live" class="{% if current_page == 'live' %}text-accent font-medium{% else %}text-white hover:text-accent transition-colors{% endif %}">라이브 녹화</a>
-				<a href="/recordings" class="{% if current_page == 'recordings' %}text-accent font-medium{% else %}text-white hover:text-accent transition-colors{% endif %}">녹화 영상</a>
-				<a href="/vod" class="{% if current_page == 'vod' %}text-accent font-medium{% else %}text-white hover:text-accent transition-colors{% endif %}">다시보기 다운로드</a>
+				<a href="/live"
+					class="{% if current_page == 'live' %}text-accent font-medium{% else %}text-white hover:text-accent transition-colors{% endif %}">라이브
+					녹화</a>
+				<a href="/recordings"
+					class="{% if current_page == 'recordings' %}text-accent font-medium{% else %}text-white hover:text-accent transition-colors{% endif %}">녹화
+					영상</a>
+				<a href="/vod"
+					class="{% if current_page == 'vod' %}text-accent font-medium{% else %}text-white hover:text-accent transition-colors{% endif %}">다시보기
+					다운로드</a>
 			</div>
 			<button class="btn-secondary px-3 py-2" type="button" onclick="openSettings()">
 				<svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
-					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+						d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z">
+					</path>
+					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+						d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
 				</svg>
 				설정
 			</button>
@@ -26,18 +34,33 @@
 			</svg>
 		</button>
 	</div>
-	<!-- Mobile Menu -->
-			<div class="md:hidden hidden" id="mobile-menu">
-			<div class="px-2 pt-2 pb-3 space-y-1">
-				<a href="/live" class="block px-3 py-2 {% if current_page == 'live' %}text-accent font-medium{% else %}text-white hover:text-accent transition-colors{% endif %}">라이브 녹화</a>
-				<a href="/recordings" class="block px-3 py-2 {% if current_page == 'recordings' %}text-accent font-medium{% else %}text-white hover:text-accent transition-colors{% endif %}">녹화 영상</a>
-				<a href="/vod" class="block px-3 py-2 {% if current_page == 'vod' %}text-accent font-medium{% else %}text-white hover:text-accent transition-colors{% endif %}">다시보기 다운로드</a>
-				<button type="button" class="block w-full text-left px-3 py-2 text-white hover:text-accent transition-colors" onclick="openSettings()">설정</button>
-			</div>
+
+	<div class="md:hidden hidden" id="mobile-menu">
+		<div class="px-2 pt-2 pb-3 space-y-1">
+			<a href="/live"
+				class="block px-3 py-2 {% if current_page == 'live' %}text-accent font-medium{% else %}text-white hover:text-accent transition-colors{% endif %}">라이브
+				녹화</a>
+			<a href="/recordings"
+				class="block px-3 py-2 {% if current_page == 'recordings' %}text-accent font-medium{% else %}text-white hover:text-accent transition-colors{% endif %}">녹화
+				영상</a>
+			<a href="/vod"
+				class="block px-3 py-2 {% if current_page == 'vod' %}text-accent font-medium{% else %}text-white hover:text-accent transition-colors{% endif %}">다시보기
+				다운로드</a>
+			<button type="button" class="btn-secondary text-left px-3 py-2" onclick="openSettings()">
+				<svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+						d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z">
+					</path>
+					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+						d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+				</svg>
+				설정
+			</button>
 		</div>
+	</div>
 </nav>
 
-<!-- Settings Modal -->
+
 <div id="settingsModal" class="modal fixed inset-0 z-50 hidden">
 	<div class="flex items-center justify-center min-h-screen p-4">
 		<div class="modal-content w-full max-w-md p-6">
@@ -45,8 +68,8 @@
 				<h3 class="text-lg font-semibold text-white">설정</h3>
 				<button onclick="closeSettings()" class="text-white hover:text-accent">
 					<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-							d="M6 18L18 6M6 6l12 12"></path>
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
+						</path>
 					</svg>
 				</button>
 			</div>
@@ -65,7 +88,8 @@
 					<p class="text-muted text-xs mt-1">비워두면 보호가 해제됩니다.</p>
 				</div>
 				<div class="flex justify-end items-center">
-					<button type="button" id="logoutButton" class="btn-danger px-4 py-2 mr-auto hidden" onclick="logoutSession()">로그아웃</button>
+					<button type="button" id="logoutButton" class="btn-danger px-4 py-2 mr-auto hidden"
+						onclick="logoutSession()">로그아웃</button>
 					<div class="space-x-3">
 						<button type="button" class="btn-secondary px-4 py-2" onclick="closeSettings()">닫기</button>
 						<button type="button" class="btn-primary px-4 py-2" onclick="saveSettings()">저장</button>
@@ -76,11 +100,11 @@
 	</div>
 </div>
 
-<!-- Common JavaScript for navbar and settings -->
+
 <script>
 	// Global variables for live page functionality
 	let isCheckingEnabled = true;
-	
+
 	// Mobile menu toggle
 	document.getElementById('mobile-menu-btn').addEventListener('click', function () {
 		document.getElementById('mobile-menu').classList.toggle('hidden');
@@ -113,7 +137,7 @@
 			if (data.status === 'success') {
 				alert('설정이 저장되었습니다.');
 				closeSettings();
-				
+
 				// 설정 저장 후 스트리머 상태 확인 재시작 (live 페이지에서만)
 				if (typeof checkStreamerStatus === 'function' && typeof statusCheckInterval !== 'undefined') {
 					if (!isCheckingEnabled) {

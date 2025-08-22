@@ -1,6 +1,4 @@
-/* index.html 전용 스타일 */
 
-/* 상태 표시기 */
 .status-indicator {
 	width: 12px;
 	height: 12px;
@@ -32,7 +30,7 @@
 	}
 }
 
-/* 스트리머 리스트 */
+
 .streamer-item {
 	background: rgba(255, 255, 255, 0.05);
 	border: 1px solid rgba(255, 255, 255, 0.08);
@@ -47,7 +45,7 @@
 	border-color: rgba(255, 255, 255, 0.15);
 }
 
-/* 텍스트 오버플로우 제어 */
+
 .line-clamp-2 {
 	display: -webkit-box;
 	-webkit-line-clamp: 2;

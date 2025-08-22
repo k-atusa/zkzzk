@@ -1,6 +1,4 @@
-/* 공통 스타일 */
 
-/* 어두운 테마 배경 */
 body {
 	background:
 		radial-gradient(circle at 20% 20%, rgba(113, 243, 166, 0.15) 0%, transparent 40%),

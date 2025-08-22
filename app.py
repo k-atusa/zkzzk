@@ -210,7 +210,7 @@ def init_scheduler():
 
 with app.app_context():
     db.create_all()
-    # Ensure the access_password column exists for existing databases
+
     try:
         result = db.session.execute("PRAGMA table_info(settings)")
         columns = [row[1] for row in result]
@@ -223,15 +223,14 @@ with app.app_context():
 
 @app.before_request
 def require_login():
-    # Allow static files
+
     if request.path.startswith('/static'):
         return
-    # Allow downloads directory serving without auth if desired? Protect it as well
-    # Allow login route itself
+
     if request.endpoint in ('login', 'logout', 'static'):
         return
     settings = Settings.query.first()
-    # Require login only if a password is set
+
     if settings and settings.access_password and not session.get('authenticated'):
         if request.method == 'GET':
             return redirect(url_for('login'))
@@ -337,7 +336,7 @@ def settings():
 
         settings.nid_aut = nid_aut
         settings.nid_ses = nid_ses
-        # Update access password only if key provided
+
         if 'access_password' in data:
             if access_password:
                 try:
@@ -485,7 +484,7 @@ def check_status():
             is_live = data['content'].get('status') == 'OPEN'
             broadcast_title = data['content'].get('liveTitle')
             
-            # 방송 정보 수집
+
             if data['content'].get('liveTitle'):
                 broadcast_info['title'] = data['content']['liveTitle']
                 broadcast_info['category'] = data['content'].get('liveCategoryValue', '')
@@ -560,12 +559,10 @@ def stop_recording(streamer_id):
         }), 500
 
 def clean_filename(filename):
-    """파일명에서 특수문자 제거"""
     cleaned_filename = re.sub(r'[♥♡ღ⭐㉦✧》《♠♦❤️♣✿ꈍᴗ\/@!~*\[\]\#\$\%\^\&\(\)\-\_\=\+\<\>\?\;\:\'\"]', '', filename)
     return cleaned_filename
 
 def get_vod_info(video_no):
-    """VOD 정보 가져오기"""
     api_url = f"https://api.chzzk.naver.com/service/v2/videos/{video_no}"
     print(f"[VOD INFO] API URL: {api_url}")
     headers = {
@@ -631,7 +628,6 @@ def get_vod_info(video_no):
         return None
 
 def get_vod_stream_urls(video_id, in_key):
-    """VOD 스트림 URL과 해상도 정보 가져오기"""
     vod_url = f"https://apis.naver.com/neonplayer/vodplay/v2/playback/{video_id}?key={in_key}"
     print(f"[VOD STREAM] Requesting stream URLs from: {vod_url}")
     
