@@ -1,0 +1,243 @@
+/* 네비게이션 바 */
+.navbar {
+	background: rgba(15, 15, 35, 0.4);
+	backdrop-filter: blur(20px);
+	-webkit-backdrop-filter: blur(20px);
+	border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* KATUSA 스타일 글래스모피즘 */
+.glass {
+	background: rgba(255, 255, 255, 0.04);
+	border-radius: 20px;
+	box-shadow:
+		0 8px 32px 0 rgba(0, 0, 0, 0.37),
+		inset 0 1px 0 rgba(255, 255, 255, 0.1);
+	backdrop-filter: blur(20px);
+	-webkit-backdrop-filter: blur(20px);
+	border: 1px solid rgba(255, 255, 255, 0.12);
+	transition: all 0.3s ease;
+}
+
+.glass:hover {
+	background: rgba(255, 255, 255, 0.08);
+	box-shadow:
+		0 12px 40px 0 rgba(0, 0, 0, 0.45),
+		inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+
+/* 폼 요소 */
+.form-input {
+	background: rgba(255, 255, 255, 0.08);
+	border: 1px solid rgba(255, 255, 255, 0.1);
+	color: #e0e0e0;
+	border-radius: 12px;
+	padding: 0.75rem 1rem;
+	width: 100%;
+	transition: all 0.3s ease;
+}
+
+.form-input:focus {
+	background: rgba(255, 255, 255, 0.12);
+	border-color: rgb(113, 243, 166);
+	box-shadow: 0 0 0 3px rgba(113, 243, 166, 0.25);
+	color: #ffffff;
+	outline: none;
+}
+
+.form-input::placeholder {
+	color: rgba(255, 255, 255, 0.5);
+}
+
+/* 버튼 스타일 */
+.btn-primary {
+	background: rgba(113, 243, 166, 0.8);
+	border: 1px solid rgba(113, 243, 166, 0.3);
+	backdrop-filter: blur(10px);
+	border-radius: 12px;
+	color: #0f0f23;
+	font-weight: 600;
+	transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+	background: rgba(113, 243, 166, 1);
+	border-color: rgba(113, 243, 166, 0.5);
+	transform: translateY(-1px);
+	box-shadow: 0 4px 12px rgba(113, 243, 166, 0.3);
+}
+
+.btn-primary:disabled {
+	background: rgba(113, 243, 166, 0.4);
+	cursor: not-allowed;
+	transform: none;
+}
+
+.btn-secondary {
+	background: rgba(255, 255, 255, 0.1);
+	border: 1px solid rgba(255, 255, 255, 0.2);
+	color: #ffffff;
+	border-radius: 12px;
+	transition: all 0.3s ease;
+}
+
+.btn-secondary:hover {
+	background: rgba(255, 255, 255, 0.2);
+	border-color: rgba(255, 255, 255, 0.3);
+	color: #ffffff;
+}
+
+.btn-danger {
+	background: rgba(239, 68, 68, 0.8);
+	border: 1px solid rgba(239, 68, 68, 0.3);
+	backdrop-filter: blur(10px);
+	border-radius: 12px;
+	color: #ffffff;
+	transition: all 0.3s ease;
+}
+
+.btn-danger:hover {
+	background: rgba(239, 68, 68, 1);
+	border-color: rgba(239, 68, 68, 0.5);
+	transform: translateY(-1px);
+}
+
+/* 모달 스타일 */
+.modal {
+	background: rgba(0, 0, 0, 0.5);
+	backdrop-filter: blur(10px);
+}
+
+.modal-content {
+	background: rgba(15, 15, 35, 0.95);
+	border: 1px solid rgba(255, 255, 255, 0.1);
+	box-shadow: 0 20px 60px 0 rgba(0, 0, 0, 0.6);
+	border-radius: 20px;
+}
+
+/* 텍스트 색상 */
+.text-muted {
+	color: rgba(255, 255, 255, 0.6);
+}
+
+.text-accent {
+	color: rgb(113, 243, 166);
+}
+
+/* 다운로드 카드 */
+.download-card {
+	background: rgba(255, 255, 255, 0.03);
+	border: 1px solid rgba(255, 255, 255, 0.1);
+	border-radius: 12px;
+	transition: all 0.3s ease;
+}
+
+.download-card:hover {
+	background: rgba(255, 255, 255, 0.06);
+	transform: translateY(-2px);
+}
+
+/* 녹화 카드 */
+.recording-card {
+	background: rgba(255, 255, 255, 0.03);
+	border: 1px solid rgba(255, 255, 255, 0.1);
+	box-shadow:
+		0 8px 32px 0 rgba(0, 0, 0, 0.4),
+		inset 0 1px 0 rgba(255, 255, 255, 0.08);
+	border-radius: 20px;
+	transition: all 0.3s ease;
+}
+
+.recording-card:hover {
+	background: rgba(255, 255, 255, 0.06);
+	transform: translateY(-2px);
+}
+
+/* 스트리머 헤더 */
+.streamer-header {
+	background: rgba(113, 243, 166, 0.15);
+	border: 1px solid rgba(255, 255, 255, 0.1);
+	color: #ffffff;
+	border-radius: 20px;
+}
+
+/* 비디오 썸네일 */
+.video-thumbnail {
+	position: relative;
+	width: 100%;
+	height: 120px;
+	background: rgba(0, 0, 0, 0.3);
+	border-radius: 8px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	cursor: pointer;
+	transition: all 0.3s ease;
+}
+
+.video-thumbnail:hover {
+	background: rgba(0, 0, 0, 0.5);
+}
+
+.play-button {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+	background: rgba(0, 0, 0, 0.7);
+	border-radius: 50%;
+	padding: 8px;
+	transition: all 0.3s ease;
+}
+
+.play-button:hover {
+	background: rgba(0, 0, 0, 0.9);
+	transform: translate(-50%, -50%) scale(1.1);
+}
+
+/* 녹화 페이지 전용 스타일 */
+.video-thumbnail {
+	width: 100%;
+	aspect-ratio: 16/9;
+	background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+	border-radius: 12px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	cursor: pointer;
+	transition: all 0.3s ease;
+	border: 2px solid rgba(255, 255, 255, 0.1);
+}
+
+.video-thumbnail:hover {
+	border-color: rgb(113, 243, 166);
+	transform: scale(1.02);
+}
+
+.play-button {
+	width: 60px;
+	height: 60px;
+	background: rgba(113, 243, 166, 0.9);
+	border-radius: 50%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	transition: all 0.3s ease;
+}
+
+.play-button:hover {
+	background: rgba(113, 243, 166, 1);
+	transform: scale(1.1);
+}
+
+.video-container {
+	position: relative;
+}
+
+.video-player.hidden {
+	display: none;
+}
+
+.video-thumbnail.hidden {
+	display: none;
+}

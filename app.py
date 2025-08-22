@@ -1,4 +1,5 @@
-from flask import Flask, render_template, jsonify, request, redirect, url_for, send_from_directory
+from flask import Flask, render_template, jsonify, request, redirect, url_for, send_from_directory, session
+from werkzeug.security import generate_password_hash, check_password_hash
 from flask_sqlalchemy import SQLAlchemy
 import os
 import re
@@ -12,7 +13,8 @@ from apscheduler.triggers.interval import IntervalTrigger
 import threading
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///streamers.db'
+app.secret_key = os.environ.get('SECRET_KEY', 'dev-secret')
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
@@ -32,6 +34,7 @@ class Settings(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     nid_aut = db.Column(db.String(200))
     nid_ses = db.Column(db.String(200))
+    access_password = db.Column(db.String(200))
     updated_at = db.Column(db.DateTime, default=lambda: datetime.now(), onupdate=lambda: datetime.now())
 
 class Recording(db.Model):
@@ -207,7 +210,50 @@ def init_scheduler():
 
 with app.app_context():
     db.create_all()
+    # Ensure the access_password column exists for existing databases
+    try:
+        result = db.session.execute("PRAGMA table_info(settings)")
+        columns = [row[1] for row in result]
+        if 'access_password' not in columns:
+            db.session.execute('ALTER TABLE settings ADD COLUMN access_password VARCHAR(200)')
+            db.session.commit()
+    except Exception as e:
+        print(f"Warning: could not ensure access_password column exists: {e}")
     init_scheduler()
+
+@app.before_request
+def require_login():
+    # Allow static files
+    if request.path.startswith('/static'):
+        return
+    # Allow downloads directory serving without auth if desired? Protect it as well
+    # Allow login route itself
+    if request.endpoint in ('login', 'logout', 'static'):
+        return
+    settings = Settings.query.first()
+    # Require login only if a password is set
+    if settings and settings.access_password and not session.get('authenticated'):
+        if request.method == 'GET':
+            return redirect(url_for('login'))
+        else:
+            return redirect(url_for('login'))
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        password = request.form.get('password') or (request.get_json() or {}).get('password')
+        settings = Settings.query.first()
+        expected = settings.access_password if settings else None
+        if expected and (password and (expected == password or check_password_hash(expected, password))):
+            session['authenticated'] = True
+            return redirect(url_for('live'))
+        return render_template('login.html', error='비밀번호가 올바르지 않습니다.')
+    return render_template('login.html')
+
+@app.route('/logout', methods=['POST', 'GET'])
+def logout():
+    session.clear()
+    return redirect(url_for('login'))
 
 @app.route('/')
 def index():
@@ -217,7 +263,7 @@ def index():
 def live():
     streamers = Streamer.query.filter_by(is_active=True).all()
     settings = Settings.query.first()
-    return render_template('index.html', streamers=streamers, settings=settings)
+    return render_template('index.html', streamers=streamers, settings=settings, current_page='live')
 
 @app.route('/recordings')
 def recordings():
@@ -248,7 +294,7 @@ def recordings():
     for streamer_name in streamer_recordings:
         streamer_recordings[streamer_name].sort(key=lambda x: x['created_at'], reverse=True)
     
-    return render_template('recordings.html', streamer_recordings=streamer_recordings)
+    return render_template('recordings.html', streamer_recordings=streamer_recordings, current_page='recordings')
 
 @app.route('/recordings/<path:filename>')
 def serve_recording(filename):
@@ -283,6 +329,7 @@ def settings():
         data = request.get_json()
         nid_aut = data.get('nid_aut')
         nid_ses = data.get('nid_ses')
+        access_password = data.get('access_password')
 
         settings = Settings.query.first()
         if not settings:
@@ -290,6 +337,16 @@ def settings():
 
         settings.nid_aut = nid_aut
         settings.nid_ses = nid_ses
+        # Update access password only if key provided
+        if 'access_password' in data:
+            if access_password:
+                try:
+                    settings.access_password = generate_password_hash(access_password)
+                except Exception as e:
+                    print(f"Error hashing password: {e}")
+                    settings.access_password = access_password
+            else:
+                settings.access_password = ''
         db.session.add(settings)
         db.session.commit()
 
@@ -301,7 +358,8 @@ def settings():
     settings = Settings.query.first()
     return jsonify({
         'nid_aut': settings.nid_aut if settings else '',
-        'nid_ses': settings.nid_ses if settings else ''
+        'nid_ses': settings.nid_ses if settings else '',
+        'access_password_set': bool(settings and settings.access_password)
     })
 
 @app.route('/add_streamer', methods=['POST'])
@@ -796,7 +854,7 @@ def _get_total_size(video_url):
 
 @app.route('/vod')
 def vod():
-    return render_template('vod.html')
+    return render_template('vod.html', current_page='vod')
 
 @app.route('/get_vod_info', methods=['POST'])
 def get_vod_info_route():

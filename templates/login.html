@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>ZKZZK - 로그인</title>
+	<link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+	<script src="https://cdn.tailwindcss.com"></script>
+	<script>
+		tailwind.config = {
+			theme: {
+				extend: {
+					colors: {
+						'accent': 'rgb(113, 243, 166)'
+					}
+				}
+			}
+		}
+	</script>
+	<style>
+		body {
+			background:
+				radial-gradient(circle at 20% 20%, rgba(113, 243, 166, 0.15) 0%, transparent 40%),
+				radial-gradient(circle at 80% 80%, rgba(34, 197, 94, 0.15) 0%, transparent 40%),
+				radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+				linear-gradient(135deg, #0f0f23 0%, #0a0a0a 100%);
+			min-height: 100vh;
+			color: #e0e0e0;
+		}
+
+		.glass {
+			background: rgba(255, 255, 255, 0.06);
+			border-radius: 16px;
+			box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+			backdrop-filter: blur(14px);
+			-webkit-backdrop-filter: blur(14px);
+			border: 1px solid rgba(255, 255, 255, 0.12);
+		}
+		.form-input {
+			background: rgba(255, 255, 255, 0.08);
+			border: 1px solid rgba(255, 255, 255, 0.1);
+			color: #e0e0e0;
+			border-radius: 12px;
+			padding: 0.75rem 1rem;
+			width: 100%;
+			transition: all 0.3s ease;
+		}
+		.form-input:focus {
+			background: rgba(255, 255, 255, 0.12);
+			border-color: rgb(113, 243, 166);
+			box-shadow: 0 0 0 3px rgba(113, 243, 166, 0.25);
+			color: #ffffff;
+			outline: none;
+		}
+		.btn-primary {
+			background: rgba(113, 243, 166, 0.8);
+			border: 1px solid rgba(113, 243, 166, 0.3);
+			border-radius: 12px;
+			color: #0f0f23;
+			font-weight: 600;
+			transition: all 0.3s ease;
+		}
+		.btn-primary:hover {
+			background: rgba(113, 243, 166, 1);
+			border-color: rgba(113, 243, 166, 0.5);
+			transform: translateY(-1px);
+			box-shadow: 0 4px 12px rgba(113, 243, 166, 0.3);
+		}
+	</style>
+</head>
+
+<body>
+	<div class="min-h-screen flex items-center justify-center p-6">
+		<div class="glass w-full max-w-md p-8">
+			<h1 class="text-2xl font-bold text-white mb-6 text-center">ZKZZK</h1>
+			{% if error %}
+			<p class="text-red-400 text-sm mb-4">{{ error }}</p>
+			{% endif %}
+			<form method="POST" action="/login" class="space-y-4">
+				<div>
+					<input type="password" id="password" name="password" class="form-input" placeholder="비밀번호를 입력하세요" required>
+				</div>
+				<button type="submit" class="btn-primary w-full py-3">로그인</button>
+			</form>
+			<p class="text-xs text-gray-400 mt-4 text-center">비밀번호는 설정 모달에서 변경할 수 있습니다.</p>
+		</div>
+	</div>
+</body>
+
+</html>
+

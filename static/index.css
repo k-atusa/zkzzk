@@ -1,0 +1,61 @@
+/* index.html 전용 스타일 */
+
+/* 상태 표시기 */
+.status-indicator {
+	width: 12px;
+	height: 12px;
+	border-radius: 50%;
+	display: inline-block;
+	margin-right: 8px;
+}
+
+.status-live {
+	background-color: rgb(113, 243, 166);
+	animation: pulse 1.5s infinite;
+}
+
+.status-offline {
+	background-color: #6b7280;
+}
+
+@keyframes pulse {
+	0% {
+		opacity: 1;
+	}
+
+	50% {
+		opacity: 0.5;
+	}
+
+	100% {
+		opacity: 1;
+	}
+}
+
+/* 스트리머 리스트 */
+.streamer-item {
+	background: rgba(255, 255, 255, 0.05);
+	border: 1px solid rgba(255, 255, 255, 0.08);
+	color: #e0e0e0;
+	border-radius: 12px;
+	margin-bottom: 8px;
+	transition: all 0.3s ease;
+}
+
+.streamer-item:hover {
+	background: rgba(255, 255, 255, 0.08);
+	border-color: rgba(255, 255, 255, 0.15);
+}
+
+/* 텍스트 오버플로우 제어 */
+.line-clamp-2 {
+	display: -webkit-box;
+	-webkit-line-clamp: 2;
+	-webkit-box-orient: vertical;
+	overflow: hidden;
+}
+
+.break-words {
+	word-wrap: break-word;
+	word-break: break-word;
+}

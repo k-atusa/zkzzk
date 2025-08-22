@@ -4,8 +4,11 @@
 <head>
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>ZKZZK</title>
+	<title>ZKZZK - 라이브 녹화</title>
 	<link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+	<link rel="stylesheet" href="/static/common.css">
+	<link rel="stylesheet" href="/static/navbar.css">
+	<link rel="stylesheet" href="/static/index.css">
 	<script src="https://cdn.tailwindcss.com"></script>
 	<script>
 		tailwind.config = {
@@ -20,241 +23,15 @@
 			}
 		}
 	</script>
-	<style>
-		body {
-			background:
-				radial-gradient(circle at 20% 20%, rgba(113, 243, 166, 0.15) 0%, transparent 40%),
-				radial-gradient(circle at 80% 80%, rgba(34, 197, 94, 0.15) 0%, transparent 40%),
-				radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
-				linear-gradient(135deg, #0f0f23 0%, #0a0a0a 100%);
-			min-height: 100vh;
-			color: #e0e0e0;
-		}
-
-		/* 네비게이션 바 */
-		.navbar {
-			background: rgba(15, 15, 35, 0.4);
-			backdrop-filter: blur(20px);
-			-webkit-backdrop-filter: blur(20px);
-			border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-		}
-
-		/* KATUSA 스타일 글래스모피즘 */
-		.glass {
-			background: rgba(255, 255, 255, 0.04);
-			border-radius: 20px;
-			box-shadow:
-				0 8px 32px 0 rgba(0, 0, 0, 0.37),
-				inset 0 1px 0 rgba(255, 255, 255, 0.1);
-			backdrop-filter: blur(20px);
-			-webkit-backdrop-filter: blur(20px);
-			border: 1px solid rgba(255, 255, 255, 0.12);
-			transition: all 0.3s ease;
-		}
-
-		.glass:hover {
-			background: rgba(255, 255, 255, 0.08);
-			box-shadow:
-				0 12px 40px 0 rgba(0, 0, 0, 0.45),
-				inset 0 1px 0 rgba(255, 255, 255, 0.15);
-		}
-
-		/* 폼 요소 */
-		.form-input {
-			background: rgba(255, 255, 255, 0.08);
-			border: 1px solid rgba(255, 255, 255, 0.1);
-			color: #e0e0e0;
-			border-radius: 12px;
-			padding: 0.75rem 1rem;
-			width: 100%;
-			transition: all 0.3s ease;
-		}
-
-		.form-input:focus {
-			background: rgba(255, 255, 255, 0.12);
-			border-color: rgb(113, 243, 166);
-			box-shadow: 0 0 0 3px rgba(113, 243, 166, 0.25);
-			color: #ffffff;
-			outline: none;
-		}
-
-		.form-input::placeholder {
-			color: rgba(255, 255, 255, 0.5);
-		}
-
-		/* 버튼 스타일 */
-		.btn-primary {
-			background: rgba(113, 243, 166, 0.8);
-			border: 1px solid rgba(113, 243, 166, 0.3);
-			backdrop-filter: blur(10px);
-			border-radius: 12px;
-			color: #0f0f23;
-			font-weight: 600;
-			transition: all 0.3s ease;
-		}
-
-		.btn-primary:hover {
-			background: rgba(113, 243, 166, 1);
-			border-color: rgba(113, 243, 166, 0.5);
-			transform: translateY(-1px);
-			box-shadow: 0 4px 12px rgba(113, 243, 166, 0.3);
-		}
-
-		.btn-secondary {
-			background: rgba(255, 255, 255, 0.1);
-			border: 1px solid rgba(255, 255, 255, 0.2);
-			color: #ffffff;
-			border-radius: 12px;
-			transition: all 0.3s ease;
-		}
-
-		.btn-secondary:hover {
-			background: rgba(255, 255, 255, 0.2);
-			border-color: rgba(255, 255, 255, 0.3);
-			color: #ffffff;
-		}
-
-		.btn-danger {
-			background: rgba(239, 68, 68, 0.8);
-			border: 1px solid rgba(239, 68, 68, 0.3);
-			backdrop-filter: blur(10px);
-			border-radius: 12px;
-			color: #ffffff;
-			transition: all 0.3s ease;
-		}
-
-		.btn-danger:hover {
-			background: rgba(239, 68, 68, 1);
-			border-color: rgba(239, 68, 68, 0.5);
-			transform: translateY(-1px);
-		}
-
-		/* 모달 스타일 */
-		.modal {
-			background: rgba(0, 0, 0, 0.5);
-			backdrop-filter: blur(10px);
-		}
-
-		.modal-content {
-			background: rgba(15, 15, 35, 0.95);
-			border: 1px solid rgba(255, 255, 255, 0.1);
-			box-shadow: 0 20px 60px 0 rgba(0, 0, 0, 0.6);
-			border-radius: 20px;
-		}
-
-		/* 상태 표시기 */
-		.status-indicator {
-			width: 12px;
-			height: 12px;
-			border-radius: 50%;
-			display: inline-block;
-			margin-right: 8px;
-		}
-
-		.status-live {
-			background-color: rgb(113, 243, 166);
-			animation: pulse 1.5s infinite;
-		}
-
-		.status-offline {
-			background-color: #6b7280;
-		}
-
-		@keyframes pulse {
-			0% {
-				opacity: 1;
-			}
-
-			50% {
-				opacity: 0.5;
-			}
-
-			100% {
-				opacity: 1;
-			}
-		}
-
-		/* 스트리머 리스트 */
-		.streamer-item {
-			background: rgba(255, 255, 255, 0.05);
-			border: 1px solid rgba(255, 255, 255, 0.08);
-			color: #e0e0e0;
-			border-radius: 12px;
-			margin-bottom: 8px;
-			transition: all 0.3s ease;
-		}
-
-		.streamer-item:hover {
-			background: rgba(255, 255, 255, 0.08);
-			border-color: rgba(255, 255, 255, 0.15);
-		}
-
-		/* 텍스트 색상 */
-		.text-muted {
-			color: rgba(255, 255, 255, 0.6);
-		}
-
-		.text-accent {
-			color: rgb(113, 243, 166);
-		}
-
-		/* 텍스트 오버플로우 제어 */
-		.line-clamp-2 {
-			display: -webkit-box;
-			-webkit-line-clamp: 2;
-			-webkit-box-orient: vertical;
-			overflow: hidden;
-		}
-
-		.break-words {
-			word-wrap: break-word;
-			word-break: break-word;
-		}
-	</style>
 </head>
 
 <body>
-	<!-- Navigation Bar -->
-	<nav class="navbar fixed top-0 w-full z-50 px-6 py-4">
-		<div class="max-w-7xl mx-auto flex justify-between items-center">
-			<a href="/" class="text-xl font-bold text-white">ZKZZK</a>
-			<div class="hidden md:flex space-x-6">
-				<a href="/live" class="text-white hover:text-accent transition-colors">라이브 녹화</a>
-				<a href="/recordings" class="text-white hover:text-accent transition-colors">녹화 영상</a>
-				<a href="/vod" class="text-white hover:text-accent transition-colors">다시보기 다운로드</a>
-			</div>
-			<button class="md:hidden text-white" id="mobile-menu-btn">
-				<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16">
-					</path>
-				</svg>
-			</button>
-		</div>
-		<!-- Mobile Menu -->
-		<div class="md:hidden hidden" id="mobile-menu">
-			<div class="px-2 pt-2 pb-3 space-y-1">
-				<a href="/live" class="block px-3 py-2 text-white hover:text-accent transition-colors">라이브 녹화</a>
-				<a href="/recordings" class="block px-3 py-2 text-white hover:text-accent transition-colors">녹화 영상</a>
-				<a href="/vod" class="block px-3 py-2 text-white hover:text-accent transition-colors">다시보기 다운로드</a>
-			</div>
-		</div>
-	</nav>
+	{% include 'navbar.html' %}
 
 	<div class="pt-20 pb-8 px-6">
 		<div class="max-w-4xl mx-auto">
 			<div class="flex justify-between items-center mb-6">
 				<h2 class="text-2xl font-bold text-white">라이브 녹화</h2>
-				<button class="btn-secondary px-4 py-2" onclick="openSettings()">
-					<svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-							d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z">
-						</path>
-						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-							d="M15 12a3 3 0 11-6 0 3 3 0 016 0z">
-						</path>
-					</svg>
-					설정
-				</button>
 			</div>
 
 			<form id="addStreamerForm" class="mb-8">
@@ -310,58 +87,13 @@
 		</div>
 	</div>
 
-	<!-- Settings Modal -->
-	<div id="settingsModal" class="modal fixed inset-0 z-50 hidden">
-		<div class="flex items-center justify-center min-h-screen p-4">
-			<div class="modal-content w-full max-w-md p-6">
-				<div class="flex justify-between items-center mb-4">
-					<h3 class="text-lg font-semibold text-white">설정</h3>
-					<button onclick="closeSettings()" class="text-white hover:text-accent">
-						<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-								d="M6 18L18 6M6 6l12 12"></path>
-						</svg>
-					</button>
-				</div>
-				<form id="settingsForm">
-					<div class="mb-4">
-						<label for="nidAut" class="block text-sm font-medium text-white mb-2">NID_AUT</label>
-						<input type="text" class="form-input" id="nidAut"
-							placeholder="{{ settings.nid_aut if settings else 'NID_AUT 값을 입력하세요' }}">
-					</div>
-					<div class="mb-6">
-						<label for="nidSes" class="block text-sm font-medium text-white mb-2">NID_SES</label>
-						<input type="text" class="form-input" id="nidSes"
-							placeholder="{{ settings.nid_ses if settings else 'NID_SES 값을 입력하세요' }}">
-					</div>
-					<div class="flex justify-end space-x-3">
-						<button type="button" class="btn-secondary px-4 py-2" onclick="closeSettings()">닫기</button>
-						<button type="button" class="btn-primary px-4 py-2" onclick="saveSettings()">저장</button>
-					</div>
-				</form>
-			</div>
-		</div>
-	</div>
+
 
 	<!-- Custom JavaScript -->
 	<script>
 		let statusCheckInterval = null;
-		let isCheckingEnabled = true;
 
-		// Mobile menu toggle
-		document.getElementById('mobile-menu-btn').addEventListener('click', function () {
-			document.getElementById('mobile-menu').classList.toggle('hidden');
-		});
 
-		// Settings modal functions
-		function openSettings() {
-			document.getElementById('settingsModal').classList.remove('hidden');
-			loadSettings();
-		}
-
-		function closeSettings() {
-			document.getElementById('settingsModal').classList.add('hidden');
-		}
 
 		// 스트리머 추가
 		document.getElementById('addStreamerForm').addEventListener('submit', async (e) => {
@@ -458,7 +190,6 @@
 					if (data.status === 'error') {
 						if (data.error_code === 'missing_cookies') {
 							alert(data.message);
-							openSettings();
 							isCheckingEnabled = false;
 							if (statusCheckInterval) {
 								clearInterval(statusCheckInterval);
@@ -537,49 +268,7 @@
 			}
 		}
 
-		// 설정 저장
-		async function saveSettings() {
-			const nidAut = document.getElementById('nidAut').value;
-			const nidSes = document.getElementById('nidSes').value;
 
-			try {
-				const response = await fetch('/settings', {
-					method: 'POST',
-					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify({ nid_aut: nidAut, nid_ses: nidSes })
-				});
-				const data = await response.json();
-
-				if (data.status === 'success') {
-					alert('설정이 저장되었습니다.');
-					closeSettings();
-
-					if (!isCheckingEnabled) {
-						isCheckingEnabled = true;
-						checkStreamerStatus();
-						statusCheckInterval = setInterval(checkStreamerStatus, 30000);
-					}
-				} else {
-					alert(data.message);
-				}
-			} catch (error) {
-				console.error('Error:', error);
-				alert('설정 저장 중 오류가 발생했습니다.');
-			}
-		}
-
-		// 설정 로드
-		async function loadSettings() {
-			try {
-				const response = await fetch('/settings');
-				const data = await response.json();
-
-				document.getElementById('nidAut').value = data.nid_aut;
-				document.getElementById('nidSes').value = data.nid_ses;
-			} catch (error) {
-				console.error('Error:', error);
-			}
-		}
 
 		// Start status checking
 		statusCheckInterval = setInterval(checkStreamerStatus, 30000);
