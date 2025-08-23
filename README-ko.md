@@ -1,6 +1,6 @@
-<h1 align=center>zkzzk</h1>
+<h1 align=center>zkzzk - 직지직</h1>
 
-<p align=center>🎬 Chzzk Video Manager</p>
+<p align=center>🎬 <strong>직</strong>접 녹화하는 치<strong>지직</strong></p>
 
 <p align="center">
   <a href="https://github.com/k-atusa/zkzzk/releases">
@@ -21,21 +21,20 @@
 </p>
 
 <p align="right">
-  <a href="README.md">🇺🇸 English</a> | <a href="README-ko.md">🇰🇷 한국어</a>
+  <a href="README-ko.md">🇰🇷 한국어</a> | <a href="README.md">🇺🇸 English</a>
 </p>
 
+## 🤔 어떤 프로젝트인가요?
 
-## 🤔 What is this project?
+zkzzk는 치지직(Chzzk) 방송을 자동으로 녹화하고, 녹화된 영상을 관리할 수 있는 오픈소스 웹 애플리케이션입니다. 치지직 방송을 자동으로 백업하거나, 다시보기를 손쉽게 저장하고 싶은 분들을 위해 만들어졌습니다.
 
-zkzzk is an open-source web application that automatically records [Naver Chzzk](https://chzzk.naver.com) broadcasts and manages recorded videos. It is for those who want to automatically backup Chzzk broadcasts or easily save VODs.
+- 원하는 스트리머를 등록하면, 방송이 시작될 때 자동으로 녹화가 시작됩니다.
+- 녹화된 영상은 웹에서 쉽게 확인하고 다운로드할 수 있습니다.
+- 치지직 다시보기(VOD) 영상 URL을 입력하면 원하는 화질로 다운로드할 수 있습니다.
 
-- When you add a desired streamer in the list, recording automatically starts when the broadcast begins.
-- Recorded videos can be easily viewed and downloaded through the web.
-- Enter a Chzzk replay (VOD) video URL to download in your desired resolution.
+## ⚙️ 설치 방법
 
-## ⚙️ Installation
-
-### 1. Direct deployment
+### 1. 직접 실행
 
 ```sh
 git clone https://github.com/k-atusa/zkzzk
@@ -46,9 +45,9 @@ python3 -m pip install -r requirements.txt
 python3 app.py
 ```
 
-### 2. Docker container (Recommended)
+### 2. Docker 컨테이너 실행 (권장)
 
-Create a `docker-compose.yml` file as follows.
+`docker-compose.yml` 파일을 다음과 같이 작성합니다.
 
 ```yml
 version: "3.9"
@@ -58,7 +57,7 @@ services:
     image: d3vle0/zkzzk:2.1.2
     container_name: zkzzk
     ports:
-      - "<external port>:3000"
+      - "<외부 포트>:3000"
     volumes:
       - ./downloads:/app/downloads
     restart: unless-stopped
