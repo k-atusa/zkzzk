@@ -2,7 +2,7 @@
 
 <p align=center>🎬 <strong>직</strong>접 녹화하는 치<strong>지직</strong></p>
 
-<p align="center" style="text-decoration:none">
+<p align="center">
   <a href="https://github.com/k-atusa/zkzzk/releases">
     <img src="https://img.shields.io/github/v/release/k-atusa/zkzzk?style=flat-square" alt="Release">
   </a>
