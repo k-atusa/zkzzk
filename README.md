@@ -40,7 +40,7 @@ version: "3.9"
 
 services:
   zkzzk:
-    image: d3vle0/zkzzk:2.1.2
+    image: d3vle0/zkzzk:latest
     container_name: zkzzk
     ports:
       - "<external port>:3000"
