@@ -3,23 +3,8 @@
 <p align=center>🎬 Chzzk Video Manager</p>
 
 <p align="center">
-  <a href="https://github.com/k-atusa/zkzzk/releases">
-    <img src="https://img.shields.io/github/v/release/k-atusa/zkzzk?style=flat-square" alt="Release">
-  </a>
-  <a href="https://github.com/k-atusa/zkzzk/blob/main/LICENSE">
-    <img src="https://img.shields.io/github/license/k-atusa/zkzzk?style=flat-square" alt="License">
-  </a>
-  <a href="https://hub.docker.com/r/d3vle0/zkzzk">
-    <img src="https://img.shields.io/docker/pulls/d3vle0/zkzzk?style=flat-square" alt="Docker Pulls">
-  </a>
-  <a href="https://github.com/k-atusa/zkzzk/stargazers">
-    <img src="https://img.shields.io/github/stars/k-atusa/zkzzk?style=flat-square" alt="Stars">
-  </a>
-  <a href="https://img.shields.io/github/languages/code-size/k-atusa/zkzzk?style=flat-square">
-    <img src="https://img.shields.io/github/languages/code-size/k-atusa/zkzzk?style=flat-square" alt="Code Size">
-  </a>
+  <a href="https://github.com/k-atusa/zkzzk/releases"><img src="https://img.shields.io/github/v/release/k-atusa/zkzzk?style=flat-square" alt="Release"></a> <a href="https://github.com/k-atusa/zkzzk/blob/main/LICENSE"><img src="https://img.shields.io/github/license/k-atusa/zkzzk?style=flat-square" alt="License"></a> <a href="https://hub.docker.com/r/d3vle0/zkzzk"><img src="https://img.shields.io/docker/pulls/d3vle0/zkzzk?style=flat-square" alt="Docker Pulls"></a> <a href="https://github.com/k-atusa/zkzzk/stargazers"><img src="https://img.shields.io/github/stars/k-atusa/zkzzk?style=flat-square" alt="Stars"></a> <a href="https://img.shields.io/github/languages/code-size/k-atusa/zkzzk?style=flat-square"><img src="https://img.shields.io/github/languages/code-size/k-atusa/zkzzk?style=flat-square" alt="Code Size"></a>
 </p>
-
 <p align="right">
   <a href="README.md">🇺🇸 English</a> | <a href="README-ko.md">🇰🇷 한국어</a>
 </p>
