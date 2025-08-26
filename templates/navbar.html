@@ -90,7 +90,6 @@
 					<input type="text" class="form-input" id="nidSes" placeholder="NID_SES 값을 입력하세요">
 				</div>
 				<div class="flex justify-end items-center">
-					<button type="button" id="logoutButton" class="btn-danger px-4 py-2 mr-auto hidden" onclick="logoutSession()">로그아웃</button>
 					<div class="space-x-3">
 						<button type="button" class="btn-secondary px-4 py-2" onclick="closeSettings()">닫기</button>
 						<button type="button" class="btn-primary px-4 py-2" onclick="saveSettings()">저장</button>
@@ -160,13 +159,6 @@
 		}
 	}
 
-	async function logoutSession() {
-		try {
-			await fetch('/logout', { method: 'POST' });
-		} catch (e) { }
-		window.location.href = '/login';
-	}
-
 	// 설정 로드
 	async function loadSettings() {
 		try {
@@ -175,10 +167,7 @@
 
 			document.getElementById('nidAut').value = data.nid_aut;
 			document.getElementById('nidSes').value = data.nid_ses;
-			const logoutBtn = document.getElementById('logoutButton');
-			if (logoutBtn) {
-				logoutBtn.classList.remove('hidden');
-			}
+
 		} catch (error) {
 			console.error('Error:', error);
 		}
