@@ -44,7 +44,6 @@ class Settings(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     nid_aut = db.Column(db.String(200))
     nid_ses = db.Column(db.String(200))
-    access_password = db.Column(db.String(200))
     updated_at = db.Column(db.DateTime, default=lambda: datetime.now(), onupdate=lambda: datetime.now())
     initialized = db.Column(db.Boolean, default=False)
 
@@ -227,14 +226,11 @@ with app.app_context():
     try:
         result = db.session.execute("PRAGMA table_info(settings)")
         columns = [row[1] for row in result]
-        if 'access_password' not in columns:
-            db.session.execute('ALTER TABLE settings ADD COLUMN access_password VARCHAR(200)')
-            db.session.commit()
         if 'initialized' not in columns:
             db.session.execute('ALTER TABLE settings ADD COLUMN initialized BOOLEAN DEFAULT 0')
             db.session.commit()
     except Exception as e:
-        print(f"Warning: could not ensure access_password column exists: {e}")
+        print(f"Warning: could not ensure settings table columns: {e}")
 
     try:
         result = db.session.execute("PRAGMA table_info(streamer)")
@@ -402,7 +398,6 @@ def settings():
         data = request.get_json()
         nid_aut = data.get('nid_aut')
         nid_ses = data.get('nid_ses')
-        access_password = data.get('access_password')
 
         settings = Settings.query.first()
         if not settings:
@@ -411,15 +406,6 @@ def settings():
         settings.nid_aut = nid_aut
         settings.nid_ses = nid_ses
 
-        if 'access_password' in data:
-            if access_password:
-                try:
-                    settings.access_password = generate_password_hash(access_password)
-                except Exception as e:
-                    print(f"Error hashing password: {e}")
-                    settings.access_password = access_password
-            else:
-                settings.access_password = ''
         db.session.add(settings)
         db.session.commit()
 
@@ -431,8 +417,7 @@ def settings():
     settings = Settings.query.first()
     return jsonify({
         'nid_aut': settings.nid_aut if settings else '',
-        'nid_ses': settings.nid_ses if settings else '',
-        'access_password_set': bool(settings and settings.access_password)
+        'nid_ses': settings.nid_ses if settings else ''
     })
 
 @app.route('/add_streamer', methods=['POST'])

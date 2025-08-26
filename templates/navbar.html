@@ -89,14 +89,8 @@
 					<label for="nidSes" class="block text-sm font-medium text-white mb-2">NID_SES</label>
 					<input type="text" class="form-input" id="nidSes" placeholder="NID_SES 값을 입력하세요">
 				</div>
-				<div class="mb-6">
-					<label for="accessPassword" class="block text-sm font-medium text-white mb-2">페이지 비밀번호</label>
-					<input type="password" class="form-input" id="accessPassword" placeholder="비밀번호를 입력하세요 (비우면 해제)">
-					<p class="text-muted text-xs mt-1">비워두면 보호가 해제됩니다.</p>
-				</div>
 				<div class="flex justify-end items-center">
-					<button type="button" id="logoutButton" class="btn-danger px-4 py-2 mr-auto hidden"
-						onclick="logoutSession()">로그아웃</button>
+					<button type="button" id="logoutButton" class="btn-danger px-4 py-2 mr-auto hidden" onclick="logoutSession()">로그아웃</button>
 					<div class="space-x-3">
 						<button type="button" class="btn-secondary px-4 py-2" onclick="closeSettings()">닫기</button>
 						<button type="button" class="btn-primary px-4 py-2" onclick="saveSettings()">저장</button>
@@ -136,13 +130,12 @@
 	async function saveSettings() {
 		const nidAut = document.getElementById('nidAut').value;
 		const nidSes = document.getElementById('nidSes').value;
-		const accessPassword = document.getElementById('accessPassword').value;
 
 		try {
 			const response = await fetch('/settings', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ nid_aut: nidAut, nid_ses: nidSes, access_password: accessPassword })
+				body: JSON.stringify({ nid_aut: nidAut, nid_ses: nidSes })
 			});
 			const data = await response.json();
 
@@ -182,13 +175,9 @@
 
 			document.getElementById('nidAut').value = data.nid_aut;
 			document.getElementById('nidSes').value = data.nid_ses;
-			const pwInput = document.getElementById('accessPassword');
-			pwInput.value = '';
-			pwInput.placeholder = data.access_password_set ? '설정됨 (변경하려면 새 비밀번호 입력)' : '비밀번호를 입력하세요 (비우면 해제)';
 			const logoutBtn = document.getElementById('logoutButton');
 			if (logoutBtn) {
-				if (data.access_password_set) logoutBtn.classList.remove('hidden');
-				else logoutBtn.classList.add('hidden');
+				logoutBtn.classList.remove('hidden');
 			}
 		} catch (error) {
 			console.error('Error:', error);
