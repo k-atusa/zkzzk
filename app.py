@@ -414,11 +414,10 @@ def settings():
             'message': '설정이 저장되었습니다.'
         })
 
-    settings = Settings.query.first()
-    return jsonify({
-        'nid_aut': settings.nid_aut if settings else '',
-        'nid_ses': settings.nid_ses if settings else ''
-    })
+    # GET: render unified settings page (formerly profile)
+    if not g.user:
+        return redirect(url_for('login'))
+    return render_template('profile.html')
 
 @app.route('/add_streamer', methods=['POST'])
 def add_streamer():

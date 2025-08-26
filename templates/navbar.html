@@ -24,8 +24,7 @@
 					{{ current_user.username if current_user else '로그인' }}
 				</button>
 				<div id="profileMenu" class="absolute right-0 mt-2 w-48 rounded-md bg-gray-900 border border-white/10 shadow-lg hidden">
-					<a href="#" class="block px-4 py-2 text-white hover:text-accent" onclick="openSettings()">설정</a>
-					<a href="/profile" class="block px-4 py-2 text-white hover:text-accent">프로필</a>
+					<a href="/settings" class="block px-4 py-2 text-white hover:text-accent">설정</a>
 					{% if current_user and current_user.is_admin %}
 					<a href="/admin/users" class="block px-4 py-2 text-white hover:text-accent">관리자 페이지</a>
 					{% endif %}
@@ -55,8 +54,7 @@
 				class="block px-3 py-2 {% if current_page == 'vod' %}text-accent font-medium{% else %}text-white hover:text-accent transition-colors{% endif %}">다시보기
 				다운로드</a>
 			<div class="border-t border-white/10 my-2"></div>
-			<a href="#" class="block px-3 py-2 text-white hover:text-accent" onclick="openSettings()">설정</a>
-			<a href="/profile" class="block px-3 py-2 text-white hover:text-accent">프로필</a>
+			<a href="/settings" class="block px-3 py-2 text-white hover:text-accent">설정</a>
 			{% if current_user and current_user.is_admin %}
 			<a href="/admin/users" class="block px-3 py-2 text-white hover:text-accent">관리자 페이지</a>
 			{% endif %}
@@ -66,39 +64,6 @@
 		</div>
 	</div>
 </nav>
-
-
-<div id="settingsModal" class="modal fixed inset-0 z-50 hidden">
-	<div class="flex items-center justify-center min-h-screen p-4">
-		<div class="modal-content w-full max-w-md p-6">
-			<div class="flex justify-between items-center mb-4">
-				<h3 class="text-lg font-semibold text-white">설정</h3>
-				<button onclick="closeSettings()" class="text-white hover:text-accent">
-					<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
-						</path>
-					</svg>
-				</button>
-			</div>
-			<form id="settingsForm">
-				<div class="mb-4">
-					<label for="nidAut" class="block text-sm font-medium text-white mb-2">NID_AUT</label>
-					<input type="text" class="form-input" id="nidAut" placeholder="NID_AUT 값을 입력하세요">
-				</div>
-				<div class="mb-6">
-					<label for="nidSes" class="block text-sm font-medium text-white mb-2">NID_SES</label>
-					<input type="text" class="form-input" id="nidSes" placeholder="NID_SES 값을 입력하세요">
-				</div>
-				<div class="flex justify-end items-center">
-					<div class="space-x-3">
-						<button type="button" class="btn-secondary px-4 py-2" onclick="closeSettings()">닫기</button>
-						<button type="button" class="btn-primary px-4 py-2" onclick="saveSettings()">저장</button>
-					</div>
-				</div>
-			</form>
-		</div>
-	</div>
-</div>
 
 
 <script>
@@ -113,63 +78,5 @@
 	function toggleProfileMenu() {
 		const el = document.getElementById('profileMenu');
 		if (el) el.classList.toggle('hidden');
-	}
-
-	// Settings modal functions
-	function openSettings() {
-		document.getElementById('settingsModal').classList.remove('hidden');
-		loadSettings();
-	}
-
-	function closeSettings() {
-		document.getElementById('settingsModal').classList.add('hidden');
-	}
-
-	// 설정 저장
-	async function saveSettings() {
-		const nidAut = document.getElementById('nidAut').value;
-		const nidSes = document.getElementById('nidSes').value;
-
-		try {
-			const response = await fetch('/settings', {
-				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ nid_aut: nidAut, nid_ses: nidSes })
-			});
-			const data = await response.json();
-
-			if (data.status === 'success') {
-				alert('설정이 저장되었습니다.');
-				closeSettings();
-
-				// 설정 저장 후 스트리머 상태 확인 재시작 (live 페이지에서만)
-				if (typeof checkStreamerStatus === 'function' && typeof statusCheckInterval !== 'undefined') {
-					if (!isCheckingEnabled) {
-						isCheckingEnabled = true;
-						checkStreamerStatus();
-						statusCheckInterval = setInterval(checkStreamerStatus, 30000);
-					}
-				}
-			} else {
-				alert(data.message);
-			}
-		} catch (error) {
-			console.error('Error:', error);
-			alert('설정 저장 중 오류가 발생했습니다.');
-		}
-	}
-
-	// 설정 로드
-	async function loadSettings() {
-		try {
-			const response = await fetch('/settings');
-			const data = await response.json();
-
-			document.getElementById('nidAut').value = data.nid_aut;
-			document.getElementById('nidSes').value = data.nid_ses;
-
-		} catch (error) {
-			console.error('Error:', error);
-		}
 	}
 </script>

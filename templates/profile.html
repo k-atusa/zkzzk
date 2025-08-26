@@ -3,21 +3,34 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>프로필</title>
+    <title>설정</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="min-h-screen p-6 text-white" style="background: linear-gradient(135deg, #0f0f23 0%, #0a0a0a 100%);">
     {% include 'navbar.html' %}
 
-    <div class="pt-28 max-w-lg mx-auto">
-        <h2 class="text-2xl font-bold mb-6">프로필</h2>
+    <div class="pt-28 max-w-3xl mx-auto space-y-6">
+        <h2 class="text-2xl font-bold">설정</h2>
+
         <div class="p-4 rounded-xl border border-white/10">
-            <div class="mb-4">
-                <label class="block text-sm text-gray-300 mb-1">아이디</label>
-                <div class="px-3 py-2 rounded bg-white/5">{{ current_user.username }}</div>
+            <h3 class="font-semibold mb-3">치지직 쿠키</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-sm text-gray-300 mb-1" for="nidAut">NID_AUT</label>
+                    <input id="nidAut" class="form-input" placeholder="NID_AUT">
+                </div>
+                <div>
+                    <label class="block text-sm text-gray-300 mb-1" for="nidSes">NID_SES</label>
+                    <input id="nidSes" class="form-input" placeholder="NID_SES">
+                </div>
             </div>
-            <div class="mb-4">
-                <label class="block text-sm text-gray-300 mb-2">새 비밀번호</label>
+            <button class="btn-primary mt-3 px-4 py-2" onclick="saveCookieSettings()">저장</button>
+        </div>
+
+        <div class="p-4 rounded-xl border border-white/10">
+            <h3 class="font-semibold mb-3">비밀번호 변경</h3>
+            <div class="mb-3">
+                <label class="block text-sm text-gray-300 mb-1" for="newPassword">새 비밀번호</label>
                 <input id="newPassword" type="password" class="form-input" placeholder="새 비밀번호">
             </div>
             <button class="btn-primary px-4 py-2" onclick="changePassword()">비밀번호 변경</button>
@@ -25,6 +38,23 @@
     </div>
 
     <script>
+        async function loadCookieSettings() {
+            try {
+                const res = await fetch('/api/settings');
+                const data = await res.json();
+                document.getElementById('nidAut').value = data.nid_aut || '';
+                document.getElementById('nidSes').value = data.nid_ses || '';
+            } catch (e) { console.error(e); }
+        }
+        async function saveCookieSettings() {
+            try {
+                const nid_aut = document.getElementById('nidAut').value.trim();
+                const nid_ses = document.getElementById('nidSes').value.trim();
+                const res = await fetch('/api/settings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ nid_aut, nid_ses }) });
+                const data = await res.json();
+                if (data.status === 'success') alert('저장되었습니다.'); else alert(data.message || '오류');
+            } catch (e) { console.error(e); alert('오류가 발생했습니다.'); }
+        }
         async function changePassword() {
             const new_password = document.getElementById('newPassword').value.trim();
             if (!new_password) { alert('새 비밀번호를 입력하세요'); return; }
@@ -32,6 +62,7 @@
             const data = await res.json();
             if (data.status === 'success') { alert('변경되었습니다.'); document.getElementById('newPassword').value=''; } else { alert(data.message || '오류'); }
         }
+        loadCookieSettings();
     </script>
 </body>
 </html>
