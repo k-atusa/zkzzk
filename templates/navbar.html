@@ -16,16 +16,24 @@
 					class="{% if current_page == 'vod' %}text-accent font-medium{% else %}text-white hover:text-accent transition-colors{% endif %}">다시보기
 					다운로드</a>
 			</div>
-			<button class="btn-secondary px-3 py-2" type="button" onclick="openSettings()">
-				<svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-						d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z">
-					</path>
-					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-						d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-				</svg>
-				설정
-			</button>
+			<div class="relative" id="profileMenuWrapper">
+				<button class="btn-secondary px-3 py-2" type="button" onclick="toggleProfileMenu()">
+					<svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A3 3 0 017 17h10a3 3 0 011.879.804L21 20H3l2.121-2.196zM15 11a3 3 0 10-6 0 3 3 0 006 0z"></path>
+					</svg>
+					{{ current_user.username if current_user else '로그인' }}
+				</button>
+				<div id="profileMenu" class="absolute right-0 mt-2 w-48 rounded-md bg-gray-900 border border-white/10 shadow-lg hidden">
+					<a href="#" class="block px-4 py-2 text-white hover:text-accent" onclick="openSettings()">설정</a>
+					<a href="/profile" class="block px-4 py-2 text-white hover:text-accent">프로필</a>
+					{% if current_user and current_user.is_admin %}
+					<a href="/admin/users" class="block px-4 py-2 text-white hover:text-accent">관리자 페이지</a>
+					{% endif %}
+					<form method="POST" action="/logout">
+						<button type="submit" class="w-full text-left px-4 py-2 text-white hover:text-accent">로그아웃</button>
+					</form>
+				</div>
+			</div>
 		</div>
 		<button class="md:hidden text-white" id="mobile-menu-btn">
 			<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -46,16 +54,15 @@
 			<a href="/vod"
 				class="block px-3 py-2 {% if current_page == 'vod' %}text-accent font-medium{% else %}text-white hover:text-accent transition-colors{% endif %}">다시보기
 				다운로드</a>
-			<button type="button" class="btn-secondary text-left px-3 py-2" onclick="openSettings()">
-				<svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-						d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z">
-					</path>
-					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-						d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-				</svg>
-				설정
-			</button>
+			<div class="border-t border-white/10 my-2"></div>
+			<a href="#" class="block px-3 py-2 text-white hover:text-accent" onclick="openSettings()">설정</a>
+			<a href="/profile" class="block px-3 py-2 text-white hover:text-accent">프로필</a>
+			{% if current_user and current_user.is_admin %}
+			<a href="/admin/users" class="block px-3 py-2 text-white hover:text-accent">관리자 페이지</a>
+			{% endif %}
+			<form method="POST" action="/logout" class="px-3 py-2">
+				<button type="submit" class="text-white hover:text-accent">로그아웃</button>
+			</form>
 		</div>
 	</div>
 </nav>
@@ -109,6 +116,11 @@
 	document.getElementById('mobile-menu-btn').addEventListener('click', function () {
 		document.getElementById('mobile-menu').classList.toggle('hidden');
 	});
+
+	function toggleProfileMenu() {
+		const el = document.getElementById('profileMenu');
+		if (el) el.classList.toggle('hidden');
+	}
 
 	// Settings modal functions
 	function openSettings() {

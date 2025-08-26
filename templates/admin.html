@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>관리자 - 사용자 관리</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="min-h-screen p-6 text-white" style="background: linear-gradient(135deg, #0f0f23 0%, #0a0a0a 100%);">
+    {% include 'navbar.html' %}
+
+    <div class="pt-28 max-w-4xl mx-auto">
+        <h2 class="text-2xl font-bold mb-6">사용자 관리</h2>
+
+        <div class="mb-6 p-4 rounded-xl border border-white/10">
+            <h3 class="font-semibold mb-3">사용자 추가</h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <input id="newUsername" class="form-input" placeholder="아이디">
+                <input id="newPassword" type="password" class="form-input" placeholder="비밀번호">
+                <label class="inline-flex items-center space-x-2">
+                    <input id="newIsAdmin" type="checkbox">
+                    <span>관리자</span>
+                </label>
+            </div>
+            <button class="btn-primary mt-3 px-4 py-2" onclick="addUser()">추가</button>
+        </div>
+
+        <div class="p-4 rounded-xl border border-white/10">
+            <h3 class="font-semibold mb-3">사용자 목록</h3>
+            <table class="w-full text-left text-sm">
+                <thead class="text-gray-300">
+                    <tr>
+                        <th class="py-2">ID</th>
+                        <th class="py-2">아이디</th>
+                        <th class="py-2">권한</th>
+                        <th class="py-2">작업</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for u in users %}
+                    <tr class="border-t border-white/10">
+                        <td class="py-2">{{ u.id }}</td>
+                        <td class="py-2">{{ u.username }}</td>
+                        <td class="py-2">{{ '관리자' if u.is_admin else '일반' }}</td>
+                        <td class="py-2">
+                            <button class="btn-danger px-3 py-1 text-sm" onclick="deleteUser({{ u.id }})" {% if current_user.id == u.id %}disabled{% endif %}>삭제</button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        async function addUser() {
+            const username = document.getElementById('newUsername').value.trim();
+            const password = document.getElementById('newPassword').value.trim();
+            const is_admin = document.getElementById('newIsAdmin').checked;
+            if (!username || !password) { alert('아이디/비밀번호를 입력하세요'); return; }
+            const res = await fetch('/admin/users', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username, password, is_admin }) });
+            const data = await res.json();
+            if (data.status === 'success') location.reload(); else alert(data.message || '오류');
+        }
+        async function deleteUser(user_id) {
+            if (!confirm('정말 삭제하시겠습니까?')) return;
+            const res = await fetch('/admin/users', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ user_id }) });
+            const data = await res.json();
+            if (data.status === 'success') location.reload(); else alert(data.message || '오류');
+        }
+    </script>
+</body>
+</html>
+

@@ -1,4 +1,4 @@
-from flask import Flask, render_template, jsonify, request, redirect, url_for, send_from_directory, session
+from flask import Flask, render_template, jsonify, request, redirect, url_for, send_from_directory, session, g
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_sqlalchemy import SQLAlchemy
 import os
@@ -19,10 +19,18 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
+class User(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(80), unique=True, nullable=False)
+    password_hash = db.Column(db.String(255), nullable=False)
+    is_admin = db.Column(db.Boolean, default=False)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now())
+
 class Streamer(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     channel_url = db.Column(db.String(200), unique=True, nullable=False)
     nickname = db.Column(db.String(100))
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     is_active = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=lambda: datetime.now())
     last_checked = db.Column(db.DateTime)
@@ -30,6 +38,7 @@ class Streamer(db.Model):
     is_recording = db.Column(db.Boolean, default=False)
     current_broadcast_title = db.Column(db.String(200))
     process_id = db.Column(db.Integer)
+    user = db.relationship('User', backref=db.backref('streamers', lazy=True))
 
 class Settings(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -37,14 +46,17 @@ class Settings(db.Model):
     nid_ses = db.Column(db.String(200))
     access_password = db.Column(db.String(200))
     updated_at = db.Column(db.DateTime, default=lambda: datetime.now(), onupdate=lambda: datetime.now())
+    initialized = db.Column(db.Boolean, default=False)
 
 class Recording(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     streamer_id = db.Column(db.Integer, db.ForeignKey('streamer.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     filename = db.Column(db.String(200), nullable=False)
     title = db.Column(db.String(200))
     created_at = db.Column(db.DateTime, default=lambda: datetime.now())
     streamer = db.relationship('Streamer', backref=db.backref('recordings', lazy=True))
+    user = db.relationship('User', backref=db.backref('recordings', lazy=True))
 
 
 
@@ -218,37 +230,94 @@ with app.app_context():
         if 'access_password' not in columns:
             db.session.execute('ALTER TABLE settings ADD COLUMN access_password VARCHAR(200)')
             db.session.commit()
+        if 'initialized' not in columns:
+            db.session.execute('ALTER TABLE settings ADD COLUMN initialized BOOLEAN DEFAULT 0')
+            db.session.commit()
     except Exception as e:
         print(f"Warning: could not ensure access_password column exists: {e}")
+
+    try:
+        result = db.session.execute("PRAGMA table_info(streamer)")
+        columns = [row[1] for row in result]
+        if 'user_id' not in columns:
+            db.session.execute('ALTER TABLE streamer ADD COLUMN user_id INTEGER')
+            db.session.commit()
+    except Exception as e:
+        print(f"Warning: could not ensure user_id on streamer: {e}")
+
+    try:
+        result = db.session.execute("PRAGMA table_info(recording)")
+        columns = [row[1] for row in result]
+        if 'user_id' not in columns:
+            db.session.execute('ALTER TABLE recording ADD COLUMN user_id INTEGER')
+            db.session.commit()
+    except Exception as e:
+        print(f"Warning: could not ensure user_id on recording: {e}")
     init_scheduler()
 
 @app.before_request
 def require_login():
-
+    g.user = None
     if request.path.startswith('/static'):
         return
+    # Ensure setup first on first deploy
+    settings_row = Settings.query.first()
+    user_count = User.query.count()
+    first_run = (not settings_row or not settings_row.initialized) or (user_count == 0)
+    if first_run and request.endpoint not in ('setup_admin', 'static'):
+        return redirect(url_for('setup_admin'))
 
-    if request.endpoint in ('login', 'logout', 'static'):
+    # Allow auth-free endpoints
+    if request.endpoint in ('login', 'logout', 'static', 'setup_admin'):
         return
-    settings = Settings.query.first()
 
-    if settings and settings.access_password and not session.get('authenticated'):
-        if request.method == 'GET':
-            return redirect(url_for('login'))
-        else:
-            return redirect(url_for('login'))
+    user_id = session.get('user_id')
+    if user_id:
+        g.user = User.query.get(user_id)
+    if not g.user:
+        return redirect(url_for('login'))
+
+@app.route('/setup', methods=['GET', 'POST'])
+def setup_admin():
+    # If already initialized, go to app
+    settings_row = Settings.query.first()
+    if settings_row and settings_row.initialized and User.query.count() > 0:
+        return redirect(url_for('live'))
+    if request.method == 'POST':
+        form = request.get_json(silent=True) or request.form
+        username = form.get('username', '').strip()
+        password = form.get('password', '').strip()
+        if not username or not password:
+            return render_template('login.html', error='관리자 사용자 생성: 사용자명과 비밀번호가 필요합니다.', setup_mode=True)
+        if User.query.filter_by(username=username).first():
+            return render_template('login.html', error='이미 존재하는 사용자명입니다.', setup_mode=True)
+        user = User(username=username, password_hash=generate_password_hash(password), is_admin=True)
+        db.session.add(user)
+        # mark settings initialized
+        settings_row = Settings.query.first() or Settings()
+        settings_row.initialized = True
+        db.session.add(settings_row)
+        db.session.commit()
+        session['user_id'] = user.id
+        return redirect(url_for('live'))
+    return render_template('login.html', setup_mode=True)
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+    # Force admin creation before any login on first deploy
+    settings_row = Settings.query.first()
+    if (not settings_row or not settings_row.initialized) or User.query.count() == 0:
+        return redirect(url_for('setup_admin'))
     if request.method == 'POST':
-        password = request.form.get('password') or (request.get_json() or {}).get('password')
-        settings = Settings.query.first()
-        expected = settings.access_password if settings else None
-        if expected and (password and (expected == password or check_password_hash(expected, password))):
-            session['authenticated'] = True
+        form = request.get_json(silent=True) or request.form
+        username = form.get('username')
+        password = form.get('password')
+        user = User.query.filter_by(username=username).first()
+        if user and check_password_hash(user.password_hash, password):
+            session['user_id'] = user.id
             return redirect(url_for('live'))
-        return render_template('login.html', error='비밀번호가 올바르지 않습니다.')
-    return render_template('login.html')
+        return render_template('login.html', error='아이디 또는 비밀번호가 올바르지 않습니다.', setup_mode=False)
+    return render_template('login.html', setup_mode=False)
 
 @app.route('/logout', methods=['POST', 'GET'])
 def logout():
@@ -261,12 +330,14 @@ def index():
 
 @app.route('/live')
 def live():
-    streamers = Streamer.query.filter_by(is_active=True).all()
+    user = g.user
+    streamers = Streamer.query.filter_by(is_active=True, user_id=user.id).all()
     settings = Settings.query.first()
     return render_template('index.html', streamers=streamers, settings=settings, current_page='live')
 
 @app.route('/recordings')
 def recordings():
+    user = g.user
     recordings = []
     if os.path.exists('downloads'):
         for root, dirs, files in os.walk('downloads'):
@@ -278,12 +349,14 @@ def recordings():
                     streamer_name = os.path.dirname(rel_path)
                     title = ' '.join(filename.split(' ')[1:-1])
                     
-                    recordings.append({
-                        'filename': rel_path,
-                        'title': title,
-                        'created_at': created_at,
-                        'streamer_name': streamer_name
-                    })
+                    user_streamer_nicks = {s.nickname for s in Streamer.query.filter_by(user_id=user.id).all()}
+                    if streamer_name in user_streamer_nicks:
+                        recordings.append({
+                            'filename': rel_path,
+                            'title': title,
+                            'created_at': created_at,
+                            'streamer_name': streamer_name
+                        })
     
     streamer_recordings = {}
     for recording in recordings:
@@ -364,6 +437,7 @@ def settings():
 
 @app.route('/add_streamer', methods=['POST'])
 def add_streamer():
+    user = g.user
     channel_url = request.get_json().get('channel_url')
     channel_id = extract_channel_id(channel_url)
     if not channel_id:
@@ -395,7 +469,7 @@ def add_streamer():
         return jsonify({'status': 'error', 'message': '채널 정보를 가져올 수 없습니다.'}), 400
 
     try:
-        streamer = Streamer(channel_url=channel_url, nickname=nickname)
+        streamer = Streamer(channel_url=channel_url, nickname=nickname, user_id=user.id)
         db.session.add(streamer)
         db.session.commit()
         return jsonify({
@@ -414,7 +488,10 @@ def add_streamer():
 @app.route('/remove_streamer/<int:streamer_id>', methods=['POST'])
 def remove_streamer(streamer_id):
     try:
+        user = g.user
         streamer = Streamer.query.get_or_404(streamer_id)
+        if streamer.user_id != user.id and not (g.user and g.user.is_admin):
+            return jsonify({'status': 'error', 'message': '권한이 없습니다.'}), 403
         
         if streamer.is_recording and streamer.process_id:
             try:
@@ -450,6 +527,8 @@ def check_status():
     streamer = Streamer.query.get(streamer_id)
     if not streamer:
         return jsonify({'status': 'error', 'message': '스트리머를 찾을 수 없습니다.'}), 400
+    if g.user and (streamer.user_id != g.user.id) and not g.user.is_admin:
+        return jsonify({'status': 'error', 'message': '권한이 없습니다.'}), 403
 
     channel_id = extract_channel_id(streamer.channel_url)
     if not channel_id:
@@ -525,6 +604,8 @@ def check_status():
 def stop_recording(streamer_id):
     try:
         streamer = Streamer.query.get_or_404(streamer_id)
+        if g.user and (streamer.user_id != g.user.id) and not g.user.is_admin:
+            return jsonify({'status': 'error', 'message': '권한이 없습니다.'}), 403
         if streamer.is_recording and streamer.process_id:
             try:
                 os.kill(streamer.process_id, 15)
@@ -918,6 +999,54 @@ def get_vod_info_route():
         import traceback
         traceback.print_exc()
         return jsonify({'status': 'error', 'message': f'VOD 정보 가져오기 중 오류가 발생했습니다: {str(e)}'}), 500
+
+@app.context_processor
+def inject_user():
+    return {'current_user': g.user}
+
+@app.route('/admin/users', methods=['GET', 'POST', 'DELETE'])
+def admin_users():
+    if not g.user or not g.user.is_admin:
+        return redirect(url_for('live'))
+    if request.method == 'GET':
+        users = User.query.all()
+        return render_template('admin.html', users=users)
+    if request.method == 'POST':
+        data = request.get_json() or request.form
+        username = data.get('username', '').strip()
+        password = data.get('password', '').strip()
+        is_admin = bool(data.get('is_admin'))
+        if not username or not password:
+            return jsonify({'status': 'error', 'message': 'username/password 필요'}), 400
+        if User.query.filter_by(username=username).first():
+            return jsonify({'status': 'error', 'message': '이미 존재하는 사용자명'}), 400
+        user = User(username=username, password_hash=generate_password_hash(password), is_admin=is_admin)
+        db.session.add(user)
+        db.session.commit()
+        return jsonify({'status': 'success'})
+    if request.method == 'DELETE':
+        data = request.get_json() or {}
+        user_id = int(data.get('user_id') or 0)
+        if user_id == g.user.id:
+            return jsonify({'status': 'error', 'message': '본인 삭제 불가'}), 400
+        user = User.query.get_or_404(user_id)
+        db.session.delete(user)
+        db.session.commit()
+        return jsonify({'status': 'success'})
+
+@app.route('/profile', methods=['GET', 'POST'])
+def profile():
+    if not g.user:
+        return redirect(url_for('login'))
+    if request.method == 'POST':
+        data = request.get_json() or request.form
+        new_password = data.get('new_password', '').strip()
+        if new_password:
+            g.user.password_hash = generate_password_hash(new_password)
+            db.session.commit()
+            return jsonify({'status': 'success', 'message': '비밀번호가 변경되었습니다.'})
+        return jsonify({'status': 'error', 'message': '새 비밀번호를 입력하세요.'}), 400
+    return render_template('profile.html')
 
 
 

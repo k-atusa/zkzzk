@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>프로필</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="min-h-screen p-6 text-white" style="background: linear-gradient(135deg, #0f0f23 0%, #0a0a0a 100%);">
+    {% include 'navbar.html' %}
+
+    <div class="pt-28 max-w-lg mx-auto">
+        <h2 class="text-2xl font-bold mb-6">프로필</h2>
+        <div class="p-4 rounded-xl border border-white/10">
+            <div class="mb-4">
+                <label class="block text-sm text-gray-300 mb-1">아이디</label>
+                <div class="px-3 py-2 rounded bg-white/5">{{ current_user.username }}</div>
+            </div>
+            <div class="mb-4">
+                <label class="block text-sm text-gray-300 mb-2">새 비밀번호</label>
+                <input id="newPassword" type="password" class="form-input" placeholder="새 비밀번호">
+            </div>
+            <button class="btn-primary px-4 py-2" onclick="changePassword()">비밀번호 변경</button>
+        </div>
+    </div>
+
+    <script>
+        async function changePassword() {
+            const new_password = document.getElementById('newPassword').value.trim();
+            if (!new_password) { alert('새 비밀번호를 입력하세요'); return; }
+            const res = await fetch('/profile', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ new_password }) });
+            const data = await res.json();
+            if (data.status === 'success') { alert('변경되었습니다.'); document.getElementById('newPassword').value=''; } else { alert(data.message || '오류'); }
+        }
+    </script>
+</body>
+</html>
+

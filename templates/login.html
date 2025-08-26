@@ -81,14 +81,28 @@
 			{% if error %}
 			<p class="text-red-400 text-sm mb-4">{{ error }}</p>
 			{% endif %}
+			{% if setup_mode %}
+			<form method="POST" action="/setup" class="space-y-4">
+				<div>
+					<input type="text" id="username" name="username" class="form-input" placeholder="관리자 아이디" required>
+				</div>
+				<div>
+					<input type="password" id="password" name="password" class="form-input" placeholder="관리자 비밀번호" required>
+				</div>
+				<button type="submit" class="btn-primary w-full py-3">관리자 생성</button>
+			</form>
+			<p class="text-xs text-gray-400 mt-4 text-center">최초 배포를 감지했습니다. 먼저 관리자 계정을 생성해주세요.</p>
+			{% else %}
 			<form method="POST" action="/login" class="space-y-4">
 				<div>
-					<input type="password" id="password" name="password" class="form-input" placeholder="비밀번호를 입력하세요"
-						required>
+					<input type="text" id="username" name="username" class="form-input" placeholder="아이디" required>
+				</div>
+				<div>
+					<input type="password" id="password" name="password" class="form-input" placeholder="비밀번호" required>
 				</div>
 				<button type="submit" class="btn-primary w-full py-3">로그인</button>
 			</form>
-			<p class="text-xs text-gray-400 mt-4 text-center">비밀번호는 설정 모달에서 변경할 수 있습니다.</p>
+			{% endif %}
 		</div>
 	</div>
 </body>
