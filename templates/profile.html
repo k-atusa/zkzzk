@@ -1,152 +1,188 @@
 <!DOCTYPE html>
 <html lang="ko">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>설정</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>ZKZZK - 설정</title>
+	<link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+	<link rel="stylesheet" href="/static/common.css">
+	<link rel="stylesheet" href="/static/navbar.css">
+	<script src="https://cdn.tailwindcss.com"></script>
+	<script>
+		tailwind.config = {
+			theme: {
+				extend: {
+					colors: {
+						'accent': 'rgb(113, 243, 166)',
+						'accent-dark': 'rgb(89, 194, 133)',
+						'accent-light': 'rgb(137, 255, 179)',
+					}
+				}
+			}
+		}
+	</script>
 </head>
-<body class="min-h-screen p-6 text-white" style="background: linear-gradient(135deg, #0f0f23 0%, #0a0a0a 100%);">
-    {% include 'navbar.html' %}
 
-    <div class="pt-28 max-w-3xl mx-auto space-y-6">
-        <h2 class="text-2xl font-bold">설정</h2>
+<body>
+	{% include 'navbar.html' %}
 
-        <div class="p-4 rounded-xl border border-white/10">
-            <h3 class="font-semibold mb-3">치지직 쿠키</h3>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <div>
-                    <label class="block text-sm text-gray-300 mb-1" for="nidAut">NID_AUT</label>
-                    <input id="nidAut" class="form-input" placeholder="NID_AUT">
-                </div>
-                <div>
-                    <label class="block text-sm text-gray-300 mb-1" for="nidSes">NID_SES</label>
-                    <input id="nidSes" class="form-input" placeholder="NID_SES">
-                </div>
-            </div>
-            <button class="btn-primary mt-3 px-4 py-2" onclick="saveCookieSettings()">저장</button>
-        </div>
+	<div class="pt-28 pb-8 px-6">
+		<div class="max-w-3xl mx-auto">
+			<div class="mb-8">
+				<h2 class="text-2xl font-bold text-white">설정</h2>
+			</div>
 
-        <div class="p-4 rounded-xl border border-white/10">
-            <h3 class="font-semibold mb-3">비밀번호 변경</h3>
-            <div class="mb-3">
-                <label class="block text-sm text-gray-300 mb-1" for="newPassword">새 비밀번호</label>
-                <input id="newPassword" type="password" class="form-input" placeholder="새 비밀번호">
-            </div>
-            <button class="btn-primary px-4 py-2" onclick="changePassword()">비밀번호 변경</button>
-        </div>
+			<div class="space-y-6">
+				<div class="p-4 rounded-xl border border-white/10">
+					<h3 class="font-semibold mb-3 text-white">치지직 쿠키</h3>
+					<div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+						<div>
+							<label class="block text-sm text-gray-300 mb-1" for="nidAut">NID_AUT</label>
+							<input id="nidAut" class="form-input" placeholder="NID_AUT">
+						</div>
+						<div>
+							<label class="block text-sm text-gray-300 mb-1" for="nidSes">NID_SES</label>
+							<input id="nidSes" class="form-input" placeholder="NID_SES">
+						</div>
+					</div>
+					<button class="btn-primary mt-3 px-4 py-2" onclick="saveCookieSettings()">저장</button>
+				</div>
 
-        <div class="p-4 rounded-xl border border-white/10">
-            <h3 class="font-semibold mb-3">2차인증 (TOTP)</h3>
-            <div id="twofaStatus" class="text-sm text-gray-300 mb-3"></div>
-            <div class="space-x-2">
-                <button id="btnStart2FA" class="btn-primary px-4 py-2" onclick="start2FA()">2차인증 추가</button>
-                <button id="btnDisable2FA" class="btn-danger px-4 py-2 hidden" onclick="disable2FA()">2차인증 비활성화</button>
-            </div>
-            <div id="twofaSetup" class="mt-4 hidden">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <img id="qrImage" class="rounded bg-white p-2" alt="QR Code" />
-                    </div>
-                    <div>
-                        <p class="text-sm text-gray-300">QR 코드를 스캔할 수 없다면 아래 설정 문자열을 인증 앱에 수동으로 입력하세요.</p>
-                        <div class="mt-2 px-3 py-2 rounded bg-white/5 break-all" id="manualSecret"></div>
-                    </div>
-                </div>
-                <div class="mt-4">
-                    <label class="block text-sm text-gray-300 mb-1" for="otpInput">앱에서 생성된 OTP 입력</label>
-                    <input id="otpInput" class="form-input" placeholder="6자리 코드">
-                    <button class="btn-primary mt-3 px-4 py-2" onclick="verify2FA()">확인</button>
-                </div>
-            </div>
-        </div>
-    </div>
+				<div class="p-4 rounded-xl border border-white/10">
+					<h3 class="font-semibold mb-3 text-white">비밀번호 변경</h3>
+					<div class="mb-3">
+						<label class="block text-sm text-gray-300 mb-1" for="newPassword">새 비밀번호</label>
+						<input id="newPassword" type="password" class="form-input" placeholder="새 비밀번호">
+					</div>
+					<button class="btn-primary px-4 py-2" onclick="changePassword()">비밀번호 변경</button>
+				</div>
 
-    <script>
-        async function loadCookieSettings() {
-            try {
-                const res = await fetch('/settings');
-            } catch (e) { }
-            try {
-                const res = await fetch('/settings');
-                const data = await res.json().catch(() => ({}));
-                if (data && (typeof data === 'object') && ('nid_aut' in data)) {
-                    document.getElementById('nidAut').value = data.nid_aut || '';
-                    document.getElementById('nidSes').value = data.nid_ses || '';
-                }
-            } catch (e) {}
-        }
-        async function saveCookieSettings() {
-            try {
-                const nid_aut = document.getElementById('nidAut').value.trim();
-                const nid_ses = document.getElementById('nidSes').value.trim();
-                const res = await fetch('/settings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ nid_aut, nid_ses }) });
-                const data = await res.json();
-                if (data.status === 'success') alert('저장되었습니다.'); else alert(data.message || '오류');
-            } catch (e) { console.error(e); alert('오류가 발생했습니다.'); }
-        }
-        async function changePassword() {
-            const new_password = document.getElementById('newPassword').value.trim();
-            if (!new_password) { alert('새 비밀번호를 입력하세요'); return; }
-            const res = await fetch('/profile', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ new_password }) });
-            const data = await res.json();
-            if (data.status === 'success') { alert('변경되었습니다.'); document.getElementById('newPassword').value=''; } else { alert(data.message || '오류'); }
-        }
+				<div class="p-4 rounded-xl border border-white/10">
+					<h3 class="font-semibold mb-3 text-white">2차인증 (TOTP)</h3>
+					<div id="twofaStatus" class="text-sm text-gray-300 mb-3"></div>
+					<div class="space-x-2">
+						<button id="btnStart2FA" class="btn-primary px-4 py-2" onclick="start2FA()">2차인증 추가</button>
+						<button id="btnDisable2FA" class="btn-danger px-4 py-2 hidden" onclick="disable2FA()">2차인증 비활성화</button>
+					</div>
+					<div id="twofaSetup" class="mt-4 hidden">
+						<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+							<div>
+								<img id="qrImage" class="rounded bg-white p-2" alt="QR Code" />
+							</div>
+							<div>
+								<p class="text-sm text-gray-300">QR 코드를 스캔할 수 없다면 아래 설정 문자열을 인증 앱에 수동으로 입력하세요.</p>
+								<div class="mt-2 px-3 py-2 rounded bg-white/5 break-all" id="manualSecret"></div>
+							</div>
+						</div>
+						<div class="mt-4">
+							<label class="block text-sm text-gray-300 mb-1" for="otpInput">앱에서 생성된 OTP 입력</label>
+							<input id="otpInput" class="form-input" placeholder="6자리 코드">
+							<button class="btn-primary mt-3 px-4 py-2" onclick="verify2FA()">확인</button>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
 
-        function render2FAUI(state) {
-            const enabled = !!state.enabled;
-            document.getElementById('twofaStatus').textContent = enabled ? '현재 상태: 활성화됨' : '현재 상태: 비활성화됨';
-            document.getElementById('btnDisable2FA').classList.toggle('hidden', !enabled);
-            document.getElementById('btnStart2FA').classList.toggle('hidden', enabled);
-            if (enabled) {
-                document.getElementById('twofaSetup').classList.add('hidden');
-                document.getElementById('otpInput').value = '';
-            }
-        }
+	<script>
+		async function loadCookieSettings() {
+			try {
+				const res = await fetch('/settings');
+			} catch (e) { }
+			try {
+				const res = await fetch('/settings');
+				const data = await res.json().catch(() => ({}));
+				if (data && (typeof data === 'object') && ('nid_aut' in data)) {
+					document.getElementById('nidAut').value = data.nid_aut || '';
+					document.getElementById('nidSes').value = data.nid_ses || '';
+				}
+			} catch (e) {}
+		}
+		async function saveCookieSettings() {
+			try {
+				const nid_aut = document.getElementById('nidAut').value.trim();
+				const nid_ses = document.getElementById('nidSes').value.trim();
+				const res = await fetch('/settings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ nid_aut, nid_ses }) });
+				const data = await res.json();
+				if (data.status === 'success') alert('저장되었습니다.'); else alert(data.message || '오류');
+			} catch (e) { console.error(e); alert('오류가 발생했습니다.'); }
+		}
+		async function changePassword() {
+			const new_password = document.getElementById('newPassword').value.trim();
+			if (!new_password) { alert('새 비밀번호를 입력하세요'); return; }
+			const res = await fetch('/profile', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ new_password }) });
+			const data = await res.json();
+			if (data.status === 'success') { alert('변경되었습니다.'); document.getElementById('newPassword').value=''; } else { alert(data.message || '오류'); }
+		}
 
-        async function fetch2FAStatus() {
-            const res = await fetch('/2fa/status');
-            const data = await res.json();
-            render2FAUI(data);
-        }
+		function render2FAUI(state) {
+			const enabled = !!state.enabled;
+			document.getElementById('twofaStatus').textContent = enabled ? '현재 상태: 활성화됨' : '현재 상태: 비활성화됨';
+			document.getElementById('btnDisable2FA').classList.toggle('hidden', !enabled);
+			document.getElementById('btnStart2FA').classList.toggle('hidden', enabled);
+		}
 
-        async function start2FA() {
-            const status = await (await fetch('/2fa/status')).json();
-            if (status.enabled) { render2FAUI(status); return; }
-            const res = await fetch('/2fa/setup', { method: 'POST' });
-            const data = await res.json();
-            if (data.status === 'success') {
-                document.getElementById('twofaSetup').classList.remove('hidden');
-                document.getElementById('qrImage').src = data.qrcode_data_url;
-                document.getElementById('manualSecret').textContent = data.otpauth_url;
-            } else {
-                alert(data.message || '오류');
-            }
-        }
-        async function verify2FA() {
-            const otp = document.getElementById('otpInput').value.trim();
-            if (!otp) { alert('OTP를 입력하세요'); return; }
-            const res = await fetch('/2fa/verify', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ otp }) });
-            const data = await res.json();
-            if (data.status === 'success') {
-                alert('2차인증이 활성화되었습니다.');
-                render2FAUI({ enabled: true });
-            } else {
-                alert(data.message || '오류');
-            }
-        }
-        async function disable2FA() {
-            if (!confirm('2차인증을 비활성화하시겠습니까?')) return;
-            const res = await fetch('/2fa/disable', { method: 'POST' });
-            const data = await res.json();
-            if (data.status === 'success') { render2FAUI({ enabled: false }); }
-            else { alert(data.message || '오류'); }
-        }
+		async function start2FA() {
+			try {
+				const res = await fetch('/2fa/setup', { method: 'POST' });
+				const data = await res.json();
+				if (data.status === 'success') {
+					document.getElementById('qrImage').src = data.qrcode_data_url;
+					document.getElementById('manualSecret').textContent = data.otpauth_url;
+					document.getElementById('twofaSetup').classList.remove('hidden');
+				} else {
+					alert(data.message || '오류');
+				}
+			} catch (e) { console.error(e); alert('오류가 발생했습니다.'); }
+		}
 
-        // init
-        fetch2FAStatus();
-        loadCookieSettings();
-    </script>
+		async function verify2FA() {
+			try {
+				const otp = document.getElementById('otpInput').value.trim();
+				if (!otp) { alert('OTP를 입력하세요'); return; }
+				const res = await fetch('/2fa/verify', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ otp }) });
+				const data = await res.json();
+				if (data.status === 'success') {
+					alert('2차인증이 활성화되었습니다.');
+					document.getElementById('twofaSetup').classList.add('hidden');
+					document.getElementById('otpInput').value = '';
+					render2FAUI({ enabled: true });
+				} else {
+					alert(data.message || '오류');
+				}
+			} catch (e) { console.error(e); alert('오류가 발생했습니다.'); }
+		}
+
+		async function disable2FA() {
+			if (!confirm('2차인증을 비활성화하시겠습니까?')) return;
+			try {
+				const res = await fetch('/2fa/disable', { method: 'POST' });
+				const data = await res.json();
+				if (data.status === 'success') {
+					alert('2차인증이 비활성화되었습니다.');
+					render2FAUI({ enabled: false });
+				} else {
+					alert(data.message || '오류');
+				}
+			} catch (e) { console.error(e); alert('오류가 발생했습니다.'); }
+		}
+
+		async function load2FAStatus() {
+			try {
+				const res = await fetch('/2fa/status');
+				const data = await res.json();
+				render2FAUI(data);
+			} catch (e) { console.error(e); }
+		}
+
+		document.addEventListener('DOMContentLoaded', () => {
+			loadCookieSettings();
+			load2FAStatus();
+		});
+	</script>
 </body>
+
 </html>
 

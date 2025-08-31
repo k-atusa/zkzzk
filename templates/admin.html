@@ -1,74 +1,183 @@
 <!DOCTYPE html>
 <html lang="ko">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>관리자 - 사용자 관리</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>ZKZZK - 사용자 관리</title>
+	<link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+	<link rel="stylesheet" href="/static/common.css">
+	<link rel="stylesheet" href="/static/navbar.css">
+	<script src="https://cdn.tailwindcss.com"></script>
+	<script>
+		tailwind.config = {
+			theme: {
+				extend: {
+					colors: {
+						'accent': 'rgb(113, 243, 166)',
+						'accent-dark': 'rgb(89, 194, 133)',
+						'accent-light': 'rgb(137, 255, 179)',
+					}
+				}
+			}
+		}
+	</script>
+	<style>
+		.admin-checkbox {
+			appearance: none;
+			width: 20px;
+			height: 20px;
+			border: 2px solid rgba(255, 255, 255, 0.3);
+			border-radius: 6px;
+			background: rgba(255, 255, 255, 0.05);
+			cursor: pointer;
+			position: relative;
+			transition: all 0.2s ease;
+		}
+		
+		.admin-checkbox:checked {
+			background: rgb(113, 243, 166);
+			border-color: rgb(113, 243, 166);
+		}
+		
+		.admin-checkbox:checked::after {
+			content: '✓';
+			position: absolute;
+			top: 50%;
+			left: 50%;
+			transform: translate(-50%, -50%);
+			color: #0f0f23;
+			font-size: 14px;
+			font-weight: bold;
+		}
+		
+		.admin-checkbox:hover {
+			border-color: rgb(113, 243, 166);
+			background: rgba(113, 243, 166, 0.1);
+		}
+		
+		.admin-checkbox:checked:hover {
+			background: rgb(113, 243, 166);
+			border-color: rgb(113, 243, 166);
+		}
+		
+		.admin-checkbox:focus {
+			outline: none;
+			box-shadow: 0 0 0 3px rgba(113, 243, 166, 0.25);
+		}
+	</style>
 </head>
-<body class="min-h-screen p-6 text-white" style="background: linear-gradient(135deg, #0f0f23 0%, #0a0a0a 100%);">
-    {% include 'navbar.html' %}
 
-    <div class="pt-28 max-w-4xl mx-auto">
-        <h2 class="text-2xl font-bold mb-6">사용자 관리</h2>
+<body>
+	{% include 'navbar.html' %}
 
-        <div class="mb-6 p-4 rounded-xl border border-white/10">
-            <h3 class="font-semibold mb-3">사용자 추가</h3>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-                <input id="newUsername" class="form-input" placeholder="아이디">
-                <input id="newPassword" type="password" class="form-input" placeholder="비밀번호">
-                <label class="inline-flex items-center space-x-2">
-                    <input id="newIsAdmin" type="checkbox">
-                    <span>관리자</span>
-                </label>
-            </div>
-            <button class="btn-primary mt-3 px-4 py-2" onclick="addUser()">추가</button>
-        </div>
+	<div class="pt-28 pb-8 px-6">
+		<div class="max-w-4xl mx-auto">
+			<div class="mb-8">
+				<h2 class="text-2xl font-bold text-white">사용자 관리</h2>
+			</div>
 
-        <div class="p-4 rounded-xl border border-white/10">
-            <h3 class="font-semibold mb-3">사용자 목록</h3>
-            <table class="w-full text-left text-sm">
-                <thead class="text-gray-300">
-                    <tr>
-                        <th class="py-2">ID</th>
-                        <th class="py-2">아이디</th>
-                        <th class="py-2">권한</th>
-                        <th class="py-2">작업</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for u in users %}
-                    <tr class="border-t border-white/10">
-                        <td class="py-2">{{ u.id }}</td>
-                        <td class="py-2">{{ u.username }}</td>
-                        <td class="py-2">{{ '관리자' if u.is_admin else '일반' }}</td>
-                        <td class="py-2">
-                            <button class="btn-danger px-3 py-1 text-sm" onclick="deleteUser({{ u.id }})" {% if current_user.id == u.id %}disabled{% endif %}>삭제</button>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </div>
+			<div class="space-y-6">
+				<div class="p-6 rounded-xl border border-white/10 bg-white/5 backdrop-blur-sm">
+					<h3 class="font-semibold mb-4 text-white text-lg">사용자 추가</h3>
+					<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+						<div>
+							<label class="block text-sm text-gray-300 mb-2" for="newUsername">아이디</label>
+							<input id="newUsername" class="form-input" placeholder="사용자 아이디">
+						</div>
+						<div>
+							<label class="block text-sm text-gray-300 mb-2" for="newPassword">비밀번호</label>
+							<input id="newPassword" type="password" class="form-input" placeholder="사용자 비밀번호">
+						</div>
+						<div class="flex items-center">
+							<label class="inline-flex items-center space-x-3 cursor-pointer group">
+								<input id="newIsAdmin" type="checkbox" class="admin-checkbox">
+								<span class="text-white font-medium group-hover:text-accent transition-colors">관리자 권한</span>
+							</label>
+						</div>
+					</div>
+					<button class="btn-primary mt-6 px-6 py-3 text-sm font-medium" onclick="addUser()">
+						<svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+						</svg>
+						사용자 추가
+					</button>
+				</div>
 
-    <script>
-        async function addUser() {
-            const username = document.getElementById('newUsername').value.trim();
-            const password = document.getElementById('newPassword').value.trim();
-            const is_admin = document.getElementById('newIsAdmin').checked;
-            if (!username || !password) { alert('아이디/비밀번호를 입력하세요'); return; }
-            const res = await fetch('/admin/users', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username, password, is_admin }) });
-            const data = await res.json();
-            if (data.status === 'success') location.reload(); else alert(data.message || '오류');
-        }
-        async function deleteUser(user_id) {
-            if (!confirm('정말 삭제하시겠습니까?')) return;
-            const res = await fetch('/admin/users', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ user_id }) });
-            const data = await res.json();
-            if (data.status === 'success') location.reload(); else alert(data.message || '오류');
-        }
-    </script>
+				<div class="p-6 rounded-xl border border-white/10 bg-white/5 backdrop-blur-sm">
+					<h3 class="font-semibold mb-4 text-white text-lg">사용자 목록</h3>
+					<div class="overflow-x-auto">
+						<table class="w-full text-left text-sm">
+							<thead>
+								<tr class="border-b border-white/10">
+									<th class="py-3 px-4 text-gray-300 font-medium">ID</th>
+									<th class="py-3 px-4 text-gray-300 font-medium">아이디</th>
+									<th class="py-3 px-4 text-gray-300 font-medium">권한</th>
+									<th class="py-3 px-4 text-gray-300 font-medium">작업</th>
+								</tr>
+							</thead>
+							<tbody>
+								{% for u in users %}
+								<tr class="border-b border-white/5 hover:bg-white/5 transition-colors">
+									<td class="py-3 px-4 text-white">{{ u.id }}</td>
+									<td class="py-3 px-4 text-white font-medium">{{ u.username }}</td>
+									<td class="py-3 px-4">
+										{% if u.is_admin %}
+										<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-accent/20 text-accent border border-accent/30">
+											<svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+												<path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+											</svg>
+											관리자
+										</span>
+										{% else %}
+										<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-500/20 text-gray-300 border border-gray-500/30">
+											<svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+												<path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"></path>
+											</svg>
+											일반
+										</span>
+										{% endif %}
+									</td>
+									<td class="py-3 px-4">
+										{% if current_user.id != u.id %}
+										<button class="inline-flex items-center px-3 py-1.5 text-sm font-medium text-red-400 hover:text-red-300 hover:bg-red-400/10 rounded-lg transition-all duration-200" onclick="deleteUser({{ u.id }})">
+											<svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+												<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+											</svg>
+											삭제
+										</button>
+										{% else %}
+										<span class="text-gray-500 text-sm">본인 계정</span>
+										{% endif %}
+									</td>
+								</tr>
+								{% endfor %}
+							</tbody>
+						</table>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<script>
+		async function addUser() {
+			const username = document.getElementById('newUsername').value.trim();
+			const password = document.getElementById('newPassword').value.trim();
+			const is_admin = document.getElementById('newIsAdmin').checked;
+			if (!username || !password) { alert('아이디/비밀번호를 입력하세요'); return; }
+			const res = await fetch('/admin/users', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username, password, is_admin }) });
+			const data = await res.json();
+			if (data.status === 'success') location.reload(); else alert(data.message || '오류');
+		}
+		async function deleteUser(user_id) {
+			if (!confirm('정말 삭제하시겠습니까?')) return;
+			const res = await fetch('/admin/users', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ user_id }) });
+			const data = await res.json();
+			if (data.status === 'success') location.reload(); else alert(data.message || '오류');
+		}
+	</script>
 </body>
+
 </html>
 
