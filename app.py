@@ -12,6 +12,10 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger
 import threading
 import secrets
+import base64
+import io
+import pyotp
+import qrcode
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', secrets.token_hex(32))
@@ -25,6 +29,8 @@ class User(db.Model):
     password_hash = db.Column(db.String(255), nullable=False)
     is_admin = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=lambda: datetime.now())
+    totp_secret = db.Column(db.String(64))
+    totp_enabled = db.Column(db.Boolean, default=False)
 
 class Streamer(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -249,6 +255,20 @@ with app.app_context():
             db.session.commit()
     except Exception as e:
         print(f"Warning: could not ensure user_id on recording: {e}")
+    try:
+        result = db.session.execute("PRAGMA table_info(user)")
+        columns = [row[1] for row in result]
+        changed = False
+        if 'totp_secret' not in columns:
+            db.session.execute('ALTER TABLE user ADD COLUMN totp_secret VARCHAR(64)')
+            changed = True
+        if 'totp_enabled' not in columns:
+            db.session.execute('ALTER TABLE user ADD COLUMN totp_enabled BOOLEAN DEFAULT 0')
+            changed = True
+        if changed:
+            db.session.commit()
+    except Exception as e:
+        print(f"Warning: could not ensure TOTP columns on user: {e}")
     init_scheduler()
 
 @app.before_request
@@ -264,7 +284,7 @@ def require_login():
         return redirect(url_for('setup_admin'))
 
     # Allow auth-free endpoints
-    if request.endpoint in ('login', 'logout', 'static', 'setup_admin'):
+    if request.endpoint in ('login', 'logout', 'static', 'setup_admin', 'login_otp'):
         return
 
     user_id = session.get('user_id')
@@ -310,10 +330,29 @@ def login():
         password = form.get('password')
         user = User.query.filter_by(username=username).first()
         if user and check_password_hash(user.password_hash, password):
+            # If 2FA is enabled, require OTP step
+            if user.totp_enabled and user.totp_secret:
+                session['pending_user_id'] = user.id
+                return redirect(url_for('login_otp'))
             session['user_id'] = user.id
             return redirect(url_for('live'))
         return render_template('login.html', error='아이디 또는 비밀번호가 올바르지 않습니다.', setup_mode=False)
     return render_template('login.html', setup_mode=False)
+
+@app.route('/login/otp', methods=['GET', 'POST'])
+def login_otp():
+    pending_id = session.get('pending_user_id')
+    if not pending_id:
+        return redirect(url_for('login'))
+    user = User.query.get(pending_id)
+    if request.method == 'POST':
+        code = (request.get_json(silent=True) or request.form).get('otp')
+        if user and user.totp_secret and pyotp.TOTP(user.totp_secret).verify(code, valid_window=1):
+            session.pop('pending_user_id', None)
+            session['user_id'] = user.id
+            return redirect(url_for('live'))
+        return render_template('login.html', error='OTP가 올바르지 않습니다.', setup_mode=False)
+    return render_template('login.html', error=None, setup_mode=False, otp_mode=True)
 
 @app.route('/logout', methods=['POST', 'GET'])
 def logout():
@@ -1031,6 +1070,59 @@ def profile():
             return jsonify({'status': 'success', 'message': '비밀번호가 변경되었습니다.'})
         return jsonify({'status': 'error', 'message': '새 비밀번호를 입력하세요.'}), 400
     return render_template('profile.html')
+
+@app.route('/2fa/setup', methods=['POST'])
+def twofa_setup():
+    if not g.user:
+        return jsonify({'status': 'error', 'message': '인증 필요'}), 401
+    if g.user.totp_enabled:
+        return jsonify({'status': 'error', 'message': '이미 2차인증이 활성화되어 있습니다.'}), 400
+    secret = pyotp.random_base32()
+    g.user.totp_secret = secret
+    g.user.totp_enabled = False
+    db.session.commit()
+    issuer = 'ZKZZK'
+    label = g.user.username
+    uri = pyotp.totp.TOTP(secret).provisioning_uri(name=label, issuer_name=issuer)
+    # Generate QR code as data URL
+    qr = qrcode.QRCode(error_correction=qrcode.constants.ERROR_CORRECT_M)
+    qr.add_data(uri)
+    qr.make(fit=True)
+    img = qr.make_image(fill_color="black", back_color="white")
+    buf = io.BytesIO()
+    img.save(buf, format='PNG')
+    data_url = 'data:image/png;base64,' + base64.b64encode(buf.getvalue()).decode('ascii')
+    return jsonify({'status': 'success', 'secret': secret, 'otpauth_url': uri, 'qrcode_data_url': data_url})
+
+@app.route('/2fa/verify', methods=['POST'])
+def twofa_verify():
+    if not g.user:
+        return jsonify({'status': 'error', 'message': '인증 필요'}), 401
+    data = request.get_json() or request.form
+    code = (data.get('otp') or '').strip()
+    if not g.user.totp_secret:
+        return jsonify({'status': 'error', 'message': '2차인증이 초기화되지 않았습니다.'}), 400
+    totp = pyotp.TOTP(g.user.totp_secret)
+    if totp.verify(code, valid_window=1):
+        g.user.totp_enabled = True
+        db.session.commit()
+        return jsonify({'status': 'success', 'message': '2차인증이 활성화되었습니다.', 'enabled': True})
+    return jsonify({'status': 'error', 'message': 'OTP가 올바르지 않습니다.'}), 400
+
+@app.route('/2fa/disable', methods=['POST'])
+def twofa_disable():
+    if not g.user:
+        return jsonify({'status': 'error', 'message': '인증 필요'}), 401
+    g.user.totp_enabled = False
+    g.user.totp_secret = None
+    db.session.commit()
+    return jsonify({'status': 'success', 'message': '2차인증이 비활성화되었습니다.', 'enabled': False})
+
+@app.route('/2fa/status', methods=['GET'])
+def twofa_status():
+    if not g.user:
+        return jsonify({'enabled': False}), 200
+    return jsonify({'enabled': bool(g.user.totp_enabled), 'has_secret': bool(g.user.totp_secret)})
 
 
 

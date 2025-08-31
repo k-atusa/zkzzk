@@ -35,22 +35,52 @@
             </div>
             <button class="btn-primary px-4 py-2" onclick="changePassword()">비밀번호 변경</button>
         </div>
+
+        <div class="p-4 rounded-xl border border-white/10">
+            <h3 class="font-semibold mb-3">2차인증 (TOTP)</h3>
+            <div id="twofaStatus" class="text-sm text-gray-300 mb-3"></div>
+            <div class="space-x-2">
+                <button id="btnStart2FA" class="btn-primary px-4 py-2" onclick="start2FA()">2차인증 추가</button>
+                <button id="btnDisable2FA" class="btn-danger px-4 py-2 hidden" onclick="disable2FA()">2차인증 비활성화</button>
+            </div>
+            <div id="twofaSetup" class="mt-4 hidden">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <img id="qrImage" class="rounded bg-white p-2" alt="QR Code" />
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-300">QR 코드를 스캔할 수 없다면 아래 설정 문자열을 인증 앱에 수동으로 입력하세요.</p>
+                        <div class="mt-2 px-3 py-2 rounded bg-white/5 break-all" id="manualSecret"></div>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <label class="block text-sm text-gray-300 mb-1" for="otpInput">앱에서 생성된 OTP 입력</label>
+                    <input id="otpInput" class="form-input" placeholder="6자리 코드">
+                    <button class="btn-primary mt-3 px-4 py-2" onclick="verify2FA()">확인</button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
         async function loadCookieSettings() {
             try {
-                const res = await fetch('/api/settings');
-                const data = await res.json();
-                document.getElementById('nidAut').value = data.nid_aut || '';
-                document.getElementById('nidSes').value = data.nid_ses || '';
-            } catch (e) { console.error(e); }
+                const res = await fetch('/settings');
+            } catch (e) { }
+            try {
+                const res = await fetch('/settings');
+                const data = await res.json().catch(() => ({}));
+                if (data && (typeof data === 'object') && ('nid_aut' in data)) {
+                    document.getElementById('nidAut').value = data.nid_aut || '';
+                    document.getElementById('nidSes').value = data.nid_ses || '';
+                }
+            } catch (e) {}
         }
         async function saveCookieSettings() {
             try {
                 const nid_aut = document.getElementById('nidAut').value.trim();
                 const nid_ses = document.getElementById('nidSes').value.trim();
-                const res = await fetch('/api/settings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ nid_aut, nid_ses }) });
+                const res = await fetch('/settings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ nid_aut, nid_ses }) });
                 const data = await res.json();
                 if (data.status === 'success') alert('저장되었습니다.'); else alert(data.message || '오류');
             } catch (e) { console.error(e); alert('오류가 발생했습니다.'); }
@@ -62,6 +92,59 @@
             const data = await res.json();
             if (data.status === 'success') { alert('변경되었습니다.'); document.getElementById('newPassword').value=''; } else { alert(data.message || '오류'); }
         }
+
+        function render2FAUI(state) {
+            const enabled = !!state.enabled;
+            document.getElementById('twofaStatus').textContent = enabled ? '현재 상태: 활성화됨' : '현재 상태: 비활성화됨';
+            document.getElementById('btnDisable2FA').classList.toggle('hidden', !enabled);
+            document.getElementById('btnStart2FA').classList.toggle('hidden', enabled);
+            if (enabled) {
+                document.getElementById('twofaSetup').classList.add('hidden');
+                document.getElementById('otpInput').value = '';
+            }
+        }
+
+        async function fetch2FAStatus() {
+            const res = await fetch('/2fa/status');
+            const data = await res.json();
+            render2FAUI(data);
+        }
+
+        async function start2FA() {
+            const status = await (await fetch('/2fa/status')).json();
+            if (status.enabled) { render2FAUI(status); return; }
+            const res = await fetch('/2fa/setup', { method: 'POST' });
+            const data = await res.json();
+            if (data.status === 'success') {
+                document.getElementById('twofaSetup').classList.remove('hidden');
+                document.getElementById('qrImage').src = data.qrcode_data_url;
+                document.getElementById('manualSecret').textContent = data.otpauth_url;
+            } else {
+                alert(data.message || '오류');
+            }
+        }
+        async function verify2FA() {
+            const otp = document.getElementById('otpInput').value.trim();
+            if (!otp) { alert('OTP를 입력하세요'); return; }
+            const res = await fetch('/2fa/verify', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ otp }) });
+            const data = await res.json();
+            if (data.status === 'success') {
+                alert('2차인증이 활성화되었습니다.');
+                render2FAUI({ enabled: true });
+            } else {
+                alert(data.message || '오류');
+            }
+        }
+        async function disable2FA() {
+            if (!confirm('2차인증을 비활성화하시겠습니까?')) return;
+            const res = await fetch('/2fa/disable', { method: 'POST' });
+            const data = await res.json();
+            if (data.status === 'success') { render2FAUI({ enabled: false }); }
+            else { alert(data.message || '오류'); }
+        }
+
+        // init
+        fetch2FAStatus();
         loadCookieSettings();
     </script>
 </body>

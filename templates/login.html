@@ -93,6 +93,14 @@
 			</form>
 			<p class="text-xs text-gray-400 mt-4 text-center">최초 배포를 감지했습니다. 먼저 관리자 계정을 생성해주세요.</p>
 			{% else %}
+			{% if otp_mode %}
+			<form method="POST" action="/login/otp" class="space-y-4">
+				<div>
+					<input type="text" inputmode="numeric" pattern="[0-9]*" id="otp" name="otp" class="form-input" placeholder="인증 앱의 6자리 코드" required>
+				</div>
+				<button type="submit" class="btn-primary w-full py-3">확인</button>
+			</form>
+			{% else %}
 			<form method="POST" action="/login" class="space-y-4">
 				<div>
 					<input type="text" id="username" name="username" class="form-input" placeholder="아이디" required>
@@ -102,6 +110,7 @@
 				</div>
 				<button type="submit" class="btn-primary w-full py-3">로그인</button>
 			</form>
+			{% endif %}
 			{% endif %}
 		</div>
 	</div>
