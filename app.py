@@ -59,8 +59,9 @@ class Recording(db.Model):
     streamer = db.relationship('Streamer', backref=db.backref('recordings', lazy=True))
     user = db.relationship('User', backref=db.backref('recordings', lazy=True))
 
-
-
+class Settings(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    initialized = db.Column(db.Boolean, default=False)
 
 
 def extract_channel_id(url):
@@ -318,6 +319,8 @@ def setup_admin():
             return render_template('login.html', error='이미 존재하는 사용자명입니다.', setup_mode=True)
         user = User(username=username, password_hash=generate_password_hash(password), is_admin=True)
         db.session.add(user)
+        settings = Settings(initialized=True)
+        db.session.add(settings)
         db.session.commit()
         session['user_id'] = user.id
         return redirect(url_for('live'))
