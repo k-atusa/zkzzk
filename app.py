@@ -93,13 +93,18 @@ def get_channel_info(channel_id):
 
 def download_stream(channel_id, broadcast_title, streamer_nickname, streamer_id):
     try:
-        if not os.path.exists('downloads'):
-            os.makedirs('downloads')
-            
-        streamer_dir = os.path.join('downloads', streamer_nickname)
+        current_user = g.user
+        if not current_user or not current_user.username:
+            raise Exception("현재 로그인한 사용자를 찾을 수 없습니다.")
+
+        user_downloads_dir = os.path.join('downloads', current_user.username)
+        if not os.path.exists(user_downloads_dir):
+            os.makedirs(user_downloads_dir)
+
+        streamer_dir = os.path.join(user_downloads_dir, streamer_nickname)
         if not os.path.exists(streamer_dir):
             os.makedirs(streamer_dir)
-            
+
         current_date = datetime.now().strftime('%y%m%d_%H%M%S')
         filename = f"{current_date} {broadcast_title} [{streamer_nickname}].ts"
         filename = re.sub(r'[<>:"/\\|?*]', '', filename)
@@ -318,6 +323,10 @@ def setup_admin():
         if User.query.filter_by(username=username).first():
             return render_template('login.html', error='이미 존재하는 사용자명입니다.', setup_mode=True)
         user = User(username=username, password_hash=generate_password_hash(password), is_admin=True)
+        downloads_dir = os.path.join(os.getcwd(), 'downloads')
+        user_dir = os.path.join(downloads_dir, username)
+        if not os.path.exists(user_dir):
+            os.makedirs(user_dir, exist_ok=True)
         db.session.add(user)
         settings = Settings(initialized=True)
         db.session.add(settings)
@@ -379,36 +388,37 @@ def live():
 
 @app.route('/recordings')
 def recordings():
-    user = g.user
+    if not g.user:
+        return redirect(url_for('login'))
+
     recordings = []
-    if os.path.exists('downloads'):
-        for root, dirs, files in os.walk('downloads'):
+    user_downloads_dir = os.path.join('downloads', g.user.username)
+    if os.path.exists(user_downloads_dir):
+        for root, dirs, files in os.walk(user_downloads_dir):
             for filename in files:
                 if filename.endswith('.ts') or filename.endswith('.mp4'):
                     filepath = os.path.join(root, filename)
                     created_at = datetime.fromtimestamp(os.path.getctime(filepath), tz=datetime.now().tzinfo)
                     rel_path = os.path.relpath(filepath, 'downloads')
-                    streamer_name = os.path.dirname(rel_path)
+                    streamer_name = os.path.dirname(os.path.relpath(filepath, user_downloads_dir))
                     title = ' '.join(filename.split(' ')[1:-1])
-                    
-                    user_streamer_nicks = {s.nickname for s in Streamer.query.filter_by(user_id=user.id).all()}
-                    if streamer_name in user_streamer_nicks:
-                        recordings.append({
-                            'filename': rel_path,
-                            'title': title,
-                            'created_at': created_at,
-                            'streamer_name': streamer_name
-                        })
-    
+
+                    recordings.append({
+                        'filename': rel_path,
+                        'title': title,
+                        'created_at': created_at,
+                        'streamer_name': streamer_name
+                    })
+
     streamer_recordings = {}
     for recording in recordings:
         if recording['streamer_name'] not in streamer_recordings:
             streamer_recordings[recording['streamer_name']] = []
         streamer_recordings[recording['streamer_name']].append(recording)
-    
+
     for streamer_name in streamer_recordings:
         streamer_recordings[streamer_name].sort(key=lambda x: x['created_at'], reverse=True)
-    
+
     return render_template('recordings.html', streamer_recordings=streamer_recordings, current_page='recordings')
 
 @app.route('/recordings/<path:filename>')
@@ -1056,6 +1066,10 @@ def admin_users():
         if User.query.filter_by(username=username).first():
             return jsonify({'status': 'error', 'message': '이미 존재하는 사용자명'}), 400
         user = User(username=username, password_hash=generate_password_hash(password), is_admin=is_admin)
+        downloads_dir = os.path.join(os.getcwd(), 'downloads')
+        user_dir = os.path.join(downloads_dir, username)
+        if not os.path.exists(user_dir):
+            os.makedirs(user_dir, exist_ok=True)
         db.session.add(user)
         db.session.commit()
         return jsonify({'status': 'success'})
