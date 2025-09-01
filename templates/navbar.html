@@ -18,11 +18,11 @@
 			</div>
 			<div class="relative" id="profileMenuWrapper">
 				<button class="btn-secondary px-3 py-2" type="button" onclick="toggleProfileMenu()">
-					<svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+				<svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A3 3 0 017 17h10a3 3 0 011.879.804L21 20H3l2.121-2.196zM15 11a3 3 0 10-6 0 3 3 0 006 0z"></path>
-					</svg>
+				</svg>
 					{{ current_user.username if current_user else '로그인' }}
-				</button>
+			</button>
 				<div id="profileMenu" class="absolute right-0 mt-2 w-48 rounded-md bg-gray-900 border border-white/10 shadow-lg hidden">
 					<a href="/settings" class="block px-4 py-2 text-white hover:text-accent">설정</a>
 					{% if current_user and current_user.is_admin %}
@@ -42,8 +42,8 @@
 		</button>
 	</div>
 
-	<div class="md:hidden hidden" id="mobile-menu">
-		<div class="px-2 pt-2 pb-3 space-y-1">
+			<div class="md:hidden hidden" id="mobile-menu">
+			<div class="px-2 pt-2 pb-3 space-y-1">
 			<a href="/live"
 				class="block px-3 py-2 {% if current_page == 'live' %}text-accent font-medium{% else %}text-white hover:text-accent transition-colors{% endif %}">라이브
 				녹화</a>
@@ -69,7 +69,7 @@
 <script>
 	// Global variables for live page functionality
 	let isCheckingEnabled = true;
-
+	
 	// Mobile menu toggle
 	document.getElementById('mobile-menu-btn').addEventListener('click', function () {
 		document.getElementById('mobile-menu').classList.toggle('hidden');

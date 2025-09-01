@@ -31,12 +31,14 @@ class User(db.Model):
     created_at = db.Column(db.DateTime, default=lambda: datetime.now())
     totp_secret = db.Column(db.String(64))
     totp_enabled = db.Column(db.Boolean, default=False)
-
+    nid_aut = db.Column(db.String(200))
+    nid_ses = db.Column(db.String(200))
 class Streamer(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     channel_url = db.Column(db.String(200), unique=True, nullable=False)
     nickname = db.Column(db.String(100))
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    cookie_user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     is_active = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=lambda: datetime.now())
     last_checked = db.Column(db.DateTime)
@@ -44,14 +46,8 @@ class Streamer(db.Model):
     is_recording = db.Column(db.Boolean, default=False)
     current_broadcast_title = db.Column(db.String(200))
     process_id = db.Column(db.Integer)
-    user = db.relationship('User', backref=db.backref('streamers', lazy=True))
-
-class Settings(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    nid_aut = db.Column(db.String(200))
-    nid_ses = db.Column(db.String(200))
-    updated_at = db.Column(db.DateTime, default=lambda: datetime.now(), onupdate=lambda: datetime.now())
-    initialized = db.Column(db.Boolean, default=False)
+    user = db.relationship('User', backref=db.backref('streamers', lazy=True), foreign_keys=[user_id])
+    cookie_user = db.relationship('User', backref=db.backref('cookie_streamers', lazy=True), foreign_keys=[cookie_user_id])
 
 class Recording(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -108,8 +104,15 @@ def download_stream(channel_id, broadcast_title, streamer_nickname, streamer_id)
         filename = re.sub(r'[<>:"/\\|?*]', '', filename)
         filepath = os.path.join(streamer_dir, filename)
         
-        settings = Settings.query.first()
-        if not settings or not settings.nid_aut or not settings.nid_ses:
+        # Get the streamer to determine which user's cookies to use
+        streamer = Streamer.query.get(streamer_id)
+        if not streamer:
+            raise Exception("스트리머를 찾을 수 없습니다")
+        
+        # Use cookie_user_id if set, otherwise use the streamer owner's cookies
+        cookie_user_id = streamer.cookie_user_id if streamer.cookie_user_id else streamer.user_id
+        cookie_user = User.query.get(cookie_user_id)
+        if not cookie_user or not cookie_user.nid_aut or not cookie_user.nid_ses:
             raise Exception("NID_AUT and NID_SES cookies are required for recording")
         
         stream_url = f"https://chzzk.naver.com/live/{channel_id}"
@@ -117,8 +120,8 @@ def download_stream(channel_id, broadcast_title, streamer_nickname, streamer_id)
             'streamlink',
             '--ffmpeg-copyts',
             '--progress', 'no',
-            '--http-cookie', f'NID_AUT={settings.nid_aut}',
-            '--http-cookie', f'NID_SES={settings.nid_ses}',
+            '--http-cookie', f'NID_AUT={cookie_user.nid_aut}',
+            '--http-cookie', f'NID_SES={cookie_user.nid_ses}',
             stream_url,
             '720p',
             '--output', filepath
@@ -126,7 +129,6 @@ def download_stream(channel_id, broadcast_title, streamer_nickname, streamer_id)
         
         process = subprocess.Popen(command)
         
-        streamer = Streamer.query.get(streamer_id)
         if streamer:
             streamer.is_recording = True
             streamer.current_broadcast_title = broadcast_title
@@ -182,8 +184,10 @@ def check_all_streamers():
                 continue
 
             try:
-                settings = Settings.query.first()
-                if not settings or not settings.nid_aut or not settings.nid_ses:
+                # Use cookie_user_id if set, otherwise use the streamer owner's cookies
+                cookie_user_id = streamer.cookie_user_id if streamer.cookie_user_id else streamer.user_id
+                cookie_user = User.query.get(cookie_user_id)
+                if not cookie_user or not cookie_user.nid_aut or not cookie_user.nid_ses:
                     continue
 
                 url = f'https://api.chzzk.naver.com/service/v3/channels/{channel_id}/live-detail'
@@ -230,19 +234,25 @@ with app.app_context():
     db.create_all()
 
     try:
-        result = db.session.execute("PRAGMA table_info(settings)")
+        result = db.session.execute("PRAGMA table_info(user)")
         columns = [row[1] for row in result]
-        if 'initialized' not in columns:
-            db.session.execute('ALTER TABLE settings ADD COLUMN initialized BOOLEAN DEFAULT 0')
+        if 'nid_aut' not in columns:
+            db.session.execute('ALTER TABLE user ADD COLUMN nid_aut VARCHAR(200)')
+            db.session.commit()
+        if 'nid_ses' not in columns:
+            db.session.execute('ALTER TABLE user ADD COLUMN nid_ses VARCHAR(200)')
             db.session.commit()
     except Exception as e:
-        print(f"Warning: could not ensure settings table columns: {e}")
+        print(f"Warning: could not ensure user table columns: {e}")
 
     try:
         result = db.session.execute("PRAGMA table_info(streamer)")
         columns = [row[1] for row in result]
         if 'user_id' not in columns:
             db.session.execute('ALTER TABLE streamer ADD COLUMN user_id INTEGER')
+            db.session.commit()
+        if 'cookie_user_id' not in columns:
+            db.session.execute('ALTER TABLE streamer ADD COLUMN cookie_user_id INTEGER')
             db.session.commit()
     except Exception as e:
         print(f"Warning: could not ensure user_id on streamer: {e}")
@@ -277,9 +287,8 @@ def require_login():
     if request.path.startswith('/static'):
         return
     # Ensure setup first on first deploy
-    settings_row = Settings.query.first()
     user_count = User.query.count()
-    first_run = (not settings_row or not settings_row.initialized) or (user_count == 0)
+    first_run = user_count == 0
     if first_run and request.endpoint not in ('setup_admin', 'static'):
         return redirect(url_for('setup_admin'))
 
@@ -296,8 +305,8 @@ def require_login():
 @app.route('/setup', methods=['GET', 'POST'])
 def setup_admin():
     # If already initialized, go to app
-    settings_row = Settings.query.first()
-    if settings_row and settings_row.initialized and User.query.count() > 0:
+    user_count = User.query.count()
+    if user_count > 0:
         return redirect(url_for('live'))
     if request.method == 'POST':
         form = request.get_json(silent=True) or request.form
@@ -309,10 +318,6 @@ def setup_admin():
             return render_template('login.html', error='이미 존재하는 사용자명입니다.', setup_mode=True)
         user = User(username=username, password_hash=generate_password_hash(password), is_admin=True)
         db.session.add(user)
-        # mark settings initialized
-        settings_row = Settings.query.first() or Settings()
-        settings_row.initialized = True
-        db.session.add(settings_row)
         db.session.commit()
         session['user_id'] = user.id
         return redirect(url_for('live'))
@@ -367,8 +372,7 @@ def index():
 def live():
     user = g.user
     streamers = Streamer.query.filter_by(is_active=True, user_id=user.id).all()
-    settings = Settings.query.first()
-    return render_template('index.html', streamers=streamers, settings=settings, current_page='live')
+    return render_template('index.html', streamers=streamers, current_page='live')
 
 @app.route('/recordings')
 def recordings():
@@ -438,14 +442,10 @@ def settings():
         nid_aut = data.get('nid_aut')
         nid_ses = data.get('nid_ses')
 
-        settings = Settings.query.first()
-        if not settings:
-            settings = Settings()
+        # Update user's cookie values directly
+        g.user.nid_aut = nid_aut
+        g.user.nid_ses = nid_ses
 
-        settings.nid_aut = nid_aut
-        settings.nid_ses = nid_ses
-
-        db.session.add(settings)
         db.session.commit()
 
         return jsonify({
@@ -453,9 +453,17 @@ def settings():
             'message': '설정이 저장되었습니다.'
         })
 
-    # GET: render unified settings page (formerly profile)
+    # GET: return user-specific settings data or render page
     if not g.user:
         return redirect(url_for('login'))
+    
+    # If it's an AJAX request, return JSON data
+    if request.headers.get('Content-Type') == 'application/json' or 'application/json' in request.headers.get('Accept', ''):
+        return jsonify({
+            'nid_aut': g.user.nid_aut,
+            'nid_ses': g.user.nid_ses
+        })
+    
     return render_template('profile.html')
 
 @app.route('/add_streamer', methods=['POST'])
@@ -492,7 +500,7 @@ def add_streamer():
         return jsonify({'status': 'error', 'message': '채널 정보를 가져올 수 없습니다.'}), 400
 
     try:
-        streamer = Streamer(channel_url=channel_url, nickname=nickname, user_id=user.id)
+        streamer = Streamer(channel_url=channel_url, nickname=nickname, user_id=user.id, cookie_user_id=user.id)
         db.session.add(streamer)
         db.session.commit()
         return jsonify({
@@ -558,8 +566,10 @@ def check_status():
         return jsonify({'status': 'error', 'message': '올바른 치지직 URL이 아닙니다.'}), 400
 
     try:
-        settings = Settings.query.first()
-        if not settings or not settings.nid_aut or not settings.nid_ses:
+        # Use cookie_user_id if set, otherwise use the streamer owner's cookies
+        cookie_user_id = streamer.cookie_user_id if streamer.cookie_user_id else streamer.user_id
+        cookie_user = User.query.get(cookie_user_id)
+        if not cookie_user or not cookie_user.nid_aut or not cookie_user.nid_ses:
             return jsonify({
                 'status': 'error',
                 'error_code': 'missing_cookies',
@@ -689,12 +699,11 @@ def get_vod_info(video_no):
         print(f"[VOD INFO] Video ID: {video_id}, In Key: {in_key}")
         
         if video_id is None or in_key is None:
-            settings = Settings.query.first()
-            if settings and settings.nid_aut and settings.nid_ses:
+            if g.user and g.user.nid_aut and g.user.nid_ses:
                 print(f"[VOD INFO] Using cookies for authentication")
                 cookies = {
-                    'NID_AUT': settings.nid_aut,
-                    'NID_SES': settings.nid_ses
+                    'NID_AUT': g.user.nid_aut,
+                    'NID_SES': g.user.nid_ses
                 }
                 response = requests.get(api_url, cookies=cookies, headers=headers)
                 response.raise_for_status()
@@ -1123,6 +1132,66 @@ def twofa_status():
     if not g.user:
         return jsonify({'enabled': False}), 200
     return jsonify({'enabled': bool(g.user.totp_enabled), 'has_secret': bool(g.user.totp_secret)})
+
+@app.route('/set_streamer_cookies', methods=['POST'])
+def set_streamer_cookies():
+    try:
+        data = request.get_json()
+        streamer_id = data.get('streamer_id')
+        cookie_user_id = data.get('cookie_user_id')
+        
+        streamer = Streamer.query.get_or_404(streamer_id)
+        if streamer.user_id != g.user.id and not g.user.is_admin:
+            return jsonify({'status': 'error', 'message': '권한이 없습니다.'}), 403
+        
+        # Verify the cookie_user_id exists and has settings
+        if cookie_user_id:
+            cookie_user = User.query.get(cookie_user_id)
+            if not cookie_user:
+                return jsonify({'status': 'error', 'message': '쿠키 사용자를 찾을 수 없습니다.'}), 400
+            
+            if not cookie_user.nid_aut or not cookie_user.nid_ses:
+                return jsonify({'status': 'error', 'message': '해당 사용자의 쿠키가 설정되지 않았습니다.'}), 400
+        
+        streamer.cookie_user_id = cookie_user_id
+        db.session.commit()
+        
+        return jsonify({
+            'status': 'success',
+            'message': '스트리머 쿠키 설정이 업데이트되었습니다.'
+        })
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error setting streamer cookies: {e}")
+        return jsonify({
+            'status': 'error',
+            'message': '스트리머 쿠키 설정 중 오류가 발생했습니다.'
+        }), 500
+
+@app.route('/get_users_with_cookies', methods=['GET'])
+def get_users_with_cookies():
+    try:
+        # Get all users who have valid cookie settings
+        users_with_cookies = []
+        users = User.query.all()
+        
+        for user in users:
+            if user.nid_aut and user.nid_ses:
+                users_with_cookies.append({
+                    'id': user.id,
+                    'username': user.username
+                })
+        
+        return jsonify({
+            'status': 'success',
+            'users': users_with_cookies
+        })
+    except Exception as e:
+        print(f"Error getting users with cookies: {e}")
+        return jsonify({
+            'status': 'error',
+            'message': '사용자 목록을 가져오는 중 오류가 발생했습니다.'
+        }), 500
 
 
 

@@ -72,6 +72,10 @@
 								<div class="broadcast-tags flex flex-wrap gap-1 mb-1"></div>
 							</div>
 							<p class="download-status text-blue-400 text-sm hidden"></p>
+							<div class="cookie-user-info text-xs text-gray-400 mt-1">
+								<span class="cookie-user-text">쿠키: {% if streamer.cookie_user %}{{ streamer.cookie_user.username }}{% else %}{{ streamer.user.username }}{% endif %}</span>
+								<button class="change-cookie-user ml-2 text-accent hover:text-accent-light transition-colors" data-streamer-id="{{ streamer.id }}">변경</button>
+							</div>
 						</div>
 						<button
 							class="remove-streamer text-muted hover:text-red-400 transition-colors ml-4 flex-shrink-0">
@@ -83,6 +87,22 @@
 					</div>
 					{% endfor %}
 				</div>
+			</div>
+		</div>
+	</div>
+
+	<div id="cookieUserModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+		<div class="bg-gray-800 rounded-xl p-6 max-w-md w-full mx-4">
+			<h3 class="text-lg font-semibold text-white mb-4">쿠키 사용자 변경</h3>
+			<div class="mb-4">
+				<label class="block text-sm text-gray-300 mb-2">쿠키를 사용할 사용자 선택:</label>
+				<select id="cookieUserSelect" class="form-input">
+					<option value="">선택하세요</option>
+				</select>
+			</div>
+			<div class="flex gap-3">
+				<button class="btn-primary px-4 py-2" onclick="saveCookieUser()">저장</button>
+				<button class="btn-secondary px-4 py-2" onclick="closeCookieUserModal()">취소</button>
 			</div>
 		</div>
 	</div>
@@ -259,6 +279,75 @@
 
 		statusCheckInterval = setInterval(checkStreamerStatus, 30000);
 		checkStreamerStatus();
+
+		let currentStreamerId = null;
+
+		// Add event listener for cookie user change buttons
+		document.getElementById('streamerList').addEventListener('click', (e) => {
+			if (e.target.closest('.change-cookie-user')) {
+				const streamerId = e.target.closest('.change-cookie-user').dataset.streamerId;
+				showCookieUserModal(streamerId);
+			}
+		});
+
+		async function showCookieUserModal(streamerId) {
+			currentStreamerId = streamerId;
+			try {
+				const response = await fetch('/get_users_with_cookies');
+				const data = await response.json();
+				
+				if (data.status === 'success') {
+					const select = document.getElementById('cookieUserSelect');
+					select.innerHTML = '<option value="">선택하세요</option>';
+					
+					data.users.forEach(user => {
+						const option = document.createElement('option');
+						option.value = user.id;
+						option.textContent = user.username;
+						select.appendChild(option);
+					});
+					
+					document.getElementById('cookieUserModal').classList.remove('hidden');
+				} else {
+					alert('사용자 목록을 가져올 수 없습니다.');
+				}
+			} catch (error) {
+				console.error('Error:', error);
+				alert('사용자 목록을 가져오는 중 오류가 발생했습니다.');
+			}
+		}
+
+		function closeCookieUserModal() {
+			document.getElementById('cookieUserModal').classList.add('hidden');
+			currentStreamerId = null;
+		}
+
+		async function saveCookieUser() {
+			const cookieUserId = document.getElementById('cookieUserSelect').value;
+			
+			try {
+				const response = await fetch('/set_streamer_cookies', {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({
+						streamer_id: currentStreamerId,
+						cookie_user_id: cookieUserId || null
+					})
+				});
+				const data = await response.json();
+				
+				if (data.status === 'success') {
+					alert('쿠키 설정이 업데이트되었습니다.');
+					closeCookieUserModal();
+					location.reload();
+				} else {
+					alert(data.message || '오류가 발생했습니다.');
+				}
+			} catch (error) {
+				console.error('Error:', error);
+				alert('쿠키 설정 중 오류가 발생했습니다.');
+			}
+		}
 	</script>
 </body>
 

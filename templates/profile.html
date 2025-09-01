@@ -89,16 +89,19 @@
 	<script>
 		async function loadCookieSettings() {
 			try {
-				const res = await fetch('/settings');
-			} catch (e) { }
-			try {
-				const res = await fetch('/settings');
-				const data = await res.json().catch(() => ({}));
+				const res = await fetch('/settings', {
+					headers: {
+						'Accept': 'application/json'
+					}
+				});
+				const data = await res.json();
 				if (data && (typeof data === 'object') && ('nid_aut' in data)) {
 					document.getElementById('nidAut').value = data.nid_aut || '';
 					document.getElementById('nidSes').value = data.nid_ses || '';
 				}
-			} catch (e) {}
+			} catch (e) {
+				console.error('Error loading cookie settings:', e);
+			}
 		}
 		async function saveCookieSettings() {
 			try {
@@ -106,7 +109,14 @@
 				const nid_ses = document.getElementById('nidSes').value.trim();
 				const res = await fetch('/settings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ nid_aut, nid_ses }) });
 				const data = await res.json();
-				if (data.status === 'success') alert('저장되었습니다.'); else alert(data.message || '오류');
+				if (data.status === 'success') {
+					alert('저장되었습니다.');
+					// 저장 후 input 필드에 값 표시
+					document.getElementById('nidAut').value = nid_aut;
+					document.getElementById('nidSes').value = nid_ses;
+				} else {
+					alert(data.message || '오류');
+				}
 			} catch (e) { console.error(e); alert('오류가 발생했습니다.'); }
 		}
 		async function changePassword() {
