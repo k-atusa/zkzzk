@@ -76,27 +76,117 @@
 
 <body>
 	<div class="min-h-screen flex items-center justify-center p-6">
+		{% if setup_mode %}
+		<div id="setupTutorial"
+			class="relative w-full max-w-4xl mx-auto mb-6 opacity-0 translate-y-2 transition-all duration-700">
+			<div class="pointer-events-none absolute inset-0 -z-10">
+				<div class="absolute -top-10 -left-10 w-64 h-64 rounded-full bg-accent/10 blur-3xl"></div>
+				<div class="absolute bottom-0 right-0 w-72 h-72 rounded-full bg-white/10 blur-3xl"></div>
+			</div>
+			<h1 class="text-2xl md:text-3xl font-extrabold text-white text-center mb-2">ZKZZK에 오신 것을 환영합니다!</h1>
+			<p class="text-center text-zinc-300 mb-6">아래 튜토리얼을 확인한 후 관리자 생성을 진행하세요.</p>
+			<div class="relative select-none">
+				<div id="setupSlides" class="overflow-hidden rounded-xl border border-white/10 bg-black/20">
+					<div class="flex transition-transform duration-700 ease-in-out" style="width: 100%;" data-index="0">
+						<div class="w-full flex-shrink-0">
+							<div class="slide-content opacity-0 translate-y-2 transition-all duration-700">
+								<div class="w-full bg-zinc-800 flex items-center justify-center" style="height: 100%">
+									<img src="/static/tutorial/live.png" alt="라이브 녹화"
+										class="w-full h-full object-cover object-center">
+								</div>
+								<p class="text-zinc-200 mt-3 text-center text-base">스트리머 채널 URL을 추가하면 방송을 자동으로 감지하고
+									녹화합니다.</p>
+							</div>
+						</div>
+						<div class="w-full flex-shrink-0">
+							<div class="slide-content opacity-0 translate-y-2 transition-all duration-700">
+								<div class="w-full bg-zinc-800 flex items-center justify-center" style="height: 100%">
+									<img src="/static/tutorial/recordings.png" alt="녹화 영상"
+										class="w-full h-full object-cover object-center">
+								</div>
+								<p class="text-zinc-200 mt-3 text-center text-base">완료된 녹화는 한 곳에서 확인하고 바로 재생·삭제할 수 있습니다.
+								</p>
+							</div>
+						</div>
+						<div class="w-full flex-shrink-0">
+							<div class="slide-content opacity-0 translate-y-2 transition-all duration-700">
+								<div class="w-full bg-zinc-800 flex items-center justify-center" style="height: 100%">
+									<img src="/static/tutorial/vod.png" alt="다시보기 다운로드"
+										class="w-full h-full object-cover object-center">
+								</div>
+								<p class="text-zinc-200 mt-3 text-center text-base">다시보기를 원하는 해상도로 서버 또는 로컬에 다운로드합니다.
+								</p>
+							</div>
+						</div>
+						<div class="w-full flex-shrink-0">
+							<div class="slide-content opacity-0 translate-y-2 transition-all duration-700">
+								<div class="w-full bg-zinc-800 flex items-center justify-center" style="height: 100%">
+									<img src="/static/tutorial/settings.png" alt="설정"
+										class="w-full h-full object-cover object-center">
+								</div>
+								<p class="text-zinc-200 mt-3 text-center text-base">페이지 접근 비밀번호와 2차인증 설정으로 더욱 안전하게
+									이용하세요.</p>
+							</div>
+						</div>
+					</div>
+				</div>
+				<div class="mt-4 flex items-center justify-between">
+					<button id="setupPrev" type="button"
+						class="px-3 py-1.5 rounded-md bg-white/5 text-white hover:bg-white/10 transition disabled:opacity-40 disabled:cursor-not-allowed text-sm">
+						<svg class="w-4 h-4 inline -mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+						</svg>
+						<span class="ml-1">이전</span>
+					</button>
+					<div class="flex items-center gap-1.5">
+						<span class="dot w-1.5 h-1.5 rounded-full bg-white/30"></span>
+						<span class="dot w-1.5 h-1.5 rounded-full bg-white/30"></span>
+						<span class="dot w-1.5 h-1.5 rounded-full bg-white/30"></span>
+						<span class="dot w-1.5 h-1.5 rounded-full bg-white/30"></span>
+					</div>
+					<button id="setupNext" type="button"
+						class="px-3 py-1.5 rounded-md bg-accent text-black font-semibold hover:brightness-110 transition text-sm">
+						<span>다음</span>
+						<svg class="w-4 h-4 inline -mt-0.5 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+						</svg>
+					</button>
+				</div>
+			</div>
+		</div>
+		{# Hidden admin creation form; revealed when tutorial finishes #}
+		<div id="setupForm" class="w-full max-w-md hidden">
+			<div class="glass w-full p-8">
+				<h1 class="text-2xl font-bold text-white mb-6 text-center">ZKZZK</h1>
+				{% if error %}
+				<p class="text-red-400 text-sm mb-4">{{ error }}</p>
+				{% endif %}
+				<form method="POST" action="/setup" class="space-y-4">
+					<div>
+						<input type="text" id="username" name="username" class="form-input" placeholder="관리자 아이디"
+							required>
+					</div>
+					<div>
+						<input type="password" id="password" name="password" class="form-input" placeholder="관리자 비밀번호"
+							required>
+					</div>
+					<button type="submit" class="btn-primary w-full py-3">관리자 생성</button>
+				</form>
+				<p id="setupFormNote" class="text-xs text-gray-400 mt-4 text-center hidden">최초 배포를 감지했습니다. 먼저 관리자 계정을
+					생성해주세요.</p>
+			</div>
+		</div>
+		{% else %}
 		<div class="glass w-full max-w-md p-8">
 			<h1 class="text-2xl font-bold text-white mb-6 text-center">ZKZZK</h1>
 			{% if error %}
 			<p class="text-red-400 text-sm mb-4">{{ error }}</p>
 			{% endif %}
-			{% if setup_mode %}
-			<form method="POST" action="/setup" class="space-y-4">
-				<div>
-					<input type="text" id="username" name="username" class="form-input" placeholder="관리자 아이디" required>
-				</div>
-				<div>
-					<input type="password" id="password" name="password" class="form-input" placeholder="관리자 비밀번호" required>
-				</div>
-				<button type="submit" class="btn-primary w-full py-3">관리자 생성</button>
-			</form>
-			<p class="text-xs text-gray-400 mt-4 text-center">최초 배포를 감지했습니다. 먼저 관리자 계정을 생성해주세요.</p>
-			{% else %}
 			{% if otp_mode %}
 			<form method="POST" action="/login/otp" class="space-y-4">
 				<div>
-					<input type="text" inputmode="numeric" pattern="[0-9]*" id="otp" name="otp" class="form-input" placeholder="인증 앱의 6자리 코드" required>
+					<input type="text" inputmode="numeric" pattern="[0-9]*" id="otp" name="otp" class="form-input"
+						placeholder="인증 앱의 6자리 코드" required>
 				</div>
 				<button type="submit" class="btn-primary w-full py-3">확인</button>
 			</form>
@@ -111,9 +201,84 @@
 				<button type="submit" class="btn-primary w-full py-3">로그인</button>
 			</form>
 			{% endif %}
-			{% endif %}
 		</div>
-	</div>
+		{% endif %}
+
+		<script>
+				(function () {
+					const slidesHost = document.getElementById('setupSlides');
+					if (!slidesHost) return;
+					const track = slidesHost.querySelector('div.flex');
+					const prev = document.getElementById('setupPrev');
+					const next = document.getElementById('setupNext');
+					const dots = Array.from(slidesHost.parentElement.parentElement.querySelectorAll('.dot'));
+					const container = document.getElementById('setupTutorial');
+					let index = 0;
+
+					function updateUI() {
+						track.style.transform = `translateX(-${index * 100}%)`;
+						dots.forEach((d, i) => {
+							d.classList.toggle('bg-accent', i === index);
+							d.classList.toggle('bg-white/30', i !== index);
+						});
+						// Animate visible slide content
+						document.querySelectorAll('#setupSlides .slide-content').forEach((el, i) => {
+							if (i === index) {
+								el.classList.remove('opacity-0', 'translate-y-2');
+								el.classList.add('opacity-100', 'translate-y-0');
+							} else {
+								el.classList.add('opacity-0', 'translate-y-2');
+								el.classList.remove('opacity-100', 'translate-y-0');
+							}
+						});
+						prev.disabled = index === 0;
+						next.querySelector('span').textContent = index === 3 ? '시작하기' : '다음';
+					}
+
+					prev && prev.addEventListener('click', () => { if (index > 0) { index--; updateUI(); } });
+					next && next.addEventListener('click', () => {
+						if (index < 3) {
+							index++;
+							updateUI();
+						} else {
+							const tutorial = document.getElementById('setupTutorial');
+							const form = document.getElementById('setupForm');
+							const note = document.getElementById('setupFormNote');
+							if (tutorial) tutorial.classList.add('hidden');
+							if (form) {
+								form.classList.remove('hidden');
+								form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+							}
+							if (note) note.classList.remove('hidden');
+						}
+					});
+					dots.forEach((d, i) => d.addEventListener('click', () => { index = i; updateUI(); }));
+
+					// container entrance animation
+					requestAnimationFrame(() => {
+						container.classList.remove('opacity-0', 'translate-y-2');
+						container.classList.add('opacity-100', 'translate-y-0');
+					});
+					updateUI();
+				})();
+
+			// Reveal setup form after tutorial
+			(function () {
+				const btn = document.getElementById('continueSetup');
+				if (!btn) return;
+				btn.addEventListener('click', () => {
+					const form = document.getElementById('setupForm');
+					const note = document.getElementById('setupFormNote');
+					const tutorial = document.getElementById('setupTutorial');
+					if (tutorial) tutorial.classList.add('hidden');
+					if (form) {
+						form.classList.remove('hidden');
+						form.scrollIntoView({ behavior: 'smooth', block: 'start' });
+					}
+					if (note) note.classList.remove('hidden');
+				});
+			})();
+		</script>
 </body>
 
 </html>
