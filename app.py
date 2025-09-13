@@ -36,7 +36,7 @@ class User(db.Model):
     nid_ses = db.Column(db.String(200))
 class Streamer(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    channel_url = db.Column(db.String(200), unique=True, nullable=False)
+    channel_url = db.Column(db.String(200), nullable=False)
     nickname = db.Column(db.String(100))
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     cookie_user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
@@ -49,6 +49,7 @@ class Streamer(db.Model):
     process_id = db.Column(db.Integer)
     user = db.relationship('User', backref=db.backref('streamers', lazy=True), foreign_keys=[user_id])
     cookie_user = db.relationship('User', backref=db.backref('cookie_streamers', lazy=True), foreign_keys=[cookie_user_id])
+    __table_args__ = (db.UniqueConstraint('user_id', 'channel_url', name='unique_user_channel'),)
 
 class Recording(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -264,6 +265,27 @@ with app.app_context():
         if 'cookie_user_id' not in columns:
             db.session.execute('ALTER TABLE streamer ADD COLUMN cookie_user_id INTEGER')
             db.session.commit()
+        
+        # Check if unique constraint on channel_url exists and remove it
+        try:
+            db.session.execute("PRAGMA index_list(streamer)")
+            indexes = db.session.execute("PRAGMA index_list(streamer)").fetchall()
+            for index in indexes:
+                if 'channel_url' in index[1]:  # index name contains channel_url
+                    db.session.execute(f"DROP INDEX {index[1]}")
+                    db.session.commit()
+                    print(f"Removed old unique constraint on channel_url")
+        except Exception as e:
+            print(f"Warning: could not remove old unique constraint: {e}")
+            
+        # Add new unique constraint on (user_id, channel_url)
+        try:
+            db.session.execute("CREATE UNIQUE INDEX IF NOT EXISTS unique_user_channel ON streamer(user_id, channel_url)")
+            db.session.commit()
+            print("Added new unique constraint on (user_id, channel_url)")
+        except Exception as e:
+            print(f"Warning: could not add new unique constraint: {e}")
+            
     except Exception as e:
         print(f"Warning: could not ensure user_id on streamer: {e}")
 
@@ -520,6 +542,11 @@ def add_streamer():
     if not nickname:
         return jsonify({'status': 'error', 'message': '채널 정보를 가져올 수 없습니다.'}), 400
 
+    # Check if this user already has this channel
+    existing_streamer = Streamer.query.filter_by(user_id=user.id, channel_url=channel_url).first()
+    if existing_streamer:
+        return jsonify({'status': 'error', 'message': '이미 등록된 채널입니다.'}), 400
+
     try:
         streamer = Streamer(channel_url=channel_url, nickname=nickname, user_id=user.id, cookie_user_id=user.id)
         db.session.add(streamer)
@@ -535,7 +562,8 @@ def add_streamer():
         })
     except Exception as e:
         db.session.rollback()
-        return jsonify({'status': 'error', 'message': '이미 등록된 채널입니다.'}), 400
+        print(f"Error adding streamer: {e}")
+        return jsonify({'status': 'error', 'message': '스트리머 추가 중 오류가 발생했습니다.'}), 500
 
 @app.route('/remove_streamer/<int:streamer_id>', methods=['POST'])
 def remove_streamer(streamer_id):
