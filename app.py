@@ -7,7 +7,7 @@ import json
 import requests
 import subprocess
 import xml.etree.ElementTree as ET
-from datetime import datetime
+from datetime import datetime, timedelta
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger
 import threading
@@ -21,6 +21,7 @@ app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', secrets.token_hex(32))
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=7)
 db = SQLAlchemy(app)
 
 class User(db.Model):
@@ -334,6 +335,7 @@ def setup_admin():
         settings = Settings(initialized=True)
         db.session.add(settings)
         db.session.commit()
+        session.permanent = True
         session['user_id'] = user.id
         return redirect(url_for('live'))
     return render_template('login.html', setup_mode=True)
@@ -352,8 +354,10 @@ def login():
         if user and check_password_hash(user.password_hash, password):
             # If 2FA is enabled, require OTP step
             if user.totp_enabled and user.totp_secret:
+                session.permanent = True
                 session['pending_user_id'] = user.id
                 return redirect(url_for('login_otp'))
+            session.permanent = True
             session['user_id'] = user.id
             return redirect(url_for('live'))
         return render_template('login.html', error='아이디 또는 비밀번호가 올바르지 않습니다.', setup_mode=False)
@@ -369,6 +373,7 @@ def login_otp():
         code = (request.get_json(silent=True) or request.form).get('otp')
         if user and user.totp_secret and pyotp.TOTP(user.totp_secret).verify(code, valid_window=1):
             session.pop('pending_user_id', None)
+            session.permanent = True
             session['user_id'] = user.id
             return redirect(url_for('live'))
         return render_template('login.html', error='OTP가 올바르지 않습니다.', setup_mode=False)
