@@ -93,11 +93,17 @@ def get_channel_info(channel_id):
 
 def download_stream(channel_id, broadcast_title, streamer_nickname, streamer_id):
     try:
-        current_user = g.user
-        if not current_user or not current_user.username:
-            raise Exception("현재 로그인한 사용자를 찾을 수 없습니다.")
+        # Get the streamer to determine which user's directory to use
+        streamer = Streamer.query.get(streamer_id)
+        if not streamer:
+            raise Exception("스트리머를 찾을 수 없습니다")
+        
+        # Get the streamer owner's user info
+        streamer_owner = User.query.get(streamer.user_id)
+        if not streamer_owner or not streamer_owner.username:
+            raise Exception("스트리머 소유자 정보를 찾을 수 없습니다.")
 
-        user_downloads_dir = os.path.join('downloads', current_user.username)
+        user_downloads_dir = os.path.join('downloads', streamer_owner.username)
         if not os.path.exists(user_downloads_dir):
             os.makedirs(user_downloads_dir)
 
@@ -109,11 +115,6 @@ def download_stream(channel_id, broadcast_title, streamer_nickname, streamer_id)
         filename = f"{current_date} {broadcast_title} [{streamer_nickname}].ts"
         filename = re.sub(r'[<>:"/\\|?*]', '', filename)
         filepath = os.path.join(streamer_dir, filename)
-        
-        # Get the streamer to determine which user's cookies to use
-        streamer = Streamer.query.get(streamer_id)
-        if not streamer:
-            raise Exception("스트리머를 찾을 수 없습니다")
         
         # Use cookie_user_id if set, otherwise use the streamer owner's cookies
         cookie_user_id = streamer.cookie_user_id if streamer.cookie_user_id else streamer.user_id
@@ -142,6 +143,7 @@ def download_stream(channel_id, broadcast_title, streamer_nickname, streamer_id)
             
             recording = Recording(
                 streamer_id=streamer_id,
+                user_id=streamer.user_id,
                 filename=os.path.join(streamer_nickname, filename),
                 title=broadcast_title
             )
@@ -216,7 +218,8 @@ def check_all_streamers():
                     if is_live:
                         streamer.last_live = datetime.now()
                         if not streamer.is_recording:
-                            download_stream(channel_id, broadcast_title, streamer.nickname, streamer.id)
+                            with app.app_context():
+                                download_stream(channel_id, broadcast_title, streamer.nickname, streamer.id)
                     else:
                         streamer.is_recording = False
                         streamer.current_broadcast_title = None
