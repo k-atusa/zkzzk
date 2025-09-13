@@ -431,7 +431,9 @@ def recordings():
                     created_at = datetime.fromtimestamp(os.path.getctime(filepath), tz=datetime.now().tzinfo)
                     rel_path = os.path.relpath(filepath, 'downloads')
                     streamer_name = os.path.dirname(os.path.relpath(filepath, user_downloads_dir))
-                    title = ' '.join(filename.split(' ')[1:-1])
+                    
+                    match = re.match(r'^\d{6}_\d{6} (.+) \[.+\]\.(ts|mp4)$', filename)
+                    title = match.group(1) if match else filename
 
                     recordings.append({
                         'filename': rel_path,
