@@ -1,0 +1,13 @@
+version: "3.9"
+
+services:
+  zkzzk:
+    image: d3vle0/zkzzk:latest
+    container_name: zkzzk
+    environment:
+      - TZ=${SERVER_TZ:-Asia/Seoul}
+    ports:
+      - "10000:3000"
+    volumes:
+      - ./downloads:/app/downloads
+    restart: unless-stopped

@@ -7,7 +7,7 @@ import json
 import requests
 import subprocess
 import xml.etree.ElementTree as ET
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger
 import threading
@@ -23,6 +23,22 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=7)
 db = SQLAlchemy(app)
+
+# KST timezone helper and formatting for Naver API times
+KST = timezone(timedelta(hours=9))
+
+def format_iso_to_kst_label(iso_string):
+    try:
+        if not iso_string:
+            return None
+        normalized = iso_string.replace('Z', '+00:00')
+        dt = datetime.fromisoformat(normalized)
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+        kst_dt = dt.astimezone(KST)
+        return kst_dt.strftime('%Y-%m-%d %H:%M') + ' +09:00'
+    except Exception:
+        return None
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -658,9 +674,10 @@ def check_status():
                 
                 if data['content'].get('openDate'):
                     try:
-                        open_date = datetime.fromisoformat(data['content']['openDate'].replace('Z', '+00:00'))
-                        broadcast_info['open_date'] = open_date.astimezone(datetime.now().tzinfo).strftime('%Y-%m-%d %H:%M')
-                    except:
+                        formatted_open = format_iso_to_kst_label(data['content']['openDate'])
+                        if formatted_open:
+                            broadcast_info['open_date'] = formatted_open
+                    except Exception:
                         pass
             
             streamer.last_checked = datetime.now()
@@ -772,8 +789,7 @@ def get_vod_info(video_no):
             formatted_publish_date = None
             if publish_date:
                 try:
-                    publish_datetime = datetime.fromisoformat(publish_date.replace('Z', '+00:00'))
-                    formatted_publish_date = publish_datetime.astimezone(datetime.now().tzinfo).strftime('%Y-%m-%d %H:%M')
+                    formatted_publish_date = format_iso_to_kst_label(publish_date)
                     print(f"[VOD INFO] Publish date: {formatted_publish_date}")
                 except Exception as e:
                     print(f"[VOD INFO] Error parsing publish date: {e}")
