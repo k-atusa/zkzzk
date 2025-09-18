@@ -42,8 +42,6 @@ curl -O https://raw.githubusercontent.com/k-atusa/zkzzk/refs/heads/main/docker-c
 `docker-compose.yml` 을 열고 `TZ` 환경변수 값을 원하는 시간대로 바꿉니다. (기본값: `Asia/Seoul`)
 
 ```yaml
-version: "3.9"
-
 services:
   zkzzk:
     image: d3vle0/zkzzk:latest
