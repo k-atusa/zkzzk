@@ -42,8 +42,6 @@ curl -O https://raw.githubusercontent.com/k-atusa/zkzzk/refs/heads/main/docker-c
 Then, open the `docker-compose.yml` file in a text editor and change the `TZ` environment variable to your desired timezone (default: `Asia/Seoul`):
 
 ```yaml
-version: "3.9"
-
 services:
   zkzzk:
     image: d3vle0/zkzzk:latest
