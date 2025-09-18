@@ -33,21 +33,31 @@ python3 app.py
 
 ### 2. Docker container (Recommended)
 
-Create a `docker-compose.yml` file as follows.
+Download the official docker-compose.yml file:
 
-```yml
+```sh
+curl -O https://raw.githubusercontent.com/k-atusa/zkzzk/refs/heads/main/docker-compose.yml
+```
+
+Then, open the docker-compose.yml file in a text editor and change the TZ environment variable to your desired timezone (default: Asia/Seoul):
+
+```yaml
 version: "3.9"
 
 services:
   zkzzk:
     image: d3vle0/zkzzk:latest
     container_name: zkzzk
+    environment:
+      - TZ=Asia/Seoul  # Change this to your timezone (e.g., Europe/London, America/New_York)
     ports:
-      - "<external port>:3000"
+      - "10000:3000"
     volumes:
       - ./downloads:/app/downloads
     restart: unless-stopped
 ```
+
+Finally, start the container:
 
 ```sh
 docker compose up -d
