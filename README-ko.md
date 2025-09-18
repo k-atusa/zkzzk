@@ -33,21 +33,31 @@ python3 app.py
 
 ### 2. Docker 컨테이너 실행 (권장)
 
-`docker-compose.yml` 파일을 다음과 같이 작성합니다.
+본 레포지토리에 있는 `docker-compose.yml` 파일을 다운로드 합니다.
 
-```yml
+```sh
+curl -O https://raw.githubusercontent.com/k-atusa/zkzzk/refs/heads/main/docker-compose.yml
+```
+
+`docker-compose.yml` 을 열고 `TZ` 환경변수 값을 원하는 시간대로 바꿉니다. (기본값: `Asia/Seoul`)
+
+```yaml
 version: "3.9"
 
 services:
   zkzzk:
     image: d3vle0/zkzzk:latest
     container_name: zkzzk
+    environment:
+      - TZ=Asia/Seoul  # Change this to your timezone (e.g., Europe/London, America/New_York)
     ports:
-      - "<외부 포트>:3000"
+      - "10000:3000"
     volumes:
       - ./downloads:/app/downloads
     restart: unless-stopped
 ```
+
+컨테이너를 실행합니다.
 
 ```sh
 docker compose up -d
