@@ -7,7 +7,7 @@ import json
 import requests
 import subprocess
 import xml.etree.ElementTree as ET
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger
 import threading
@@ -23,22 +23,6 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=7)
 db = SQLAlchemy(app)
-
-# KST timezone helper and formatting for Naver API times
-KST = timezone(timedelta(hours=9))
-
-def format_iso_to_kst_label(iso_string):
-    try:
-        if not iso_string:
-            return None
-        normalized = iso_string.replace('Z', '+00:00')
-        dt = datetime.fromisoformat(normalized)
-        if dt.tzinfo is None:
-            dt = dt.replace(tzinfo=timezone.utc)
-        kst_dt = dt.astimezone(KST)
-        return kst_dt.strftime('%Y-%m-%d %H:%M') + ' +09:00'
-    except Exception:
-        return None
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -112,12 +96,12 @@ def get_channel_info(channel_id):
 def download_stream(channel_id, broadcast_title, streamer_nickname, streamer_id):
     try:
         # Get the streamer to determine which user's directory to use
-        streamer = Streamer.query.get(streamer_id)
+        streamer = Streamer.query.filter_by(id=streamer_id).first()
         if not streamer:
             raise Exception("스트리머를 찾을 수 없습니다")
         
         # Get the streamer owner's user info
-        streamer_owner = User.query.get(streamer.user_id)
+        streamer_owner = User.query.filter_by(id=streamer.user_id).first()
         if not streamer_owner or not streamer_owner.username:
             raise Exception("스트리머 소유자 정보를 찾을 수 없습니다.")
 
@@ -136,7 +120,7 @@ def download_stream(channel_id, broadcast_title, streamer_nickname, streamer_id)
         
         # Use cookie_user_id if set, otherwise use the streamer owner's cookies
         cookie_user_id = streamer.cookie_user_id if streamer.cookie_user_id else streamer.user_id
-        cookie_user = User.query.get(cookie_user_id)
+        cookie_user = User.query.filter_by(id=cookie_user_id).first()
         if not cookie_user or not cookie_user.nid_aut or not cookie_user.nid_ses:
             raise Exception("NID_AUT and NID_SES cookies are required for recording")
         
@@ -212,7 +196,7 @@ def check_all_streamers():
             try:
                 # Use cookie_user_id if set, otherwise use the streamer owner's cookies
                 cookie_user_id = streamer.cookie_user_id if streamer.cookie_user_id else streamer.user_id
-                cookie_user = User.query.get(cookie_user_id)
+                cookie_user = User.query.filter_by(id=cookie_user_id).first()
                 if not cookie_user or not cookie_user.nid_aut or not cookie_user.nid_ses:
                     continue
 
@@ -346,7 +330,7 @@ def require_login():
 
     user_id = session.get('user_id')
     if user_id:
-        g.user = User.query.get(user_id)
+        g.user = User.query.filter_by(id=user_id).first()
     if not g.user:
         return redirect(url_for('login'))
 
@@ -406,7 +390,7 @@ def login_otp():
     pending_id = session.get('pending_user_id')
     if not pending_id:
         return redirect(url_for('login'))
-    user = User.query.get(pending_id)
+    user = User.query.filter_by(id=pending_id).first()
     if request.method == 'POST':
         code = (request.get_json(silent=True) or request.form).get('otp')
         if user and user.totp_secret and pyotp.TOTP(user.totp_secret).verify(code, valid_window=1):
@@ -587,7 +571,9 @@ def add_streamer():
 def remove_streamer(streamer_id):
     try:
         user = g.user
-        streamer = Streamer.query.get_or_404(streamer_id)
+        streamer = Streamer.query.filter_by(id=streamer_id).first()
+        if not streamer:
+            return jsonify({'status': 'error', 'message': '스트리머를 찾을 수 없습니다.'}), 404
         if streamer.user_id != user.id and not (g.user and g.user.is_admin):
             return jsonify({'status': 'error', 'message': '권한이 없습니다.'}), 403
         
@@ -622,7 +608,7 @@ def check_status():
     data = request.get_json()
     streamer_id = data.get('streamer_id')
     
-    streamer = Streamer.query.get(streamer_id)
+    streamer = Streamer.query.filter_by(id=streamer_id).first()
     if not streamer:
         return jsonify({'status': 'error', 'message': '스트리머를 찾을 수 없습니다.'}), 400
     if g.user and (streamer.user_id != g.user.id) and not g.user.is_admin:
@@ -635,7 +621,7 @@ def check_status():
     try:
         # Use cookie_user_id if set, otherwise use the streamer owner's cookies
         cookie_user_id = streamer.cookie_user_id if streamer.cookie_user_id else streamer.user_id
-        cookie_user = User.query.get(cookie_user_id)
+        cookie_user = User.query.filter_by(id=cookie_user_id).first()
         if not cookie_user or not cookie_user.nid_aut or not cookie_user.nid_ses:
             return jsonify({
                 'status': 'error',
@@ -672,10 +658,9 @@ def check_status():
                 
                 if data['content'].get('openDate'):
                     try:
-                        formatted_open = format_iso_to_kst_label(data['content']['openDate'])
-                        if formatted_open:
-                            broadcast_info['open_date'] = formatted_open
-                    except Exception:
+                        open_date = datetime.fromisoformat(data['content']['openDate'].replace('Z', '+00:00'))
+                        broadcast_info['open_date'] = open_date.astimezone(datetime.now().tzinfo).strftime('%Y-%m-%d %H:%M')
+                    except:
                         pass
             
             streamer.last_checked = datetime.now()
@@ -704,7 +689,9 @@ def check_status():
 @app.route('/stop_recording/<int:streamer_id>', methods=['POST'])
 def stop_recording(streamer_id):
     try:
-        streamer = Streamer.query.get_or_404(streamer_id)
+        streamer = Streamer.query.filter_by(id=streamer_id).first()
+        if not streamer:
+            return jsonify({'status': 'error', 'message': '스트리머를 찾을 수 없습니다.'}), 404
         if g.user and (streamer.user_id != g.user.id) and not g.user.is_admin:
             return jsonify({'status': 'error', 'message': '권한이 없습니다.'}), 403
         if streamer.is_recording and streamer.process_id:
@@ -785,7 +772,8 @@ def get_vod_info(video_no):
             formatted_publish_date = None
             if publish_date:
                 try:
-                    formatted_publish_date = format_iso_to_kst_label(publish_date)
+                    publish_datetime = datetime.fromisoformat(publish_date.replace('Z', '+00:00'))
+                    formatted_publish_date = publish_datetime.astimezone(datetime.now().tzinfo).strftime('%Y-%m-%d %H:%M')
                     print(f"[VOD INFO] Publish date: {formatted_publish_date}")
                 except Exception as e:
                     print(f"[VOD INFO] Error parsing publish date: {e}")
@@ -1132,7 +1120,9 @@ def admin_users():
         user_id = int(data.get('user_id') or 0)
         if user_id == g.user.id:
             return jsonify({'status': 'error', 'message': '본인 삭제 불가'}), 400
-        user = User.query.get_or_404(user_id)
+        user = User.query.filter_by(id=user_id).first()
+        if not user:
+            return jsonify({'status': 'error', 'message': '사용자를 찾을 수 없습니다.'}), 404
         db.session.delete(user)
         db.session.commit()
         return jsonify({'status': 'success'})
@@ -1211,13 +1201,15 @@ def set_streamer_cookies():
         streamer_id = data.get('streamer_id')
         cookie_user_id = data.get('cookie_user_id')
         
-        streamer = Streamer.query.get_or_404(streamer_id)
+        streamer = Streamer.query.filter_by(id=streamer_id).first()
+        if not streamer:
+            return jsonify({'status': 'error', 'message': '스트리머를 찾을 수 없습니다.'}), 404
         if streamer.user_id != g.user.id and not g.user.is_admin:
             return jsonify({'status': 'error', 'message': '권한이 없습니다.'}), 403
         
         # Verify the cookie_user_id exists and has settings
         if cookie_user_id:
-            cookie_user = User.query.get(cookie_user_id)
+            cookie_user = User.query.filter_by(id=cookie_user_id).first()
             if not cookie_user:
                 return jsonify({'status': 'error', 'message': '쿠키 사용자를 찾을 수 없습니다.'}), 400
             
