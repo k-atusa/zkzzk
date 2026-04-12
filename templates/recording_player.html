@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>ZKZZK - 영상 재생</title>
+	<link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+	<link rel="icon" type="image/x-icon" href="/static/favicon.ico">
+	<link rel="icon" type="image/png" href="/static/favicon.png">
+	<link rel="stylesheet" href="/static/common.css">
+	<link rel="stylesheet" href="/static/recording-player.css">
+	<script src="https://cdn.tailwindcss.com"></script>
+	<script>
+		tailwind.config = {
+			theme: {
+				extend: {
+					colors: {
+						'accent': 'rgb(113, 243, 166)',
+						'accent-dark': 'rgb(89, 194, 133)',
+						'accent-light': 'rgb(137, 255, 179)',
+					}
+				}
+			}
+		}
+	</script>
+</head>
+
+<body>
+	<div class="player-wrap px-4 py-6 md:px-6 md:py-10">
+		<div class="player-card max-w-5xl mx-auto p-4 md:p-6">
+			<div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4">
+				<div>
+					<p class="text-xs uppercase tracking-wide text-muted">재생 중</p>
+					<h1 class="text-white text-lg md:text-2xl font-semibold truncate" title="{{ file_name }}">{{ file_name }}</h1>
+				</div>
+				<div class="flex gap-2">
+					<a href="/recordings/{{ filename }}" class="btn-primary px-4 py-2" download>다운로드</a>
+					<a href="/recordings" class="btn-secondary px-4 py-2">목록으로</a>
+				</div>
+			</div>
+
+			<video class="video-player" controls autoplay preload="metadata">
+				{% if file_ext == '.mp4' %}
+				<source src="/recordings/{{ filename }}" type="video/mp4">
+				{% else %}
+				<source src="/recordings/{{ filename }}" type="video/mp2t">
+				{% endif %}
+				브라우저가 영상 재생을 지원하지 않습니다.
+			</video>
+		</div>
+	</div>
+</body>
+
+</html>

@@ -36,43 +36,30 @@
 
 	<div class="pt-28 pb-8 px-6">
 		<div class="max-w-7xl mx-auto">
+			{% if streamer_recordings %}
 			{% for streamer_name, recordings in streamer_recordings.items() %}
-			<div class="mb-8">
-				<div class="streamer-header p-6 mb-6">
-					<h2 class="text-2xl font-bold text-white">{{ streamer_name }}</h2>
+			<div class="mb-8 streamer-section">
+				<div class="streamer-header p-6 mb-4">
+					<h2 class="text-2xl font-bold text-white">{{ streamer_name if streamer_name else '기타' }}</h2>
+					<p class="text-muted mt-1">총 {{ recordings|length }}개 파일</p>
 				</div>
-				<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+				<div class="recording-list">
+					<div class="recording-list-header">
+						<span>파일명</span>
+						<span>생성 시간</span>
+						<span>용량</span>
+						<span>동작</span>
+					</div>
 					{% for recording in recordings %}
-					<div class="recording-card p-6">
-						<h3 class="text-lg font-semibold text-white mb-3 truncate">{{ recording.title }}</h3>
-						<p class="text-muted text-sm mb-4">
-							<svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-									d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z">
-								</path>
-							</svg>
-							{{ recording.created_at.strftime('%Y-%m-%d %H:%M:%S') }}
-						</p>
-						<div class="video-container mb-4">
-							<div class="video-thumbnail" data-filename="{{ recording.filename }}">
-								<div class="play-button">
-									<svg class="w-12 h-12 text-white" fill="none" stroke="currentColor"
-										viewBox="0 0 24 24">
-										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-											d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.347a1.125 1.125 0 0 1 0 1.972l-11.54 6.347c-.75.412-1.667-.13-1.667-.986V5.653Z">
-										</path>
-									</svg>
-								</div>
-							</div>
-							<video class="video-player hidden" controls data-filename="{{ recording.filename }}">
-								<source src="/recordings/{{ recording.filename }}" type="video/mp4">
-								Your browser does not support the video tag.
-							</video>
-						</div>
-						<div class="flex justify-between items-center">
-							<a href="/recordings/{{ recording.filename }}" class="btn-primary px-4 py-2" download>
-								다운로드
-							</a>
+					<div class="recording-row" data-filename="{{ recording.filename }}">
+						<a href="/play_recording/{{ recording.filename }}" target="_blank" rel="noopener noreferrer"
+							class="recording-file-link" title="새 탭에서 재생">
+							{{ recording.display_name }}
+						</a>
+						<span class="text-muted">{{ recording.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</span>
+						<span class="text-muted">{{ recording.size_mb }} MB</span>
+						<div class="recording-actions">
+							<a href="/recordings/{{ recording.filename }}" class="btn-primary px-3 py-1.5" download>다운로드</a>
 							<button class="btn-danger p-2 delete-recording" data-filename="{{ recording.filename }}">
 								<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -86,6 +73,12 @@
 				</div>
 			</div>
 			{% endfor %}
+			{% else %}
+			<div class="empty-state p-10 text-center">
+				<h2 class="text-2xl font-bold text-white mb-2">저장된 녹화 영상이 없습니다.</h2>
+				<p class="text-muted">라이브 녹화를 시작하면 이 탭에 파일 목록이 표시됩니다.</p>
+			</div>
+			{% endif %}
 		</div>
 	</div>
 
@@ -106,12 +99,12 @@
 						const data = await response.json();
 
 						if (data.status === 'success') {
-							const card = e.target.closest('.recording-card');
-							const streamerSection = card.closest('.mb-8');
-							card.remove();
+							const row = e.target.closest('.recording-row');
+							const streamerSection = row.closest('.streamer-section');
+							row.remove();
 
-							const remainingCards = streamerSection.querySelectorAll('.recording-card');
-							if (remainingCards.length === 0) {
+							const remainingRows = streamerSection.querySelectorAll('.recording-row');
+							if (remainingRows.length === 0) {
 								streamerSection.remove();
 							}
 						} else {
@@ -122,20 +115,6 @@
 						alert('녹화 영상 삭제 중 오류가 발생했습니다.');
 					}
 				}
-			});
-		});
-
-		document.querySelectorAll('.video-thumbnail').forEach(thumbnail => {
-			thumbnail.addEventListener('click', function () {
-				const filename = this.dataset.filename;
-				const video = document.querySelector(`video[data-filename="${filename}"]`);
-				const thumbnailContainer = this.closest('.video-container');
-
-				document.querySelectorAll('.video-player').forEach(v => v.classList.add('hidden'));
-				document.querySelectorAll('.video-thumbnail').forEach(t => t.classList.remove('hidden'));
-
-				video.classList.remove('hidden');
-				this.classList.add('hidden');
 			});
 		});
 	</script>
