@@ -93,14 +93,6 @@
 
 					<div id="selectedQualityInfo" class="hidden mb-4">
 						<div class="flex gap-2">
-							<button id="downloadToDeviceBtn" class="btn-primary px-4 py-2 text-sm">
-								<svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-										d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
-									</path>
-								</svg>
-								기기에 다운로드
-							</button>
 							<button id="downloadToServerBtn"
 								class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-xl text-sm transition-colors">
 								<svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -242,20 +234,9 @@
 
 		function showSelectedQuality(resolution, videoInfo) {
 			const selectedQualityInfo = document.getElementById('selectedQualityInfo');
-			const deviceDownloadBtn = document.getElementById('downloadToDeviceBtn');
 
 			selectedResolution = resolution;
 			currentVideoInfo = videoInfo;
-
-			if (resolution.download_type === 'm3u8') {
-				deviceDownloadBtn.disabled = true;
-				deviceDownloadBtn.classList.add('opacity-50', 'cursor-not-allowed');
-				deviceDownloadBtn.title = '이 영상은 서버 다운로드를 이용해주세요.';
-			} else {
-				deviceDownloadBtn.disabled = false;
-				deviceDownloadBtn.classList.remove('opacity-50', 'cursor-not-allowed');
-				deviceDownloadBtn.title = '';
-			}
 
 			selectedQualityInfo.classList.remove('hidden');
 		}
@@ -290,29 +271,6 @@
 
 			return `${datePrefix} ${cleanTitle} [${cleanAuthor}].mp4`;
 		}
-
-		document.getElementById('downloadToDeviceBtn').addEventListener('click', () => {
-			if (!selectedResolution || !currentVideoInfo) {
-				alert('다운로드할 영상을 선택해주세요.');
-				return;
-			}
-
-			if (selectedResolution.download_type === 'm3u8') {
-				alert('이 영상은 기기 직접 다운로드를 지원하지 않습니다. 서버에 다운로드 버튼을 이용해주세요.');
-				return;
-			}
-
-			const filename = generateFilename(currentVideoInfo, selectedResolution);
-			const downloadUrl = selectedResolution.download_url;
-
-			const link = document.createElement('a');
-			link.href = downloadUrl;
-			link.download = filename;
-			link.target = '_blank';
-			document.body.appendChild(link);
-			link.click();
-			document.body.removeChild(link);
-		});
 
 		document.getElementById('downloadToServerBtn').addEventListener('click', async () => {
 			if (!selectedResolution || !currentVideoInfo) {
