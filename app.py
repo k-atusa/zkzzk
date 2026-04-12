@@ -14,6 +14,7 @@ import threading
 import secrets
 import base64
 import io
+from urllib.parse import urljoin
 import pyotp
 import qrcode
 
@@ -787,10 +788,11 @@ def get_vod_info(video_no):
         content = response.json().get('content', {})
         video_id = content.get('videoId')
         in_key = content.get('inKey')
+        live_rewind_playback_json = content.get('liveRewindPlaybackJson')
         
         print(f"[VOD INFO] Video ID: {video_id}, In Key: {in_key}")
         
-        if video_id is None or in_key is None:
+        if video_id is None or (in_key is None and not live_rewind_playback_json):
             if g.user and g.user.nid_aut and g.user.nid_ses:
                 print(f"[VOD INFO] Using cookies for authentication")
                 cookies = {
@@ -802,9 +804,10 @@ def get_vod_info(video_no):
                 content = response.json().get('content', {})
                 video_id = content.get('videoId')
                 in_key = content.get('inKey')
+                live_rewind_playback_json = content.get('liveRewindPlaybackJson')
                 print(f"[VOD INFO] After auth - Video ID: {video_id}, In Key: {in_key}")
         
-        if video_id and in_key:
+        if video_id and (in_key or live_rewind_playback_json):
             publish_date = content.get('publishDate')
             formatted_publish_date = None
             if publish_date:
@@ -822,7 +825,8 @@ def get_vod_info(video_no):
                 'author': content.get('channel', {}).get('channelName'),
                 'category': content.get('videoCategory'),
                 'tags': content.get('tags', []),
-                'publish_date': formatted_publish_date
+                'publish_date': formatted_publish_date,
+                'live_rewind_playback_json': live_rewind_playback_json
             }
             print(f"[VOD INFO] Successfully retrieved VOD info: {vod_info['title']}")
             return vod_info
@@ -833,7 +837,140 @@ def get_vod_info(video_no):
         print(f"Error fetching VOD info: {e}")
         return None
 
-def get_vod_stream_urls(video_id, in_key):
+def get_vod_stream_urls(video_id, in_key, live_rewind_playback_json=None):
+    # Non-partner VODs can omit inKey and expose only liveRewindPlaybackJson.
+    if not in_key and live_rewind_playback_json:
+        print("[VOD STREAM] inKey missing, trying liveRewindPlaybackJson m3u8 flow...")
+        try:
+            if isinstance(live_rewind_playback_json, str):
+                playback_json = json.loads(live_rewind_playback_json)
+            else:
+                playback_json = live_rewind_playback_json
+
+            media = playback_json.get('media', [])
+            if not media:
+                print("[VOD STREAM] No media array in liveRewindPlaybackJson")
+                return None
+
+            master_m3u8_url = media[0].get('path')
+            encoding_track = media[0].get('encodingTrack', [])
+            if not master_m3u8_url:
+                print("[VOD STREAM] Missing master m3u8 path in liveRewindPlaybackJson")
+                return None
+
+            m3u8_headers = {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
+                'Accept': 'application/vnd.apple.mpegurl, application/x-mpegURL, */*',
+                'Origin': 'https://chzzk.naver.com',
+                'Referer': 'https://chzzk.naver.com/'
+            }
+            master_resp = requests.get(master_m3u8_url, headers=m3u8_headers)
+            master_resp.raise_for_status()
+            lines = [line.strip() for line in master_resp.text.splitlines() if line.strip()]
+
+            stream_urls = {}
+
+            # Build a map from encoding metadata for fallback and bandwidth estimates.
+            track_map = {}
+            for track in encoding_track:
+                width = track.get('videoWidth')
+                height = track.get('videoHeight')
+                if width and height:
+                    track_map[f"{int(width)}x{int(height)}"] = {
+                        'bandwidth': int(track.get('encodingRate') or 0)
+                    }
+
+            for i, line in enumerate(lines):
+                if not line.startswith('#EXT-X-STREAM-INF:'):
+                    continue
+
+                resolution_match = re.search(r'RESOLUTION=(\d+)x(\d+)', line)
+                bandwidth_match = re.search(r'BANDWIDTH=(\d+)', line)
+                if not resolution_match:
+                    continue
+
+                width = int(resolution_match.group(1))
+                height = int(resolution_match.group(2))
+                resolution = f"{width}x{height}"
+
+                if i + 1 >= len(lines):
+                    continue
+                variant_path = lines[i + 1]
+                if variant_path.startswith('#'):
+                    continue
+
+                variant_url = urljoin(master_m3u8_url, variant_path)
+
+                if height >= 1080:
+                    quality = '1080p'
+                elif height >= 720:
+                    quality = '720p'
+                elif height >= 480:
+                    quality = '480p'
+                elif height >= 360:
+                    quality = '360p'
+                else:
+                    quality = '240p'
+
+                bandwidth = int(bandwidth_match.group(1)) if bandwidth_match else track_map.get(resolution, {}).get('bandwidth', 0)
+
+                stream_urls[resolution] = {
+                    'download_url': variant_url,
+                    'width': width,
+                    'height': height,
+                    'bandwidth': bandwidth,
+                    'quality': quality,
+                    'download_type': 'm3u8'
+                }
+                print(f"[VOD STREAM] Added m3u8 URL for {resolution} ({quality}): {variant_url}")
+
+            if stream_urls:
+                sorted_urls = dict(sorted(stream_urls.items(), key=lambda x: (x[1]['height'], x[1]['width']), reverse=True))
+                print(f"[VOD STREAM] Returning {len(sorted_urls)} m3u8 stream URLs")
+                return sorted_urls
+
+            # Fallback: create entries from encodingTrack even if master playlist cannot be parsed fully.
+            for track in encoding_track:
+                width = track.get('videoWidth')
+                height = track.get('videoHeight')
+                if not width or not height:
+                    continue
+                width = int(width)
+                height = int(height)
+                resolution = f"{width}x{height}"
+                if height >= 1080:
+                    quality = '1080p'
+                elif height >= 720:
+                    quality = '720p'
+                elif height >= 480:
+                    quality = '480p'
+                elif height >= 360:
+                    quality = '360p'
+                else:
+                    quality = '240p'
+                stream_urls[resolution] = {
+                    'download_url': master_m3u8_url,
+                    'width': width,
+                    'height': height,
+                    'bandwidth': int(track.get('encodingRate') or 0),
+                    'quality': quality,
+                    'download_type': 'm3u8'
+                }
+
+            if stream_urls:
+                sorted_urls = dict(sorted(stream_urls.items(), key=lambda x: (x[1]['height'], x[1]['width']), reverse=True))
+                print(f"[VOD STREAM] Returning {len(sorted_urls)} m3u8 fallback stream URLs")
+                return sorted_urls
+
+            return None
+        except Exception as e:
+            print(f"[VOD STREAM] Error in liveRewindPlaybackJson flow: {e}")
+            return None
+
+    if not in_key:
+        print("[VOD STREAM] Missing both inKey and liveRewindPlaybackJson")
+        return None
+
     vod_url = f"https://apis.naver.com/neonplayer/vodplay/v2/playback/{video_id}?key={in_key}"
     print(f"[VOD STREAM] Requesting stream URLs from: {vod_url}")
     
@@ -912,7 +1049,8 @@ def get_vod_stream_urls(video_id, in_key):
                                             'width': int(width),
                                             'height': int(height),
                                             'bandwidth': int(bandwidth) if bandwidth else 0,
-                                            'quality': quality
+                                            'quality': quality,
+                                            'download_type': 'direct'
                                         }
                                         print(f"[VOD STREAM] Added JSON download URL for {resolution} ({quality}): {base_url}")
                     
@@ -984,7 +1122,8 @@ def get_vod_stream_urls(video_id, in_key):
                                     'width': int(width),
                                     'height': int(height),
                                     'bandwidth': int(bandwidth) if bandwidth else 0,
-                                    'quality': quality
+                                    'quality': quality,
+                                    'download_type': 'direct'
                                 }
                                 print(f"[VOD STREAM] Added XML download URL for {resolution} ({quality}): {base_url}")
                             else:
@@ -1011,7 +1150,8 @@ def get_vod_stream_urls(video_id, in_key):
                     'width': 1280,
                     'height': 720,
                     'bandwidth': 2000000,
-                    'quality': '720p'
+                    'quality': '720p',
+                    'download_type': 'direct'
                 }
             }
             print(f"[VOD STREAM] Using default stream URL: {default_url}")
@@ -1032,7 +1172,7 @@ def get_vod_stream_url(video_id, in_key):
     urls = get_vod_stream_urls(video_id, in_key)
     if urls:
         first_resolution = list(urls.keys())[0]
-        return urls[first_resolution]['media_url_template']
+        return urls[first_resolution]['download_url']
     return None
 
 
@@ -1082,7 +1222,11 @@ def get_vod_info_route():
         print(f"[VOD ROUTE] Successfully got VOD info: {vod_info['title']}")
         
         print(f"[VOD ROUTE] Getting stream URLs for video_id: {vod_info['video_id']}")
-        stream_urls = get_vod_stream_urls(vod_info['video_id'], vod_info['in_key'])
+        stream_urls = get_vod_stream_urls(
+            vod_info['video_id'],
+            vod_info['in_key'],
+            vod_info.get('live_rewind_playback_json')
+        )
         if not stream_urls:
             print(f"[VOD ROUTE] Failed to get stream URLs for video_id: {vod_info['video_id']}")
             return jsonify({'status': 'error', 'message': '스트림 URL을 가져올 수 없습니다.'}), 400
@@ -1104,15 +1248,17 @@ def get_vod_info_route():
                 'bandwidth': info['bandwidth'],
                 'quality': info['quality'],
                 'download_url': info['download_url'],
+                'download_type': info.get('download_type', 'direct'),
                 'estimated_size_mb': estimated_size_mb
             }
             resolutions.append(resolution_info)
             print(f"[VOD ROUTE] Resolution {resolution}: {info['download_url']}")
         
         print(f"[VOD ROUTE] Returning {len(resolutions)} resolutions to client")
+        response_video_info = {k: v for k, v in vod_info.items() if k != 'live_rewind_playback_json'}
         return jsonify({
             'status': 'success',
-            'video_info': vod_info,
+            'video_info': response_video_info,
             'resolutions': resolutions,
             'default_resolution': default_resolution,
             'message': 'VOD 정보를 성공적으로 가져왔습니다.'
@@ -1303,6 +1449,7 @@ def download_vod():
         filename = data.get('filename')
         video_info = data.get('video_info')
         resolution = data.get('resolution')
+        download_type = (resolution or {}).get('download_type', 'direct')
         
         print(f"[VOD DOWNLOAD] Starting server download: {filename}")
         print(f"[VOD DOWNLOAD] URL: {download_url}")
@@ -1325,44 +1472,140 @@ def download_vod():
         def download_file():
             try:
                 print(f"[VOD DOWNLOAD] Downloading to: {filepath}")
-                
-                wget_command = [
-                    'wget',
-                    '--timeout=30',
-                    '--tries=3',
-                    '--continue',
-                    '--quiet',
-                    '--output-document=' + filepath,
-                    download_url
-                ]
-                
-                print(f"[VOD DOWNLOAD] Starting download: {filename}")
-                result = subprocess.run(wget_command, capture_output=True, text=True)
-                
-                if result.returncode == 0:
-                    print(f"[VOD DOWNLOAD] Download completed: {filepath}")
-                    
-                    if filepath.endswith('.ts'):
-                        mp4_filepath = filepath.replace('.ts', '.mp4')
+
+                if download_type == 'm3u8' or '.m3u8' in (download_url or ''):
+                    print(f"[VOD DOWNLOAD] Starting ffmpeg m3u8 download: {filename}")
+                    ffmpeg_headers = (
+                        "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+                        "(KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36\\r\\n"
+                        "Origin: https://chzzk.naver.com\\r\\n"
+                        "Referer: https://chzzk.naver.com/\\r\\n"
+                    )
+                    ffmpeg_command = [
+                        'ffmpeg',
+                        '-f', 'hls',
+                        '-protocol_whitelist', 'file,http,https,tcp,tls,crypto,data',
+                        '-allowed_extensions', 'ALL',
+                        '-user_agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
+                        '-referer', 'https://chzzk.naver.com/',
+                        '-headers', ffmpeg_headers,
+                        '-i', download_url,
+                        '-c', 'copy',
+                        '-movflags', '+faststart',
+                        '-start_at_zero',
+                        '-y',
+                        filepath
+                    ]
+                    result = subprocess.run(ffmpeg_command, capture_output=True, text=True)
+                    if result.returncode != 0:
+                        print(f"[VOD DOWNLOAD] ffmpeg failed with return code: {result.returncode}")
+                        print(f"[VOD DOWNLOAD] ffmpeg stderr: {result.stderr}")
+                        print("[VOD DOWNLOAD] Trying streamlink fallback for m3u8...")
+
+                        temp_ts_filepath = filepath + '.ts'
+                        streamlink_command = [
+                            'streamlink',
+                            '--http-header', 'User-Agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
+                            '--http-header', 'Origin=https://chzzk.naver.com',
+                            '--http-header', 'Referer=https://chzzk.naver.com/',
+                            '--stream-segment-threads', '4',
+                            download_url,
+                            'best',
+                            '--output', temp_ts_filepath
+                        ]
+                        streamlink_result = subprocess.run(streamlink_command, capture_output=True, text=True)
+                        if streamlink_result.returncode != 0:
+                            print(f"[VOD DOWNLOAD] streamlink fallback failed: {streamlink_result.stderr}")
+                            raise Exception(f"ffmpeg m3u8 download failed: {result.stderr}")
+
+                        print(f"[VOD DOWNLOAD] streamlink fallback completed: {temp_ts_filepath}")
                         try:
-                            print(f"[VOD DOWNLOAD] Converting to MP4: {mp4_filepath}")
-                            ffmpeg_command = [
+                            # 1st try: lossless remux to MP4
+                            remux_command = [
                                 'ffmpeg',
-                                '-i', filepath,
+                                '-fflags', '+genpts',
+                                '-analyzeduration', '100M',
+                                '-probesize', '100M',
+                                '-i', temp_ts_filepath,
+                                '-map', '0:v:0',
+                                '-map', '0:a:0?',
                                 '-c', 'copy',
-                                '-start_at_zero',
+                                '-bsf:a', 'aac_adtstoasc',
+                                '-movflags', '+faststart',
                                 '-y',
-                                mp4_filepath
+                                filepath
                             ]
-                            subprocess.run(ffmpeg_command, check=True)
-                            os.remove(filepath)
-                            print(f"[VOD DOWNLOAD] Conversion completed: {mp4_filepath}")
-                        except Exception as e:
-                            print(f"[VOD DOWNLOAD] Error converting to MP4: {e}")
+                            remux_result = subprocess.run(remux_command, capture_output=True, text=True)
+
+                            if remux_result.returncode != 0:
+                                print(f"[VOD DOWNLOAD] lossless remux failed: {remux_result.stderr}")
+                                # 2nd try: re-encode for maximum compatibility
+                                transcode_command = [
+                                    'ffmpeg',
+                                    '-fflags', '+genpts',
+                                    '-analyzeduration', '100M',
+                                    '-probesize', '100M',
+                                    '-i', temp_ts_filepath,
+                                    '-map', '0:v:0',
+                                    '-map', '0:a:0?',
+                                    '-c:v', 'libx264',
+                                    '-preset', 'veryfast',
+                                    '-crf', '23',
+                                    '-c:a', 'aac',
+                                    '-b:a', '192k',
+                                    '-movflags', '+faststart',
+                                    '-y',
+                                    filepath
+                                ]
+                                transcode_result = subprocess.run(transcode_command, capture_output=True, text=True)
+                                if transcode_result.returncode != 0:
+                                    print(f"[VOD DOWNLOAD] re-encode remux failed: {transcode_result.stderr}")
+                                    raise Exception(f"streamlink fallback remux failed: {transcode_result.stderr}")
+
+                            if os.path.exists(filepath) and os.path.exists(temp_ts_filepath):
+                                os.remove(temp_ts_filepath)
+                        except Exception as remux_error:
+                            print(f"[VOD DOWNLOAD] streamlink remux failed: {remux_error}")
+                            raise Exception(f"streamlink fallback remux failed: {remux_error}")
+                    print(f"[VOD DOWNLOAD] ffmpeg m3u8 download completed: {filepath}")
                 else:
-                    print(f"[VOD DOWNLOAD] wget failed with return code: {result.returncode}")
-                    print(f"[VOD DOWNLOAD] wget stderr: {result.stderr}")
-                    raise Exception(f"wget download failed: {result.stderr}")
+                    wget_command = [
+                        'wget',
+                        '--timeout=30',
+                        '--tries=3',
+                        '--continue',
+                        '--quiet',
+                        '--output-document=' + filepath,
+                        download_url
+                    ]
+
+                    print(f"[VOD DOWNLOAD] Starting direct download: {filename}")
+                    result = subprocess.run(wget_command, capture_output=True, text=True)
+
+                    if result.returncode == 0:
+                        print(f"[VOD DOWNLOAD] Download completed: {filepath}")
+
+                        if filepath.endswith('.ts'):
+                            mp4_filepath = filepath.replace('.ts', '.mp4')
+                            try:
+                                print(f"[VOD DOWNLOAD] Converting to MP4: {mp4_filepath}")
+                                ffmpeg_command = [
+                                    'ffmpeg',
+                                    '-i', filepath,
+                                    '-c', 'copy',
+                                    '-start_at_zero',
+                                    '-y',
+                                    mp4_filepath
+                                ]
+                                subprocess.run(ffmpeg_command, check=True)
+                                os.remove(filepath)
+                                print(f"[VOD DOWNLOAD] Conversion completed: {mp4_filepath}")
+                            except Exception as e:
+                                print(f"[VOD DOWNLOAD] Error converting to MP4: {e}")
+                    else:
+                        print(f"[VOD DOWNLOAD] wget failed with return code: {result.returncode}")
+                        print(f"[VOD DOWNLOAD] wget stderr: {result.stderr}")
+                        raise Exception(f"wget download failed: {result.stderr}")
                 
             except Exception as e:
                 print(f"[VOD DOWNLOAD] Error during download: {e}")

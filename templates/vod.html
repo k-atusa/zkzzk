@@ -242,9 +242,20 @@
 
 		function showSelectedQuality(resolution, videoInfo) {
 			const selectedQualityInfo = document.getElementById('selectedQualityInfo');
+			const deviceDownloadBtn = document.getElementById('downloadToDeviceBtn');
 
 			selectedResolution = resolution;
 			currentVideoInfo = videoInfo;
+
+			if (resolution.download_type === 'm3u8') {
+				deviceDownloadBtn.disabled = true;
+				deviceDownloadBtn.classList.add('opacity-50', 'cursor-not-allowed');
+				deviceDownloadBtn.title = '이 영상은 서버 다운로드를 이용해주세요.';
+			} else {
+				deviceDownloadBtn.disabled = false;
+				deviceDownloadBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+				deviceDownloadBtn.title = '';
+			}
 
 			selectedQualityInfo.classList.remove('hidden');
 		}
@@ -283,6 +294,11 @@
 		document.getElementById('downloadToDeviceBtn').addEventListener('click', () => {
 			if (!selectedResolution || !currentVideoInfo) {
 				alert('다운로드할 영상을 선택해주세요.');
+				return;
+			}
+
+			if (selectedResolution.download_type === 'm3u8') {
+				alert('이 영상은 기기 직접 다운로드를 지원하지 않습니다. 서버에 다운로드 버튼을 이용해주세요.');
 				return;
 			}
 
