@@ -1456,11 +1456,14 @@ def download_vod():
         
         if not download_url or not filename:
             return jsonify({'status': 'error', 'message': '다운로드 URL과 파일명이 필요합니다.'}), 400
+
+        if not g.user or not g.user.username:
+            return jsonify({'status': 'error', 'message': '로그인이 필요합니다.'}), 401
         
         if not os.path.exists('downloads'):
             os.makedirs('downloads')
         
-        vod_dir = os.path.join('downloads', 'vod')
+        vod_dir = os.path.join('downloads', g.user.username, 'vod')
         if not os.path.exists(vod_dir):
             os.makedirs(vod_dir)
         
