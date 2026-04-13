@@ -8,3 +8,80 @@ body {
 	min-height: 100vh;
 	color: #e0e0e0;
 }
+
+.custom-alert-overlay {
+	position: fixed;
+	inset: 0;
+	background: rgba(3, 7, 18, 0.78);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 1.25rem;
+	z-index: 1200;
+	backdrop-filter: blur(3px);
+}
+
+.custom-alert-panel {
+	width: min(100%, 460px);
+	border: 1px solid rgba(255, 255, 255, 0.14);
+	border-radius: 14px;
+	background: linear-gradient(145deg, rgba(21, 27, 45, 0.96), rgba(9, 12, 24, 0.96));
+	box-shadow: 0 20px 50px rgba(0, 0, 0, 0.45);
+	padding: 1rem;
+	animation: custom-alert-pop 0.16s ease-out;
+}
+
+.custom-alert-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	margin-bottom: 0.75rem;
+}
+
+.custom-alert-title {
+	font-size: 1rem;
+	font-weight: 700;
+	color: #fff;
+	margin: 0;
+}
+
+.custom-alert-close {
+	border: 0;
+	background: transparent;
+	color: rgba(255, 255, 255, 0.65);
+	font-size: 1.5rem;
+	line-height: 1;
+	padding: 0 0.25rem;
+	cursor: pointer;
+	transition: color 0.15s ease;
+}
+
+.custom-alert-close:hover {
+	color: rgba(255, 255, 255, 0.95);
+}
+
+.custom-alert-message {
+	margin: 0;
+	color: rgba(255, 255, 255, 0.9);
+	line-height: 1.55;
+	word-break: break-word;
+	white-space: pre-wrap;
+	min-height: 2rem;
+}
+
+.custom-alert-actions {
+	margin-top: 1rem;
+	display: flex;
+	justify-content: flex-end;
+}
+
+@keyframes custom-alert-pop {
+	from {
+		opacity: 0;
+		transform: translateY(8px) scale(0.98);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0) scale(1);
+	}
+}

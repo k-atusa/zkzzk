@@ -66,9 +66,135 @@
 </nav>
 
 
+<div id="customAlertOverlay" class="custom-alert-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="customAlertTitle" aria-describedby="customAlertMessage">
+	<div class="custom-alert-panel">
+		<div class="custom-alert-header">
+			<h3 id="customAlertTitle" class="custom-alert-title">알림</h3>
+			<button id="customAlertCloseBtn" class="custom-alert-close" type="button" aria-label="닫기">×</button>
+		</div>
+		<p id="customAlertMessage" class="custom-alert-message"></p>
+		<div class="custom-alert-actions">
+			<button id="customAlertConfirmBtn" class="btn-primary px-4 py-2" type="button">확인</button>
+		</div>
+	</div>
+</div>
+
+<div id="customConfirmOverlay" class="custom-alert-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="customConfirmTitle" aria-describedby="customConfirmMessage">
+	<div class="custom-alert-panel">
+		<div class="custom-alert-header">
+			<h3 id="customConfirmTitle" class="custom-alert-title">확인</h3>
+			<button id="customConfirmCloseBtn" class="custom-alert-close" type="button" aria-label="닫기">×</button>
+		</div>
+		<p id="customConfirmMessage" class="custom-alert-message"></p>
+		<div class="custom-alert-actions" style="gap: 0.5rem; display: flex; justify-content: flex-end;">
+			<button id="customConfirmCancelBtn" class="btn-secondary px-4 py-2" style="background: rgba(255, 255, 255, 0.1); color: white; border-radius: 0.5rem; transition: background 0.2s;" onmouseover="this.style.background='rgba(255, 255, 255, 0.2)'" onmouseout="this.style.background='rgba(255, 255, 255, 0.1)'" type="button">취소</button>
+			<button id="customConfirmOkBtn" class="btn-danger px-4 py-2" type="button">확인</button>
+		</div>
+	</div>
+</div>
+
+
 <script>
 	// Global variables for live page functionality
 	let isCheckingEnabled = true;
+
+	function showCustomPopup(message, title = '알림') {
+		const overlay = document.getElementById('customAlertOverlay');
+		const titleEl = document.getElementById('customAlertTitle');
+		const messageEl = document.getElementById('customAlertMessage');
+		const closeBtn = document.getElementById('customAlertCloseBtn');
+		const confirmBtn = document.getElementById('customAlertConfirmBtn');
+
+		if (!overlay || !titleEl || !messageEl || !closeBtn || !confirmBtn) {
+			return;
+		}
+
+		titleEl.textContent = title;
+		messageEl.textContent = message == null ? '' : String(message);
+		overlay.classList.remove('hidden');
+
+		const closePopup = () => {
+			overlay.classList.add('hidden');
+			confirmBtn.removeEventListener('click', onConfirm);
+			closeBtn.removeEventListener('click', onClose);
+			overlay.removeEventListener('click', onOverlayClick);
+			document.removeEventListener('keydown', onEsc);
+		};
+
+		const onConfirm = () => closePopup();
+		const onClose = () => closePopup();
+		const onOverlayClick = (event) => {
+			if (event.target === overlay) {
+				closePopup();
+			}
+		};
+		const onEsc = (event) => {
+			if (event.key === 'Escape') {
+				closePopup();
+			}
+		};
+
+		confirmBtn.addEventListener('click', onConfirm);
+		closeBtn.addEventListener('click', onClose);
+		overlay.addEventListener('click', onOverlayClick);
+		document.addEventListener('keydown', onEsc);
+	}
+
+	window.showCustomPopup = showCustomPopup;
+	window.alert = function (message) {
+		showCustomPopup(message);
+	};
+
+	function showCustomConfirm(message, title = '확인') {
+		return new Promise((resolve) => {
+			const overlay = document.getElementById('customConfirmOverlay');
+			const titleEl = document.getElementById('customConfirmTitle');
+			const messageEl = document.getElementById('customConfirmMessage');
+			const closeBtn = document.getElementById('customConfirmCloseBtn');
+			const okBtn = document.getElementById('customConfirmOkBtn');
+			const cancelBtn = document.getElementById('customConfirmCancelBtn');
+
+			if (!overlay || !titleEl || !messageEl || !closeBtn || !okBtn || !cancelBtn) {
+				resolve(confirm(message));
+				return;
+			}
+
+			titleEl.textContent = title;
+			messageEl.textContent = message == null ? '' : String(message);
+			overlay.classList.remove('hidden');
+
+			const closePopup = (result) => {
+				overlay.classList.add('hidden');
+				okBtn.removeEventListener('click', onOk);
+				cancelBtn.removeEventListener('click', onCancel);
+				closeBtn.removeEventListener('click', onCancel);
+				overlay.removeEventListener('click', onOverlayClick);
+				document.removeEventListener('keydown', onEsc);
+				resolve(result);
+			};
+
+			const onOk = () => closePopup(true);
+			const onCancel = () => closePopup(false);
+			const onOverlayClick = (event) => {
+				if (event.target === overlay) {
+					closePopup(false);
+				}
+			};
+			const onEsc = (event) => {
+				if (event.key === 'Escape') {
+					closePopup(false);
+				}
+			};
+
+			okBtn.addEventListener('click', onOk);
+			cancelBtn.addEventListener('click', onCancel);
+			closeBtn.addEventListener('click', onCancel);
+			overlay.addEventListener('click', onOverlayClick);
+			document.addEventListener('keydown', onEsc);
+		});
+	}
+
+	window.showCustomConfirm = showCustomConfirm;
 	
 	// Mobile menu toggle
 	document.getElementById('mobile-menu-btn').addEventListener('click', function () {

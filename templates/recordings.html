@@ -87,7 +87,7 @@
 
 		document.querySelectorAll('.delete-recording').forEach(button => {
 			button.addEventListener('click', async (e) => {
-				if (confirm('정말로 이 녹화 영상을 삭제하시겠습니까?')) {
+				if (await showCustomConfirm('정말로 이 녹화 영상을 삭제하시겠습니까?')) {
 					const filename = e.target.closest('.delete-recording').dataset.filename;
 					try {
 						const response = await fetch(`/delete_recording/${filename}`, {

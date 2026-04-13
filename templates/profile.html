@@ -166,7 +166,7 @@
 		}
 
 		async function disable2FA() {
-			if (!confirm('2차인증을 비활성화하시겠습니까?')) return;
+			if (!await showCustomConfirm('2차인증을 비활성화하시겠습니까?')) return;
 			try {
 				const res = await fetch('/2fa/disable', { method: 'POST' });
 				const data = await res.json();

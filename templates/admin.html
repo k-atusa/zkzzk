@@ -171,7 +171,7 @@
 			if (data.status === 'success') location.reload(); else alert(data.message || '오류');
 		}
 		async function deleteUser(user_id) {
-			if (!confirm('정말 삭제하시겠습니까?')) return;
+			if (!await showCustomConfirm('정말 삭제하시겠습니까?')) return;
 			const res = await fetch('/admin/users', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ user_id }) });
 			const data = await res.json();
 			if (data.status === 'success') location.reload(); else alert(data.message || '오류');

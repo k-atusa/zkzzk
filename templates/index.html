@@ -123,7 +123,7 @@
 			const streamerId = streamerItem.dataset.streamerId;
 			const isRecording = streamerItem.querySelector('.download-status').textContent.includes('녹화');
 
-			if (confirm('정말로 이 스트리머를 제거하시겠습니까?')) {
+			if (await showCustomConfirm('정말로 이 스트리머를 제거하시겠습니까?')) {
 				try {
 					if (isRecording) {
 						const stopResponse = await fetch(`/stop_recording/${streamerId}`, {
