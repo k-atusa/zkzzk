@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { Search, Download } from 'lucide-react';
 import api from '@/api';
@@ -46,10 +45,10 @@ export function Vod() {
     <div className="space-y-6">
       <h2 className="text-3xl font-bold tracking-tight">VOD 다운로더</h2>
 
-      <Card className="bg-neutral-900 border-neutral-800">
+      <Card>
         <CardHeader>
           <CardTitle>치지직 VOD 검색</CardTitle>
-          <CardDescription className="text-neutral-400">다운로드할 VOD URL을 입력하세요.</CardDescription>
+          <CardDescription>다운로드할 VOD URL을 입력하세요.</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSearch} className="flex space-x-2">
@@ -57,10 +56,9 @@ export function Vod() {
               value={url}
               onChange={e => setUrl(e.target.value)}
               placeholder="https://chzzk.naver.com/video/..."
-              className="bg-neutral-950 border-neutral-800"
               required
             />
-            <Button type="submit" disabled={loading} className="bg-white text-black hover:bg-neutral-200">
+            <Button type="submit" disabled={loading}>
               <Search className="mr-2 h-4 w-4" /> {loading ? '검색중...' : '검색'}
             </Button>
           </form>
@@ -68,23 +66,23 @@ export function Vod() {
       </Card>
 
       {vodInfo && (
-        <Card className="bg-neutral-900 border-neutral-800">
+        <Card>
           <CardHeader>
             <CardTitle>{vodInfo.video_info.title}</CardTitle>
-            <CardDescription className="text-neutral-400">
+            <CardDescription>
               {vodInfo.video_info.author} • {vodInfo.video_info.category}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {vodInfo.resolutions.map((res: any) => (
-                <Card key={res.resolution} className="bg-neutral-950 border-neutral-800 flex flex-col justify-between">
+                <Card key={res.resolution} className="flex flex-col justify-between bg-muted/40">
                   <CardContent className="pt-6">
                     <div className="flex justify-between items-center mb-4">
-                      <span className="text-xl font-bold text-white">{res.resolution}</span>
-                      <span className="text-sm text-neutral-400">{res.quality}</span>
+                      <span className="text-xl font-bold">{res.resolution}</span>
+                      <span className="text-sm text-muted-foreground">{res.quality}</span>
                     </div>
-                    <div className="text-sm text-neutral-400 mb-6">
+                    <div className="text-sm text-muted-foreground mb-6">
                       예상 크기: {res.estimated_size_mb ? `${res.estimated_size_mb} MB` : '알 수 없음'}
                     </div>
                     <Button className="w-full" onClick={() => handleDownload(res.resolution)}>

@@ -6,8 +6,19 @@ import { Recordings } from './pages/Recordings';
 import { Vod } from './pages/Vod';
 import { Settings } from './pages/Settings';
 import { Toaster } from '@/components/ui/sonner';
+import { useEffect } from 'react';
 
 function App() {
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('theme');
+    const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    if (savedTheme === 'dark' || (!savedTheme && systemPrefersDark)) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, []);
+
   return (
     <BrowserRouter>
       <Routes>

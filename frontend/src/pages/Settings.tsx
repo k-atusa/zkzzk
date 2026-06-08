@@ -67,20 +67,20 @@ export function Settings() {
     <div className="space-y-6">
       <h2 className="text-3xl font-bold tracking-tight">설정</h2>
 
-      <Card className="bg-neutral-900 border-neutral-800">
+      <Card>
         <CardHeader>
           <CardTitle className="flex items-center">
             <KeyRound className="mr-2 h-5 w-5" /> 2차 인증 (OTP)
           </CardTitle>
-          <CardDescription className="text-neutral-400">보안을 위해 2차 인증을 설정하세요.</CardDescription>
+          <CardDescription>보안을 위해 2차 인증을 설정하세요.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex items-center justify-between p-4 border border-neutral-800 rounded-lg">
+          <div className="flex items-center justify-between p-4 border border-border rounded-lg">
             <div className="flex items-center space-x-4">
               {user.totp_enabled ? <ShieldCheck className="h-6 w-6 text-green-500" /> : <ShieldAlert className="h-6 w-6 text-yellow-500" />}
               <div>
-                <p className="font-medium text-white">{user.totp_enabled ? '2차 인증 사용 중' : '2차 인증 미사용'}</p>
-                <p className="text-sm text-neutral-400">
+                <p className="font-medium">{user.totp_enabled ? '2차 인증 사용 중' : '2차 인증 미사용'}</p>
+                <p className="text-sm text-muted-foreground">
                   {user.totp_enabled ? '계정이 안전하게 보호되고 있습니다.' : '인증기 앱을 사용하여 OTP를 등록하세요.'}
                 </p>
               </div>
@@ -92,14 +92,14 @@ export function Settings() {
           </div>
 
           {showSetup && (
-            <div className="mt-6 p-6 border border-neutral-800 rounded-lg bg-neutral-950">
-              <h3 className="text-lg font-medium text-white mb-4">OTP 설정</h3>
+            <div className="mt-6 p-6 border border-border rounded-lg bg-muted/40">
+              <h3 className="text-lg font-medium mb-4">OTP 설정</h3>
               <div className="flex flex-col md:flex-row gap-8 items-start">
                 <div className="bg-white p-2 rounded-lg">
                   <img src={qrCode} alt="QR Code" className="w-48 h-48" />
                 </div>
                 <div className="flex-1 w-full">
-                  <p className="text-sm text-neutral-400 mb-4">
+                  <p className="text-sm text-muted-foreground mb-4">
                     Google Authenticator 또는 Authy 앱으로 좌측 QR 코드를 스캔한 후 생성된 6자리 코드를 입력하세요.
                   </p>
                   <form onSubmit={handleVerify2FA} className="space-y-4">
@@ -110,7 +110,6 @@ export function Settings() {
                         value={otp}
                         onChange={e => setOtp(e.target.value)}
                         placeholder="000000"
-                        className="bg-neutral-900 border-neutral-800"
                         required
                         maxLength={6}
                       />

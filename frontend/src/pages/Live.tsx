@@ -69,10 +69,10 @@ export function Live() {
         </Button>
       </div>
 
-      <Card className="bg-neutral-900 border-neutral-800">
+      <Card>
         <CardHeader>
           <CardTitle>새 스트리머 추가</CardTitle>
-          <CardDescription className="text-neutral-400">치지직 채널 URL을 입력하여 자동 녹화를 설정하세요.</CardDescription>
+          <CardDescription>치지직 채널 URL을 입력하여 자동 녹화를 설정하세요.</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleAdd} className="flex space-x-2">
@@ -80,37 +80,36 @@ export function Live() {
               value={newUrl}
               onChange={e => setNewUrl(e.target.value)}
               placeholder="https://chzzk.naver.com/..."
-              className="bg-neutral-950 border-neutral-800"
               required
             />
-            <Button type="submit" className="bg-white text-black hover:bg-neutral-200">
+            <Button type="submit">
               <Plus className="mr-2 h-4 w-4" /> 추가
             </Button>
           </form>
         </CardContent>
       </Card>
 
-      <Card className="bg-neutral-900 border-neutral-800">
+      <Card>
         <CardHeader>
           <CardTitle>등록된 스트리머</CardTitle>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
-              <TableRow className="border-neutral-800">
-                <TableHead className="text-neutral-400">닉네임</TableHead>
-                <TableHead className="text-neutral-400">상태</TableHead>
-                <TableHead className="text-neutral-400">방송 제목</TableHead>
-                <TableHead className="text-neutral-400 text-right">작업</TableHead>
+              <TableRow>
+                <TableHead>닉네임</TableHead>
+                <TableHead>상태</TableHead>
+                <TableHead>방송 제목</TableHead>
+                <TableHead className="text-right">작업</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {streamers.length === 0 ? (
-                <TableRow className="border-neutral-800">
-                  <TableCell colSpan={4} className="text-center py-6 text-neutral-500">등록된 스트리머가 없습니다.</TableCell>
+                <TableRow>
+                  <TableCell colSpan={4} className="text-center py-6 text-muted-foreground">등록된 스트리머가 없습니다.</TableCell>
                 </TableRow>
               ) : streamers.map((s) => (
-                <TableRow key={s.id} className="border-neutral-800">
+                <TableRow key={s.id}>
                   <TableCell className="font-medium">
                     <a href={s.channel_url} target="_blank" rel="noreferrer" className="hover:underline">{s.nickname}</a>
                   </TableCell>
@@ -121,12 +120,12 @@ export function Live() {
                         녹화중
                       </span>
                     ) : (
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-neutral-800 text-neutral-400">
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-muted text-muted-foreground">
                         대기중
                       </span>
                     )}
                   </TableCell>
-                  <TableCell className="max-w-xs truncate text-neutral-400" title={s.current_broadcast_title}>
+                  <TableCell className="max-w-xs truncate text-muted-foreground" title={s.current_broadcast_title}>
                     {s.current_broadcast_title || '-'}
                   </TableCell>
                   <TableCell className="text-right space-x-2">

@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { toast } from 'sonner';
-import { Download, Trash2, Play } from 'lucide-react';
+import { Download, Trash2 } from 'lucide-react';
 import api from '@/api';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
@@ -44,33 +44,33 @@ export function Recordings() {
       <h2 className="text-3xl font-bold tracking-tight">녹화본 관리</h2>
 
       {Object.keys(recordings).length === 0 ? (
-        <Card className="bg-neutral-900 border-neutral-800">
-          <CardContent className="py-12 text-center text-neutral-500">
+        <Card>
+          <CardContent className="py-12 text-center text-muted-foreground">
             저장된 녹화본이 없습니다.
           </CardContent>
         </Card>
       ) : (
         Object.entries(recordings).map(([streamerName, recs]) => (
-          <Card key={streamerName} className="bg-neutral-900 border-neutral-800">
+          <Card key={streamerName}>
             <CardHeader>
               <CardTitle>{streamerName}</CardTitle>
             </CardHeader>
             <CardContent>
               <Table>
                 <TableHeader>
-                  <TableRow className="border-neutral-800">
-                    <TableHead className="text-neutral-400">파일명</TableHead>
-                    <TableHead className="text-neutral-400">크기</TableHead>
-                    <TableHead className="text-neutral-400">날짜</TableHead>
-                    <TableHead className="text-neutral-400 text-right">작업</TableHead>
+                  <TableRow>
+                    <TableHead>파일명</TableHead>
+                    <TableHead>크기</TableHead>
+                    <TableHead>날짜</TableHead>
+                    <TableHead className="text-right">작업</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {recs.map((r, i) => (
-                    <TableRow key={i} className="border-neutral-800">
-                      <TableCell className="font-medium text-neutral-300">{r.display_name}</TableCell>
-                      <TableCell className="text-neutral-400">{r.size_mb} MB</TableCell>
-                      <TableCell className="text-neutral-400">
+                    <TableRow key={i}>
+                      <TableCell className="font-medium">{r.display_name}</TableCell>
+                      <TableCell className="text-muted-foreground">{r.size_mb} MB</TableCell>
+                      <TableCell className="text-muted-foreground">
                         {format(new Date(r.created_at), 'PPP pp', { locale: ko })}
                       </TableCell>
                       <TableCell className="text-right space-x-2">

@@ -44,11 +44,11 @@ export function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-neutral-950 flex items-center justify-center p-4">
-      <Card className="w-full max-w-md bg-neutral-900 border-neutral-800 text-white">
+    <div className="min-h-screen bg-background flex items-center justify-center p-4">
+      <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl font-bold tracking-tight">ZKZZK</CardTitle>
-          <CardDescription className="text-neutral-400">
+          <CardDescription>
             {isSetup ? '최초 관리자 계정을 생성합니다.' : (requireOtp ? '2차 인증 OTP를 입력하세요.' : '계정에 로그인하세요.')}
           </CardDescription>
         </CardHeader>
@@ -58,21 +58,21 @@ export function Login() {
               <>
                 <div className="space-y-2">
                   <Label htmlFor="username">아이디</Label>
-                  <Input id="username" value={username} onChange={e => setUsername(e.target.value)} className="bg-neutral-950 border-neutral-800" required />
+                  <Input id="username" value={username} onChange={e => setUsername(e.target.value)} required />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="password">비밀번호</Label>
-                  <Input id="password" type="password" value={password} onChange={e => setPassword(e.target.value)} className="bg-neutral-950 border-neutral-800" required />
+                  <Input id="password" type="password" value={password} onChange={e => setPassword(e.target.value)} required />
                 </div>
               </>
             )}
             {requireOtp && (
               <div className="space-y-2">
                 <Label htmlFor="otp">OTP 코드</Label>
-                <Input id="otp" type="text" value={otp} onChange={e => setOtp(e.target.value)} className="bg-neutral-950 border-neutral-800" required autoFocus />
+                <Input id="otp" type="text" value={otp} onChange={e => setOtp(e.target.value)} required autoFocus />
               </div>
             )}
-            <Button type="submit" className="w-full bg-white text-black hover:bg-neutral-200">
+            <Button type="submit" className="w-full">
               {isSetup ? '계정 생성' : (requireOtp ? '인증' : '로그인')}
             </Button>
           </form>
