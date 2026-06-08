@@ -1,5 +1,5 @@
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Video, Download, Settings, LogOut, Sun, Moon } from 'lucide-react';
+import { LayoutDashboard, Video, Download, Settings, LogOut, Sun, Moon, Laptop } from 'lucide-react';
 import { Button } from './ui/button';
 import api from '../api';
 import { useEffect, useState } from 'react';
@@ -15,22 +15,34 @@ export function Layout() {
   const location = useLocation();
   const navigate = useNavigate();
   const [user, setUser] = useState<{ username: string; is_admin: boolean } | null>(null);
-  const [isDark, setIsDark] = useState(false);
+  const [theme, setTheme] = useState<'light' | 'dark' | 'system'>('system');
 
   useEffect(() => {
     api.get('/auth/me').then(res => setUser(res.data)).catch(() => navigate('/login'));
-    setIsDark(document.documentElement.classList.contains('dark'));
+    const savedTheme = (localStorage.getItem('theme') as 'light' | 'dark' | 'system') || 'system';
+    setTheme(savedTheme);
   }, [navigate]);
 
-  const toggleTheme = () => {
-    const nextDark = !isDark;
-    setIsDark(nextDark);
-    if (nextDark) {
-      document.documentElement.classList.add('dark');
-      localStorage.setItem('theme', 'dark');
+  const cycleTheme = () => {
+    let nextTheme: 'light' | 'dark' | 'system';
+    if (theme === 'system') {
+      nextTheme = 'light';
+    } else if (theme === 'light') {
+      nextTheme = 'dark';
     } else {
-      document.documentElement.classList.remove('dark');
-      localStorage.setItem('theme', 'light');
+      nextTheme = 'system';
+    }
+
+    setTheme(nextTheme);
+    localStorage.setItem('theme', nextTheme);
+
+    const root = document.documentElement;
+    root.classList.remove('light', 'dark');
+    if (nextTheme === 'system') {
+      const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      root.classList.add(systemPrefersDark ? 'dark' : 'light');
+    } else {
+      root.classList.add(nextTheme);
     }
   };
 
@@ -48,8 +60,14 @@ export function Layout() {
         <div className="flex flex-col flex-1">
           <div className="flex items-center justify-between mb-10 px-2">
             <h1 className="text-2xl font-bold tracking-tight text-foreground">ZKZZK</h1>
-            <Button variant="ghost" size="icon" onClick={toggleTheme} className="text-muted-foreground hover:text-foreground">
-              {isDark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={cycleTheme}
+              className="text-muted-foreground hover:text-foreground"
+              title={theme === 'system' ? '시스템 설정 따름' : theme === 'light' ? '라이트 모드' : '다크 모드'}
+            >
+              {theme === 'system' ? <Laptop className="h-5 w-5" /> : theme === 'light' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
             </Button>
           </div>
           <nav className="space-y-2">
