@@ -126,10 +126,14 @@ export const Live = () => {
     }
   };
 
-  // Filter followed by current input text
-  const filteredFollowed = followedStreamers.filter(ch =>
-    !newUrl || ch.channelName?.toLowerCase().includes(newUrl.toLowerCase())
-  );
+  // Filter followed by current input text and sort by live status (live first)
+  const filteredFollowed = followedStreamers
+    .filter(ch => !newUrl || ch.channelName?.toLowerCase().includes(newUrl.toLowerCase()))
+    .sort((a, b) => {
+      const aLive = a.openLive ? 1 : 0;
+      const bLive = b.openLive ? 1 : 0;
+      return bLive - aLive; // 1 (live) comes before 0 (offline)
+    });
 
   // Check if already added
   const addedUrls = new Set(streamers.map(s => s.channel_url));
@@ -143,7 +147,7 @@ export const Live = () => {
         </Button>
       </div>
 
-      <Card>
+      <Card className="!overflow-visible">
         <CardHeader>
           <CardTitle>새 스트리머 추가</CardTitle>
           <CardDescription>
@@ -153,7 +157,7 @@ export const Live = () => {
             )}
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="!overflow-visible">
           <form onSubmit={handleAdd} className="flex space-x-2">
             <div className="relative flex-1">
               <Input
@@ -182,7 +186,7 @@ export const Live = () => {
                       {newUrl ? '검색 결과가 없습니다.' : '팔로우 중인 스트리머가 없습니다.'}
                     </div>
                   ) : (
-                    <div className="max-h-64 overflow-y-auto">
+                    <div className="max-h-[480px] overflow-y-auto">
                       <div className="px-3 py-2 text-xs text-muted-foreground font-medium border-b border-border bg-muted/30">
                         팔로우 중인 채널 ({filteredFollowed.length})
                       </div>
