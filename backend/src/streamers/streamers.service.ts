@@ -2,10 +2,14 @@ import { Injectable, BadRequestException, NotFoundException, ForbiddenException 
 import { PrismaService } from '../prisma/prisma.service';
 import { extractChannelId, getChannelInfo } from '../utils/chzzk.utils';
 import axios from 'axios';
+import { TasksService } from '../tasks/tasks.service';
 
 @Injectable()
 export class StreamersService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private tasksService: TasksService
+  ) {}
 
   async addStreamer(channel_url: string, user: any) {
     const channel_id = extractChannelId(channel_url);
@@ -49,6 +53,11 @@ export class StreamersService {
         created_at: new Date(),
         is_recording: false
       }
+    });
+
+    // Start checking live status and record immediately in background
+    this.tasksService.checkStreamer(streamer).catch(err => {
+      // Don't crash the request
     });
 
     return streamer;

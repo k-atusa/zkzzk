@@ -88,7 +88,9 @@ export class TasksService {
       const streamerDir = path.join(userDownloadsDir, 'live', streamerNickname);
       if (!fs.existsSync(streamerDir)) fs.mkdirSync(streamerDir, { recursive: true });
 
-      const dateStr = new Date().toISOString().replace(/[-:T]/g, '').slice(2, 14);
+      const now = new Date();
+      const pad = (n: number) => String(n).padStart(2, '0');
+      const dateStr = `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
       let filename = `${dateStr} ${broadcastTitle} [${streamerNickname}].ts`;
       filename = filename.replace(/[<>:"/\\|?*]/g, '');
       const filepath = path.join(streamerDir, filename);
