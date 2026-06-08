@@ -98,14 +98,20 @@ export class TasksService {
       const cookieUser = await this.prisma.user.findUnique({ where: { id: cookieUserId } });
 
       const streamUrl = `https://chzzk.naver.com/live/${channelId}`;
-      const command = 'streamlink';
+      let command = 'streamlink';
+      if (fs.existsSync('/opt/homebrew/bin/streamlink')) {
+        command = '/opt/homebrew/bin/streamlink';
+      } else if (fs.existsSync('/usr/local/bin/streamlink')) {
+        command = '/usr/local/bin/streamlink';
+      }
+
       const args = [
         '--ffmpeg-copyts',
         '--progress', 'no',
         '--http-cookie', `NID_AUT=${cookieUser?.nid_aut}`,
         '--http-cookie', `NID_SES=${cookieUser?.nid_ses}`,
         streamUrl,
-        '720p',
+        '720p60,720p,best',
         '--output', filepath
       ];
 
@@ -174,7 +180,14 @@ export class TasksService {
         const mp4Filename = filename.replace('.ts', '.mp4');
         const mp4Filepath = path.join(streamerDir, mp4Filename);
 
-        const ffmpegChild = spawn('ffmpeg', [
+        let ffmpegCmd = 'ffmpeg';
+        if (fs.existsSync('/opt/homebrew/bin/ffmpeg')) {
+          ffmpegCmd = '/opt/homebrew/bin/ffmpeg';
+        } else if (fs.existsSync('/usr/local/bin/ffmpeg')) {
+          ffmpegCmd = '/usr/local/bin/ffmpeg';
+        }
+
+        const ffmpegChild = spawn(ffmpegCmd, [
           '-i', filepath,
           '-c', 'copy',
           '-start_at_zero',

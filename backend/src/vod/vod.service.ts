@@ -170,8 +170,15 @@ export class VodService {
     const filepath = path.join(vodDir, filename);
     if (fs.existsSync(filepath)) throw new BadRequestException('이미 동일한 파일이 존재합니다.');
 
+    let streamlinkCmd = 'streamlink';
+    if (fs.existsSync('/opt/homebrew/bin/streamlink')) {
+      streamlinkCmd = '/opt/homebrew/bin/streamlink';
+    } else if (fs.existsSync('/usr/local/bin/streamlink')) {
+      streamlinkCmd = '/usr/local/bin/streamlink';
+    }
+
     // Background download using streamlink
-    const child = spawn('streamlink', [
+    const child = spawn(streamlinkCmd, [
       '--http-header', 'User-Agent=Mozilla/5.0',
       download_url,
       'best',
@@ -184,7 +191,14 @@ export class VodService {
 
     child.on('close', (code) => {
       if (code === 0) {
-        const ffmpeg = spawn('ffmpeg', [
+        let ffmpegCmd = 'ffmpeg';
+        if (fs.existsSync('/opt/homebrew/bin/ffmpeg')) {
+          ffmpegCmd = '/opt/homebrew/bin/ffmpeg';
+        } else if (fs.existsSync('/usr/local/bin/ffmpeg')) {
+          ffmpegCmd = '/usr/local/bin/ffmpeg';
+        }
+
+        const ffmpeg = spawn(ffmpegCmd, [
           '-i', filepath.replace('.mp4', '.ts'),
           '-c', 'copy',
           '-y',
