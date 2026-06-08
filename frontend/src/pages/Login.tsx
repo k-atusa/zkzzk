@@ -47,7 +47,7 @@ export function Login() {
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold tracking-tight">ZKZZK</CardTitle>
+          <CardTitle className="text-2xl font-bold tracking-tight font-google-sans">ZKZZK</CardTitle>
           <CardDescription>
             {isSetup ? '최초 관리자 계정을 생성합니다.' : (requireOtp ? '2차 인증 OTP를 입력하세요.' : '계정에 로그인하세요.')}
           </CardDescription>

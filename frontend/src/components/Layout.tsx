@@ -59,7 +59,7 @@ export function Layout() {
       <aside className="w-64 border-r border-border bg-card px-4 py-6 flex flex-col justify-between">
         <div className="flex flex-col flex-1">
           <div className="flex items-center justify-between mb-10 px-2">
-            <h1 className="text-2xl font-bold tracking-tight text-foreground">ZKZZK</h1>
+            <h1 className="text-2xl font-bold tracking-tight text-foreground font-google-sans">ZKZZK</h1>
             <Button
               variant="ghost"
               size="icon"
