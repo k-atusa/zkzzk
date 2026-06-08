@@ -245,14 +245,38 @@
 			const title = videoInfo.title || 'Unknown';
 			const author = videoInfo.author || 'Unknown';
 
-			const now = new Date();
-			const year = now.getFullYear().toString().slice(-2);
-			const month = (now.getMonth() + 1).toString().padStart(2, '0');
-			const day = now.getDate().toString().padStart(2, '0');
-			const hours = now.getHours().toString().padStart(2, '0');
-			const minutes = now.getMinutes().toString().padStart(2, '0');
-			const seconds = now.getSeconds().toString().padStart(2, '0');
-			const datePrefix = `${year}${month}${day}_${hours}${minutes}${seconds}`;
+			let datePrefix = '';
+			if (videoInfo.raw_publish_date) {
+				try {
+					const date = new Date(videoInfo.raw_publish_date);
+					const year = date.getFullYear().toString().slice(-2);
+					const month = (date.getMonth() + 1).toString().padStart(2, '0');
+					const day = date.getDate().toString().padStart(2, '0');
+					const hours = date.getHours().toString().padStart(2, '0');
+					const minutes = date.getMinutes().toString().padStart(2, '0');
+					const seconds = date.getSeconds().toString().padStart(2, '0');
+					datePrefix = `${year}${month}${day}_${hours}${minutes}${seconds}`;
+				} catch (e) {
+					console.error('Error parsing date:', e);
+					const now = new Date();
+					const year = now.getFullYear().toString().slice(-2);
+					const month = (now.getMonth() + 1).toString().padStart(2, '0');
+					const day = now.getDate().toString().padStart(2, '0');
+					const hours = now.getHours().toString().padStart(2, '0');
+					const minutes = now.getMinutes().toString().padStart(2, '0');
+					const seconds = now.getSeconds().toString().padStart(2, '0');
+					datePrefix = `${year}${month}${day}_${hours}${minutes}${seconds}`;
+				}
+			} else {
+				const now = new Date();
+				const year = now.getFullYear().toString().slice(-2);
+				const month = (now.getMonth() + 1).toString().padStart(2, '0');
+				const day = now.getDate().toString().padStart(2, '0');
+				const hours = now.getHours().toString().padStart(2, '0');
+				const minutes = now.getMinutes().toString().padStart(2, '0');
+				const seconds = now.getSeconds().toString().padStart(2, '0');
+				datePrefix = `${year}${month}${day}_${hours}${minutes}${seconds}`;
+			}
 
 			const cleanTitle = title.replace(/[<>:"/\\|?*]/g, '').trim();
 			const cleanAuthor = author.replace(/[<>:"/\\|?*]/g, '').trim();

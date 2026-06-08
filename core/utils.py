@@ -104,6 +104,7 @@ def get_vod_info(video_no):
                 'category': content.get('videoCategory'),
                 'tags': content.get('tags', []),
                 'publish_date': formatted_publish_date,
+                'raw_publish_date': publish_date,
                 'live_rewind_playback_json': live_rewind_playback_json
             }
             print(f"[VOD INFO] Successfully retrieved VOD info: {vod_info['title']}")

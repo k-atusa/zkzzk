@@ -101,9 +101,20 @@ def download_vod():
         streamer_nickname = video_info.get('author') or 'Unknown'
         streamer_nickname = re.sub(r'[<>:"/\\|?*]', '', streamer_nickname).strip()
         
-        current_date = datetime.now().strftime('%y%m%d_%H%M%S')
+        raw_publish_date = video_info.get('raw_publish_date')
+        if raw_publish_date:
+            try:
+                pub_datetime = datetime.fromisoformat(raw_publish_date.replace('Z', '+00:00'))
+                local_pub_datetime = pub_datetime.astimezone(datetime.now().tzinfo)
+                date_prefix = local_pub_datetime.strftime('%y%m%d_%H%M%S')
+            except Exception as e:
+                print(f"[VOD DOWNLOAD] Error parsing raw_publish_date: {e}")
+                date_prefix = datetime.now().strftime('%y%m%d_%H%M%S')
+        else:
+            date_prefix = datetime.now().strftime('%y%m%d_%H%M%S')
+
         clean_title = re.sub(r'[<>:"/\\|?*]', '', video_info.get('title', 'Unknown')).strip()
-        filename = f"{current_date} {clean_title} [{streamer_nickname}].mp4"
+        filename = f"{date_prefix} {clean_title} [{streamer_nickname}].mp4"
 
         print(f"[VOD DOWNLOAD] Starting server download: {filename}")
         print(f"[VOD DOWNLOAD] URL: {download_url}")
