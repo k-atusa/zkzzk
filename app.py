@@ -33,6 +33,10 @@ def load_user():
         if user:
             g.user = user
 
+@app.context_processor
+def inject_user():
+    return dict(current_user=g.user)
+
 @app.before_request
 def check_setup():
     if request.endpoint and request.endpoint.startswith('static'):

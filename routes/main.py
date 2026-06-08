@@ -11,12 +11,19 @@ def index():
 
 @main_bp.route('/live')
 def live():
+    if not g.user:
+        return redirect(url_for('auth.login'))
     user = g.user
     streamers = Streamer.query.filter_by(is_active=True, user_id=user.id).all()
     return render_template('index.html', streamers=streamers, current_page='live')
 
 @main_bp.route('/settings', methods=['GET', 'POST'])
 def settings():
+    if not g.user:
+        if request.headers.get('Content-Type') == 'application/json' or 'application/json' in request.headers.get('Accept', ''):
+            return jsonify({'status': 'error', 'message': '로그인이 필요합니다.'}), 401
+        return redirect(url_for('auth.login'))
+
     if request.method == 'POST':
         data = request.get_json()
         nid_aut = data.get('nid_aut')
@@ -31,9 +38,6 @@ def settings():
             'status': 'success',
             'message': '설정이 저장되었습니다.'
         })
-
-    if not g.user:
-        return redirect(url_for('auth.login'))
     
     if request.headers.get('Content-Type') == 'application/json' or 'application/json' in request.headers.get('Accept', ''):
         return jsonify({

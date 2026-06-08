@@ -9,6 +9,8 @@ vod_bp = Blueprint('vod', __name__)
 
 @vod_bp.route('/vod')
 def vod():
+    if not g.user:
+        return redirect(url_for('auth.login'))
     return render_template('vod.html', current_page='vod')
 
 @vod_bp.route('/get_vod_info', methods=['POST'])
