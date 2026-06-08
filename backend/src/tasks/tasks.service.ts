@@ -110,6 +110,14 @@ export class TasksService {
       ];
 
       const child = spawn(command, args);
+
+      child.stdout.on('data', (data) => {
+        this.logger.log(`[Streamlink stdout] ${data.toString().trim()}`);
+      });
+
+      child.stderr.on('data', (data) => {
+        this.logger.error(`[Streamlink stderr] ${data.toString().trim()}`);
+      });
       
       child.on('error', async (err) => {
         this.logger.error(`Failed to start streamlink: ${err.message}`);
@@ -149,13 +157,16 @@ export class TasksService {
         this.logger.log(`Streamlink exited with code ${code}`);
         // Reset streamer recording status
         try {
-          await this.prisma.streamer.update({
-            where: { id: streamerId },
-            data: {
-              is_recording: false,
-              process_id: null
-            }
-          });
+          const exists = await this.prisma.streamer.findUnique({ where: { id: streamerId } });
+          if (exists) {
+            await this.prisma.streamer.update({
+              where: { id: streamerId },
+              data: {
+                is_recording: false,
+                process_id: null
+              }
+            });
+          }
         } catch (dbErr: any) {
           this.logger.error(`Database update failed on streamlink close: ${dbErr.message}`);
         }
