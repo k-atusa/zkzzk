@@ -186,6 +186,8 @@ export class StreamersService {
       openLive: item.streamer?.openLive ?? false,
       liveTitle: item.liveInfo?.liveTitle ?? null,
       concurrentUserCount: item.liveInfo?.concurrentUserCount ?? 0,
+      liveCategoryValue: item.liveInfo?.liveCategoryValue ?? null,
+      tags: item.liveInfo?.tags ?? [],
       channel_url: `https://chzzk.naver.com/${item.channelId}`,
     }));
   }

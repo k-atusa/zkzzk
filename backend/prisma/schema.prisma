@@ -44,6 +44,8 @@ model streamer {
   is_recording            Boolean?
   is_paused               Boolean?    @default(false)
   current_broadcast_title String?
+  current_broadcast_category String?
+  current_broadcast_tags     String[]
   process_id              Int?
   recordings              recording[]
   cookie_user             user?       @relation("StreamerCookieUser", fields: [cookie_user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)

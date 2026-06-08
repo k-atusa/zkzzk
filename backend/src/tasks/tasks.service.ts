@@ -45,28 +45,35 @@ export class TasksService {
       if (response.data?.code === 200 && response.data?.content) {
         const isLive = response.data.content.status === 'OPEN';
         const broadcastTitle = response.data.content.liveTitle;
-
-        await this.prisma.streamer.update({
-          where: { id: streamer.id },
-          data: { last_checked: new Date() }
-        });
+        const liveCategoryValue = response.data.content.liveCategoryValue;
+        const tags = response.data.content.tags || [];
 
         if (isLive) {
-          await this.prisma.streamer.update({
+          await this.prisma.streamer.updateMany({
             where: { id: streamer.id },
-            data: { last_live: new Date() }
+            data: {
+              last_checked: new Date(),
+              last_live: new Date(),
+              current_broadcast_title: broadcastTitle,
+              current_broadcast_category: liveCategoryValue || null,
+              current_broadcast_tags: tags
+            }
           });
 
           if (!streamer.is_recording && !streamer.is_paused) {
-            this.downloadStream(channelId, broadcastTitle, streamer.nickname, streamer.id);
+            this.downloadStream(channelId, broadcastTitle, streamer.nickname, streamer.id, liveCategoryValue, tags);
           }
         } else {
-          if (streamer.is_recording) {
-            await this.prisma.streamer.update({
-              where: { id: streamer.id },
-              data: { is_recording: false, current_broadcast_title: null }
-            });
-          }
+          await this.prisma.streamer.updateMany({
+            where: { id: streamer.id },
+            data: {
+              last_checked: new Date(),
+              is_recording: false,
+              current_broadcast_title: null,
+              current_broadcast_category: null,
+              current_broadcast_tags: []
+            }
+          });
         }
       }
     } catch (e) {
@@ -74,7 +81,7 @@ export class TasksService {
     }
   }
 
-  async downloadStream(channelId: string, broadcastTitle: string, streamerNickname: string, streamerId: string) {
+  async downloadStream(channelId: string, broadcastTitle: string, streamerNickname: string, streamerId: string, liveCategoryValue?: string, tags?: string[]) {
     try {
       const streamer = await this.prisma.streamer.findUnique({ where: { id: streamerId } });
       if (!streamer || !streamer.user_id) return;
@@ -147,6 +154,8 @@ export class TasksService {
         data: {
           is_recording: true,
           current_broadcast_title: broadcastTitle,
+          current_broadcast_category: liveCategoryValue || null,
+          current_broadcast_tags: tags || [],
           process_id: child.pid
         }
       });

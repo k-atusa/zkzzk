@@ -240,6 +240,20 @@ export const Live = () => {
                               {ch.openLive && ch.liveTitle && (
                                 <p className="text-xs text-muted-foreground truncate">{ch.liveTitle}</p>
                               )}
+                              {ch.openLive && (ch.liveCategoryValue || (ch.tags && ch.tags.length > 0)) && (
+                                <div className="flex flex-wrap items-center gap-1.5 mt-1">
+                                  {ch.liveCategoryValue && (
+                                    <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-primary/10 text-primary">
+                                      {ch.liveCategoryValue}
+                                    </span>
+                                  )}
+                                  {ch.tags && ch.tags.slice(0, 3).map((tag: string, idx: number) => (
+                                    <span key={idx} className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] bg-muted text-muted-foreground">
+                                      #{tag}
+                                    </span>
+                                  ))}
+                                </div>
+                              )}
                             </div>
                             <div className="flex items-center gap-1.5 flex-shrink-0">
                               {ch.openLive && (
@@ -281,7 +295,7 @@ export const Live = () => {
               <TableRow>
                 <TableHead>닉네임</TableHead>
                 <TableHead>상태</TableHead>
-                <TableHead>방송 제목</TableHead>
+                <TableHead>방송 정보</TableHead>
                 <TableHead className="text-right">작업</TableHead>
               </TableRow>
             </TableHeader>
@@ -311,8 +325,30 @@ export const Live = () => {
                       </span>
                     )}
                   </TableCell>
-                  <TableCell className="max-w-xs truncate text-muted-foreground" title={s.current_broadcast_title}>
-                    {s.current_broadcast_title || '-'}
+                  <TableCell className="max-w-md">
+                    {s.current_broadcast_title ? (
+                      <div className="space-y-1">
+                        <div className="text-sm font-medium truncate text-foreground" title={s.current_broadcast_title}>
+                          {s.current_broadcast_title}
+                        </div>
+                        {(s.current_broadcast_category || (s.current_broadcast_tags && s.current_broadcast_tags.length > 0)) && (
+                          <div className="flex flex-wrap items-center gap-1">
+                            {s.current_broadcast_category && (
+                              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-primary/10 text-primary">
+                                {s.current_broadcast_category}
+                              </span>
+                            )}
+                            {s.current_broadcast_tags && s.current_broadcast_tags.slice(0, 3).map((tag: string, idx: number) => (
+                              <span key={idx} className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] bg-muted text-muted-foreground">
+                                #{tag}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <span className="text-muted-foreground">-</span>
+                    )}
                   </TableCell>
                   <TableCell className="text-right space-x-2">
                     {s.is_paused ? (
