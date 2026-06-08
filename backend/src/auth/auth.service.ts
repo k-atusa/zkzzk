@@ -1,7 +1,7 @@
 import { Injectable, UnauthorizedException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { JwtService } from '@nestjs/jwt';
-const { authenticator } = require('otplib');
+import { authenticator } from 'otplib';
 import * as crypto from 'crypto';
 
 @Injectable()
