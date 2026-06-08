@@ -1,0 +1,66 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+model user {
+  id             String      @id @default(auto()) @map("_id") @db.ObjectId
+  username       String      @unique
+  password_hash  String
+  is_admin       Boolean?
+  created_at     DateTime?   @default(now())
+  totp_secret    String?
+  totp_enabled   Boolean?
+  nid_aut        String?
+  nid_ses        String?
+  recordings     recording[]
+  streamers      streamer[]  @relation("StreamerUser")
+  cookie_streamers streamer[] @relation("StreamerCookieUser")
+
+  @@map("account")
+}
+
+model settings {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  initialized Boolean?
+
+  @@map("settings")
+}
+
+model streamer {
+  id                      String      @id @default(auto()) @map("_id") @db.ObjectId
+  channel_url             String
+  nickname                String?
+  user_id                 String?     @db.ObjectId
+  cookie_user_id          String?     @db.ObjectId
+  is_active               Boolean?
+  created_at              DateTime?   @default(now())
+  last_checked            DateTime?
+  last_live               DateTime?
+  is_recording            Boolean?
+  current_broadcast_title String?
+  process_id              Int?
+  recordings              recording[]
+  cookie_user             user?       @relation("StreamerCookieUser", fields: [cookie_user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  user                    user?       @relation("StreamerUser", fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([user_id, channel_url])
+  @@map("streamers")
+}
+
+model recording {
+  id          String    @id @default(auto()) @map("_id") @db.ObjectId
+  streamer_id String    @db.ObjectId
+  user_id     String?   @db.ObjectId
+  filename    String
+  title       String?
+  created_at  DateTime? @default(now())
+  streamer    streamer  @relation(fields: [streamer_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  user        user?     @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@map("recording")
+}
