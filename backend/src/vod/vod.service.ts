@@ -178,6 +178,10 @@ export class VodService {
       '--output', filepath.replace('.mp4', '.ts')
     ]);
 
+    child.on('error', (err) => {
+      this.logger.error(`Failed to start streamlink for VOD: ${err.message}`);
+    });
+
     child.on('close', (code) => {
       if (code === 0) {
         const ffmpeg = spawn('ffmpeg', [
@@ -186,7 +190,16 @@ export class VodService {
           '-y',
           filepath
         ]);
-        ffmpeg.on('close', () => fs.unlinkSync(filepath.replace('.mp4', '.ts')));
+
+        ffmpeg.on('error', (err) => {
+          this.logger.error(`Failed to start ffmpeg for VOD: ${err.message}`);
+        });
+
+        ffmpeg.on('close', () => {
+          if (fs.existsSync(filepath.replace('.mp4', '.ts'))) {
+            fs.unlinkSync(filepath.replace('.mp4', '.ts'));
+          }
+        });
       }
     });
 

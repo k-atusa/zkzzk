@@ -111,6 +111,21 @@ export class TasksService {
 
       const child = spawn(command, args);
       
+      child.on('error', async (err) => {
+        this.logger.error(`Failed to start streamlink: ${err.message}`);
+        try {
+          await this.prisma.streamer.update({
+            where: { id: streamerId },
+            data: {
+              is_recording: false,
+              process_id: null
+            }
+          });
+        } catch (dbErr: any) {
+          this.logger.error(`Database update failed on streamlink spawn error: ${dbErr.message}`);
+        }
+      });
+      
       await this.prisma.streamer.update({
         where: { id: streamerId },
         data: {
@@ -132,6 +147,19 @@ export class TasksService {
 
       child.on('close', async (code) => {
         this.logger.log(`Streamlink exited with code ${code}`);
+        // Reset streamer recording status
+        try {
+          await this.prisma.streamer.update({
+            where: { id: streamerId },
+            data: {
+              is_recording: false,
+              process_id: null
+            }
+          });
+        } catch (dbErr: any) {
+          this.logger.error(`Database update failed on streamlink close: ${dbErr.message}`);
+        }
+
         const mp4Filename = filename.replace('.ts', '.mp4');
         const mp4Filepath = path.join(streamerDir, mp4Filename);
 
@@ -143,9 +171,15 @@ export class TasksService {
           mp4Filepath
         ]);
 
+        ffmpegChild.on('error', (err) => {
+          this.logger.error(`Failed to start ffmpeg: ${err.message}`);
+        });
+
         ffmpegChild.on('close', async (ffmpegCode) => {
           if (ffmpegCode === 0) {
-            fs.unlinkSync(filepath);
+            if (fs.existsSync(filepath)) {
+              fs.unlinkSync(filepath);
+            }
             await this.prisma.recording.update({
               where: { id: recording.id },
               data: { filename: path.join('live', streamerNickname, mp4Filename).replace(/\\/g, '/') }
