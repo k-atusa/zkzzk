@@ -238,74 +238,136 @@ export const Settings = () => {
     <div className="space-y-6">
       <h2 className="text-3xl font-bold tracking-tight">설정</h2>
 
-      {/* Password Change Card */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center">
-            <Lock className="mr-2 h-5 w-5" /> 비밀번호 변경
-          </CardTitle>
-          <CardDescription>현재 비밀번호를 입력한 후 새 비밀번호로 변경하세요.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleChangePassword} className="space-y-4 max-w-sm">
-            <div className="space-y-2">
-              <Label htmlFor="currentPassword">현재 비밀번호</Label>
-              <div className="relative">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Password Change Card */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <Lock className="mr-2 h-5 w-5" /> 비밀번호 변경
+            </CardTitle>
+            <CardDescription>현재 비밀번호를 입력한 후 새 비밀번호로 변경하세요.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleChangePassword} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="currentPassword">현재 비밀번호</Label>
+                <div className="relative">
+                  <Input
+                    id="currentPassword"
+                    type={showCurrentPw ? 'text' : 'password'}
+                    value={currentPassword}
+                    onChange={e => setCurrentPassword(e.target.value)}
+                    placeholder="현재 비밀번호"
+                    required
+                  />
+                  <button
+                    type="button"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    onClick={() => setShowCurrentPw(v => !v)}
+                  >
+                    {showCurrentPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="newPassword">새 비밀번호</Label>
+                <div className="relative">
+                  <Input
+                    id="newPassword"
+                    type={showNewPw ? 'text' : 'password'}
+                    value={newPassword}
+                    onChange={e => setNewPassword(e.target.value)}
+                    placeholder="새 비밀번호 (6자 이상)"
+                    required
+                  />
+                  <button
+                    type="button"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    onClick={() => setShowNewPw(v => !v)}
+                  >
+                    {showNewPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="confirmPassword">새 비밀번호 확인</Label>
                 <Input
-                  id="currentPassword"
-                  type={showCurrentPw ? 'text' : 'password'}
-                  value={currentPassword}
-                  onChange={e => setCurrentPassword(e.target.value)}
-                  placeholder="현재 비밀번호"
+                  id="confirmPassword"
+                  type="password"
+                  value={confirmPassword}
+                  onChange={e => setConfirmPassword(e.target.value)}
+                  placeholder="새 비밀번호 재입력"
                   required
                 />
-                <button
-                  type="button"
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                  onClick={() => setShowCurrentPw(v => !v)}
-                >
-                  {showCurrentPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </button>
               </div>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="newPassword">새 비밀번호</Label>
-              <div className="relative">
-                <Input
-                  id="newPassword"
-                  type={showNewPw ? 'text' : 'password'}
-                  value={newPassword}
-                  onChange={e => setNewPassword(e.target.value)}
-                  placeholder="새 비밀번호 (6자 이상)"
-                  required
-                />
-                <button
-                  type="button"
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                  onClick={() => setShowNewPw(v => !v)}
-                >
-                  {showNewPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </button>
+              <Button type="submit" disabled={pwLoading}>
+                {pwLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                비밀번호 변경
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+
+        {/* 2FA Card */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <KeyRound className="mr-2 h-5 w-5" /> 2차 인증 (OTP)
+            </CardTitle>
+            <CardDescription>보안을 위해 2차 인증을 설정하세요.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between p-4 border border-border rounded-lg">
+              <div className="flex items-center space-x-4">
+                {user.totp_enabled ? <ShieldCheck className="h-6 w-6 text-green-500" /> : <ShieldAlert className="h-6 w-6 text-yellow-500" />}
+                <div>
+                  <p className="font-medium">{user.totp_enabled ? '2차 인증 사용 중' : '2차 인증 미사용'}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {user.totp_enabled ? '계정이 안전하게 보호되고 있습니다.' : '인증기 앱을 사용하여 OTP를 등록하세요.'}
+                  </p>
+                </div>
               </div>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="confirmPassword">새 비밀번호 확인</Label>
-              <Input
-                id="confirmPassword"
-                type="password"
-                value={confirmPassword}
-                onChange={e => setConfirmPassword(e.target.value)}
-                placeholder="새 비밀번호 재입력"
-                required
+              <Switch
+                checked={user.totp_enabled}
+                onCheckedChange={(checked) => checked ? handleSetup2FA() : handleDisable2FA()}
               />
             </div>
-            <Button type="submit" disabled={pwLoading}>
-              {pwLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-              비밀번호 변경
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
+
+            {showSetup && (
+              <div className="mt-6 p-6 border border-border rounded-lg bg-muted/40">
+                <h3 className="text-lg font-medium mb-4">OTP 설정</h3>
+                <div className="flex flex-col xl:flex-row gap-6 items-start">
+                  <div className="bg-white p-2 rounded-lg shrink-0 mx-auto xl:mx-0">
+                    <img src={qrCode} alt="QR Code" className="w-40 h-40" />
+                  </div>
+                  <div className="flex-1 w-full">
+                    <p className="text-xs text-muted-foreground mb-4">
+                      Google Authenticator 앱 등으로 QR 코드를 스캔한 후 코드를 입력하세요.
+                    </p>
+                    <form onSubmit={handleVerify2FA} className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="otp">인증 코드</Label>
+                        <Input
+                          id="otp"
+                          value={otp}
+                          onChange={e => setOtp(e.target.value)}
+                          placeholder="000000"
+                          required
+                          maxLength={6}
+                        />
+                      </div>
+                      <div className="flex space-x-2">
+                        <Button type="submit">확인</Button>
+                        <Button type="button" variant="outline" onClick={() => setShowSetup(false)}>취소</Button>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
 
       {/* 화면 배율 설정 Card */}
       <Card>
@@ -409,66 +471,6 @@ export const Settings = () => {
               )}
             </div>
           </div>
-        </CardContent>
-      </Card>
-
-      {/* 2FA Card */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center">
-            <KeyRound className="mr-2 h-5 w-5" /> 2차 인증 (OTP)
-          </CardTitle>
-          <CardDescription>보안을 위해 2차 인증을 설정하세요.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center justify-between p-4 border border-border rounded-lg">
-            <div className="flex items-center space-x-4">
-              {user.totp_enabled ? <ShieldCheck className="h-6 w-6 text-green-500" /> : <ShieldAlert className="h-6 w-6 text-yellow-500" />}
-              <div>
-                <p className="font-medium">{user.totp_enabled ? '2차 인증 사용 중' : '2차 인증 미사용'}</p>
-                <p className="text-sm text-muted-foreground">
-                  {user.totp_enabled ? '계정이 안전하게 보호되고 있습니다.' : '인증기 앱을 사용하여 OTP를 등록하세요.'}
-                </p>
-              </div>
-            </div>
-            <Switch
-              checked={user.totp_enabled}
-              onCheckedChange={(checked) => checked ? handleSetup2FA() : handleDisable2FA()}
-            />
-          </div>
-
-          {showSetup && (
-            <div className="mt-6 p-6 border border-border rounded-lg bg-muted/40">
-              <h3 className="text-lg font-medium mb-4">OTP 설정</h3>
-              <div className="flex flex-col md:flex-row gap-8 items-start">
-                <div className="bg-white p-2 rounded-lg">
-                  <img src={qrCode} alt="QR Code" className="w-48 h-48" />
-                </div>
-                <div className="flex-1 w-full">
-                  <p className="text-sm text-muted-foreground mb-4">
-                    Google Authenticator 또는 Authy 앱으로 좌측 QR 코드를 스캔한 후 생성된 6자리 코드를 입력하세요.
-                  </p>
-                  <form onSubmit={handleVerify2FA} className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="otp">인증 코드</Label>
-                      <Input
-                        id="otp"
-                        value={otp}
-                        onChange={e => setOtp(e.target.value)}
-                        placeholder="000000"
-                        required
-                        maxLength={6}
-                      />
-                    </div>
-                    <div className="flex space-x-2">
-                      <Button type="submit">확인</Button>
-                      <Button type="button" variant="outline" onClick={() => setShowSetup(false)}>취소</Button>
-                    </div>
-                  </form>
-                </div>
-              </div>
-            </div>
-          )}
         </CardContent>
       </Card>
 
