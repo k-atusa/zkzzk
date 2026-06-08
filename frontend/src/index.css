@@ -240,6 +240,15 @@
   body {
     @apply bg-background text-foreground;
   }
+
+  [data-sonner-toaster] {
+    --width: 22.25rem !important;
+  }
+
+  [data-sonner-toaster] [data-sonner-toast] {
+    padding: 1rem !important;
+    border-radius: var(--radius) !important;
+  }
 }
 
 /*
