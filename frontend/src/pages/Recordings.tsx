@@ -1,16 +1,112 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { toast } from 'sonner';
-import { Download, Trash2, Video, Film, FileText, MonitorPlay } from 'lucide-react';
+import { Download, Trash2, Video, Film, FileText, MonitorPlay, Play, AlertCircle } from 'lucide-react';
 import api from '@/api';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
+import mpegts from 'mpegts.js';
+
+// Self-contained Video Player for .ts and .mp4 formats
+const VideoPlayer = ({ filename }: { filename: string }) => {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const playerRef = useRef<any>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const videoUrl = `http://localhost:5001/api/recordings/download/${filename}`;
+  const isTs = filename.endsWith('.ts');
+
+  useEffect(() => {
+    if (!videoRef.current) return;
+    setError(null);
+
+    if (isTs) {
+      if (mpegts.getFeatureList().msePlayback) {
+        try {
+          const player = mpegts.createPlayer({
+            type: 'mpegts',
+            isLive: false,
+            url: videoUrl,
+            withCredentials: true,
+          }, {
+            lazyLoad: false,
+            enableStashBuffer: false
+          });
+
+          player.attachMediaElement(videoRef.current);
+          player.load();
+          playerRef.current = player;
+
+          const playPromise = player.play();
+          if (playPromise instanceof Promise) {
+            playPromise.catch((e: any) => {
+              console.warn("Autoplay prevented:", e);
+            });
+          }
+
+          player.on(mpegts.Events.ERROR, (type, detail, info) => {
+            console.error('mpegts error:', type, detail, info);
+            setError(`재생 중 오류가 발생했습니다: ${type} (${detail})`);
+          });
+        } catch (e: any) {
+          setError(`플레이어 초기화 실패: ${e.message}`);
+        }
+
+        return () => {
+          if (playerRef.current) {
+            playerRef.current.destroy();
+            playerRef.current = null;
+          }
+        };
+      } else {
+        setError('이 브라우저는 MPEG-TS 재생을 지원하지 않습니다.');
+      }
+    }
+  }, [videoUrl, isTs]);
+
+  if (error) {
+    return (
+      <div className="flex h-full w-full flex-col items-center justify-center gap-3 text-destructive bg-muted p-6 text-center rounded-lg">
+        <AlertCircle className="h-10 w-10 text-destructive/80" />
+        <div>
+          <p className="font-semibold text-sm">{error}</p>
+          <p className="text-xs text-muted-foreground mt-1">대체 방법: 우측의 다운로드 버튼을 이용해 다운로드 후 PC에서 재생해 주세요.</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (isTs) {
+    return (
+      <video
+        ref={videoRef}
+        controls
+        autoPlay
+        crossOrigin="use-credentials"
+        className="w-full h-full object-contain"
+      />
+    );
+  }
+
+  return (
+    <video
+      ref={videoRef}
+      src={videoUrl}
+      controls
+      autoPlay
+      crossOrigin="use-credentials"
+      className="w-full h-full object-contain"
+    />
+  );
+};
 
 export const Recordings = () => {
   const [recordings, setRecordings] = useState<Record<string, any[]>>({});
   const [activeTab, setActiveTab] = useState<'live' | 'vod' | 'other'>('live');
+  const [playingVideo, setPlayingVideo] = useState<{ filename: string; title: string } | null>(null);
 
   const fetchRecordings = async () => {
     try {
@@ -159,16 +255,26 @@ export const Recordings = () => {
                     <TableHead className="pl-6 py-3">방송 정보 / 파일명</TableHead>
                     <TableHead className="w-28 py-3">파일 크기</TableHead>
                     <TableHead className="w-48 py-3">녹화 완료 일시</TableHead>
-                    <TableHead className="text-right pr-6 py-3 w-32">작업</TableHead>
+                    <TableHead className="text-right pr-6 py-3 w-40">작업</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {recs.map((r, i) => (
                     <TableRow key={i} className="hover:bg-muted/10 transition-colors">
                       <TableCell className="pl-6 py-4 font-medium">
-                        <div className="font-semibold text-foreground text-sm line-clamp-1">{r.title}</div>
+                        <div 
+                          className="font-semibold text-foreground text-sm line-clamp-1 cursor-pointer hover:underline hover:text-primary transition-colors"
+                          onClick={() => setPlayingVideo({ filename: r.filename, title: r.title })}
+                        >
+                          {r.title}
+                        </div>
                         {r.title !== r.display_name && (
-                          <div className="text-xs text-muted-foreground mt-1 font-mono break-all">{r.display_name}</div>
+                          <div 
+                            className="text-xs text-muted-foreground mt-1 font-mono break-all cursor-pointer hover:underline hover:text-primary transition-colors"
+                            onClick={() => setPlayingVideo({ filename: r.filename, title: r.title })}
+                          >
+                            {r.display_name}
+                          </div>
                         )}
                       </TableCell>
                       <TableCell className="text-muted-foreground text-sm font-medium">{r.size_mb} MB</TableCell>
@@ -176,6 +282,9 @@ export const Recordings = () => {
                         {format(new Date(r.created_at), 'PPP pp', { locale: ko })}
                       </TableCell>
                       <TableCell className="text-right pr-6 py-4 space-x-2">
+                        <Button variant="outline" size="sm" onClick={() => setPlayingVideo({ filename: r.filename, title: r.title })} className="h-8 w-8 p-0" title="재생">
+                          <Play className="h-4 w-4" />
+                        </Button>
                         <Button variant="secondary" size="sm" onClick={() => handleDownload(r.filename)} className="h-8 w-8 p-0" title="다운로드">
                           <Download className="h-4 w-4" />
                         </Button>
@@ -191,6 +300,23 @@ export const Recordings = () => {
           </Card>
         ))
       )}
+
+      {/* Video Player Modal */}
+      <Dialog open={!!playingVideo} onOpenChange={(open) => { if (!open) setPlayingVideo(null); }}>
+        <DialogContent className="sm:max-w-4xl p-6 gap-4">
+          <DialogHeader className="pb-2 border-b border-border/50">
+            <DialogTitle className="text-lg font-bold pr-6 line-clamp-1 flex items-center gap-2 text-foreground">
+              <Play className="h-5 w-5 text-primary fill-primary/10" />
+              {playingVideo?.title}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="relative aspect-video w-full overflow-hidden rounded-lg bg-black flex items-center justify-center shadow-inner ring-1 ring-white/5">
+            {playingVideo && (
+              <VideoPlayer filename={playingVideo.filename} />
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
