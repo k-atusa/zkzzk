@@ -319,14 +319,14 @@ def get_vod_stream_urls(video_id, in_key, live_rewind_playback_json=None):
                                             quality = "360p"
                                         else:
                                             quality = "240p"
-                                        
+                                        manifest_url = f"https://apis.naver.com/neonplayer/vodplay/v2/playback/{video_id}?key={in_key}&quality={quality}"
                                         stream_urls[resolution] = {
-                                            'download_url': base_url,
+                                            'download_url': manifest_url,
                                             'width': int(width),
                                             'height': int(height),
                                             'bandwidth': int(bandwidth) if bandwidth else 0,
                                             'quality': quality,
-                                            'download_type': 'direct'
+                                            'download_type': 'dash'
                                         }
                                         print(f"[VOD STREAM] Added JSON download URL for {resolution} ({quality}): {base_url}")
                     
@@ -392,14 +392,14 @@ def get_vod_stream_urls(video_id, in_key, live_rewind_playback_json=None):
                                     quality = "360p"
                                 else:
                                     quality = "240p"
-                                
+                                manifest_url = f"https://apis.naver.com/neonplayer/vodplay/v2/playback/{video_id}?key={in_key}&quality={quality}"
                                 stream_urls[resolution] = {
-                                    'download_url': base_url,
+                                    'download_url': manifest_url,
                                     'width': int(width),
                                     'height': int(height),
                                     'bandwidth': int(bandwidth) if bandwidth else 0,
                                     'quality': quality,
-                                    'download_type': 'direct'
+                                    'download_type': 'dash'
                                 }
                                 print(f"[VOD STREAM] Added XML download URL for {resolution} ({quality}): {base_url}")
                             else:
@@ -427,7 +427,7 @@ def get_vod_stream_urls(video_id, in_key, live_rewind_playback_json=None):
                     'height': 720,
                     'bandwidth': 2000000,
                     'quality': '720p',
-                    'download_type': 'direct'
+                    'download_type': 'dash'
                 }
             }
             print(f"[VOD STREAM] Using default stream URL: {default_url}")

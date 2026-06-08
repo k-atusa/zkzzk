@@ -124,17 +124,18 @@ def download_vod():
             try:
                 print(f"[VOD DOWNLOAD] Downloading to: {filepath}")
 
-                if download_type == 'm3u8' or '.m3u8' in (download_url or ''):
-                    print(f"[VOD DOWNLOAD] Starting ffmpeg m3u8 download: {filename}")
+                is_stream = download_type in ('m3u8', 'dash') or '.m3u8' in (download_url or '') or '?key=' in (download_url or '')
+                if is_stream:
+                    print(f"[VOD DOWNLOAD] Starting ffmpeg stream download: {filename}")
                     ffmpeg_headers = (
                         "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
                         "(KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36\r\n"
                         "Origin: https://chzzk.naver.com\r\n"
                         "Referer: https://chzzk.naver.com/\r\n"
+                        "Accept: application/dash+xml, */*\r\n"
                     )
                     ffmpeg_command = [
                         'ffmpeg',
-                        '-f', 'hls',
                         '-protocol_whitelist', 'file,http,https,tcp,tls,crypto,data',
                         '-allowed_extensions', 'ALL',
                         '-user_agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
