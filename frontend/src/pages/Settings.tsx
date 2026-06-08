@@ -8,12 +8,24 @@ import { toast } from 'sonner';
 import {
   ShieldCheck, ShieldAlert, KeyRound, Lock, Cookie,
   Users, Plus, Trash2, UserCheck, Loader2, CheckCircle2,
-  Eye, EyeOff, ShieldQuestion
+  Eye, EyeOff, ShieldQuestion, ZoomIn
 } from 'lucide-react';
 import api from '@/api';
 
 export const Settings = () => {
   const [user, setUser] = useState<any>(null);
+
+  // UI Scale
+  const [scale, setScale] = useState(() => {
+    return parseInt(localStorage.getItem('ui_scale') || '100', 10);
+  });
+
+  const handleScaleChange = (newScale: number) => {
+    setScale(newScale);
+    localStorage.setItem('ui_scale', String(newScale));
+    document.documentElement.style.fontSize = `${newScale}%`;
+    toast.success(`화면 배율이 ${newScale}%로 설정되었습니다.`);
+  };
 
   // 2FA
   const [qrCode, setQrCode] = useState('');
@@ -292,6 +304,32 @@ export const Settings = () => {
               비밀번호 변경
             </Button>
           </form>
+        </CardContent>
+      </Card>
+
+      {/* 화면 배율 설정 Card */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <ZoomIn className="h-5 w-5" /> 화면 배율 설정
+          </CardTitle>
+          <CardDescription>
+            전체적인 UI 글꼴 및 크기 배율을 조절하여 가장 편안한 크기로 화면을 사용하세요.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center gap-2">
+            {[90, 100, 110, 120, 130].map((s) => (
+              <Button
+                key={s}
+                variant={scale === s ? 'default' : 'outline'}
+                onClick={() => handleScaleChange(s)}
+                className="w-20"
+              >
+                {s}%
+              </Button>
+            ))}
+          </div>
         </CardContent>
       </Card>
 

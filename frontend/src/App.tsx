@@ -10,6 +10,9 @@ import { useEffect } from 'react';
 
 const App = () => {
   useEffect(() => {
+    const savedScale = localStorage.getItem('ui_scale') || '100';
+    document.documentElement.style.fontSize = `${savedScale}%`;
+
     const savedTheme = (localStorage.getItem('theme') as 'light' | 'dark' | 'system') || 'system';
     
     const applyTheme = (t: 'light' | 'dark' | 'system') => {
