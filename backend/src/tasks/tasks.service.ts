@@ -11,7 +11,7 @@ import axios from 'axios';
 export class TasksService {
   private readonly logger = new Logger(TasksService.name);
 
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
 
   @Cron('*/30 * * * * *')
   async handleCron() {
@@ -133,7 +133,7 @@ export class TasksService {
       child.stderr.on('data', (data) => {
         this.logger.error(`[Streamlink stderr] ${data.toString().trim()}`);
       });
-      
+
       child.on('error', async (err) => {
         this.logger.error(`Failed to start streamlink: ${err.message}`);
         try {
@@ -148,7 +148,7 @@ export class TasksService {
           this.logger.error(`Database update failed on streamlink spawn error: ${dbErr.message}`);
         }
       });
-      
+
       await this.prisma.streamer.updateMany({
         where: { id: streamerId },
         data: {
