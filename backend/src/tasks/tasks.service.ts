@@ -57,7 +57,7 @@ export class TasksService {
             data: { last_live: new Date() }
           });
 
-          if (!streamer.is_recording) {
+          if (!streamer.is_recording && !streamer.is_paused) {
             this.downloadStream(channelId, broadcastTitle, streamer.nickname, streamer.id);
           }
         } else {
@@ -90,7 +90,7 @@ export class TasksService {
 
       const now = new Date();
       const pad = (n: number) => String(n).padStart(2, '0');
-      const dateStr = `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
+      const dateStr = `${String(now.getFullYear()).slice(2)}${pad(now.getMonth() + 1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
       let filename = `${dateStr} ${broadcastTitle} [${streamerNickname}].ts`;
       filename = filename.replace(/[<>:"/\\|?*]/g, '');
       const filepath = path.join(streamerDir, filename);
@@ -130,7 +130,7 @@ export class TasksService {
       child.on('error', async (err) => {
         this.logger.error(`Failed to start streamlink: ${err.message}`);
         try {
-          await this.prisma.streamer.update({
+          await this.prisma.streamer.updateMany({
             where: { id: streamerId },
             data: {
               is_recording: false,
@@ -142,7 +142,7 @@ export class TasksService {
         }
       });
       
-      await this.prisma.streamer.update({
+      await this.prisma.streamer.updateMany({
         where: { id: streamerId },
         data: {
           is_recording: true,
@@ -165,16 +165,13 @@ export class TasksService {
         this.logger.log(`Streamlink exited with code ${code}`);
         // Reset streamer recording status
         try {
-          const exists = await this.prisma.streamer.findUnique({ where: { id: streamerId } });
-          if (exists) {
-            await this.prisma.streamer.update({
-              where: { id: streamerId },
-              data: {
-                is_recording: false,
-                process_id: null
-              }
-            });
-          }
+          await this.prisma.streamer.updateMany({
+            where: { id: streamerId },
+            data: {
+              is_recording: false,
+              process_id: null
+            }
+          });
         } catch (dbErr: any) {
           this.logger.error(`Database update failed on streamlink close: ${dbErr.message}`);
         }
@@ -206,10 +203,14 @@ export class TasksService {
             if (fs.existsSync(filepath)) {
               fs.unlinkSync(filepath);
             }
-            await this.prisma.recording.update({
-              where: { id: recording.id },
-              data: { filename: path.join('live', streamerNickname, mp4Filename).replace(/\\/g, '/') }
-            });
+            try {
+              await this.prisma.recording.updateMany({
+                where: { id: recording.id },
+                data: { filename: path.join('live', streamerNickname, mp4Filename).replace(/\\/g, '/') }
+              });
+            } catch (dbErr: any) {
+              this.logger.error(`Failed to update recording filename: ${dbErr.message}`);
+            }
           }
         });
       });

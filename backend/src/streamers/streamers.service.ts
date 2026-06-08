@@ -96,18 +96,36 @@ export class StreamersService {
       try {
         process.kill(streamer.process_id, 'SIGTERM');
       } catch (e) {}
-      
-      await this.prisma.streamer.update({
-        where: { id: streamerId },
-        data: {
-          is_recording: false,
-          current_broadcast_title: null,
-          process_id: null
-        }
-      });
-      return { status: 'success' };
     }
-    throw new BadRequestException('녹화 중이 아닙니다.');
+
+    await this.prisma.streamer.update({
+      where: { id: streamerId },
+      data: {
+        is_recording: false,
+        current_broadcast_title: null,
+        process_id: null,
+        is_paused: true
+      }
+    });
+    return { status: 'success' };
+  }
+
+  async resumeRecording(streamerId: string, user: any) {
+    const streamer = await this.prisma.streamer.findUnique({ where: { id: streamerId } });
+    if (!streamer) throw new NotFoundException('스트리머를 찾을 수 없습니다.');
+    if (streamer.user_id !== user.id && !user.is_admin) throw new ForbiddenException('권한이 없습니다.');
+
+    const updated = await this.prisma.streamer.update({
+      where: { id: streamerId },
+      data: {
+        is_paused: false
+      }
+    });
+
+    // Start checking live status and record immediately in background
+    this.tasksService.checkStreamer(updated).catch(err => {});
+
+    return { status: 'success' };
   }
 
   async setStreamerCookies(streamerId: string, cookieUserId: string | null, user: any) {

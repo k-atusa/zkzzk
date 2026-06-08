@@ -33,6 +33,11 @@ export class StreamersController {
     return this.streamersService.stopRecording(id, req.user);
   }
 
+  @Post('resume_recording/:id')
+  async resumeRecording(@Param('id') id: string, @Req() req: any) {
+    return this.streamersService.resumeRecording(id, req.user);
+  }
+
   @Post('set_streamer_cookies')
   async setStreamerCookies(@Req() req: any, @Body() body: any) {
     return this.streamersService.setStreamerCookies(body.streamer_id, body.cookie_user_id, req.user);

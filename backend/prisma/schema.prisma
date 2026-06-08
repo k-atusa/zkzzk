@@ -42,6 +42,7 @@ model streamer {
   last_checked            DateTime?
   last_live               DateTime?
   is_recording            Boolean?
+  is_paused               Boolean?    @default(false)
   current_broadcast_title String?
   process_id              Int?
   recordings              recording[]

@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { toast } from 'sonner';
-import { Plus, Trash2, StopCircle, RefreshCw, Loader2, Radio } from 'lucide-react';
+import { Plus, Trash2, StopCircle, RefreshCw, Loader2, Radio, PlayCircle } from 'lucide-react';
 import api from '@/api';
 
 export const Live = () => {
@@ -40,7 +40,7 @@ export const Live = () => {
   useEffect(() => {
     fetchStreamers();
     fetchMe();
-    const interval = setInterval(fetchStreamers, 5000);
+    const interval = setInterval(fetchStreamers, 2000);
     return () => clearInterval(interval);
   }, []);
 
@@ -116,13 +116,23 @@ export const Live = () => {
   };
 
   const handleStopRecording = async (id: string) => {
-    if (!confirm('녹화를 중지하시겠습니까?')) return;
+    if (!confirm('자동 녹화를 일시중지하시겠습니까? (현재 방송 중이면 녹화가 종료됩니다)')) return;
     try {
       await api.post(`/streamers/stop_recording/${id}`);
       toast.success('녹화가 중지되었습니다.');
       fetchStreamers();
     } catch (error: any) {
       toast.error(error.response?.data?.message || '중지 실패');
+    }
+  };
+
+  const handleResumeRecording = async (id: string) => {
+    try {
+      await api.post(`/streamers/resume_recording/${id}`);
+      toast.success('자동 녹화가 재개되었습니다.');
+      fetchStreamers();
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || '재개 실패');
     }
   };
 
@@ -286,7 +296,11 @@ export const Live = () => {
                     <a href={s.channel_url} target="_blank" rel="noreferrer" className="hover:underline">{s.nickname}</a>
                   </TableCell>
                   <TableCell>
-                    {s.is_recording ? (
+                    {s.is_paused ? (
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-500/10 text-yellow-600">
+                        일시중지
+                      </span>
+                    ) : s.is_recording ? (
                       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-500/10 text-red-500">
                         <span className="w-2 h-2 mr-1.5 bg-red-500 rounded-full animate-pulse"></span>
                         녹화중
@@ -301,12 +315,16 @@ export const Live = () => {
                     {s.current_broadcast_title || '-'}
                   </TableCell>
                   <TableCell className="text-right space-x-2">
-                    {s.is_recording && (
-                      <Button variant="destructive" size="sm" onClick={() => handleStopRecording(s.id)}>
+                    {s.is_paused ? (
+                      <Button variant="outline" size="sm" onClick={() => handleResumeRecording(s.id)} title="녹화 재개">
+                        <PlayCircle className="h-4 w-4 text-green-500" />
+                      </Button>
+                    ) : (
+                      <Button variant={s.is_recording ? "destructive" : "outline"} size="sm" onClick={() => handleStopRecording(s.id)} title="녹화 중지">
                         <StopCircle className="h-4 w-4" />
                       </Button>
                     )}
-                    <Button variant="destructive" size="sm" onClick={() => handleRemove(s.id)}>
+                    <Button variant="destructive" size="sm" onClick={() => handleRemove(s.id)} title="스트리머 삭제">
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </TableCell>
