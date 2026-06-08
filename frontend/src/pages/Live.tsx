@@ -1,15 +1,25 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { toast } from 'sonner';
-import { Plus, Trash2, StopCircle, RefreshCw } from 'lucide-react';
+import { Plus, Trash2, StopCircle, RefreshCw, Loader2, Radio } from 'lucide-react';
 import api from '@/api';
 
 export const Live = () => {
   const [streamers, setStreamers] = useState<any[]>([]);
   const [newUrl, setNewUrl] = useState('');
+  const [hasCookies, setHasCookies] = useState(false);
+
+  // Following dropdown
+  const [followedStreamers, setFollowedStreamers] = useState<any[]>([]);
+  const [showFollowDropdown, setShowFollowDropdown] = useState(false);
+  const [followLoading, setFollowLoading] = useState(false);
+  const [followFetched, setFollowFetched] = useState(false);
+  const [addingId, setAddingId] = useState<string | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   const fetchStreamers = async () => {
     try {
@@ -20,11 +30,52 @@ export const Live = () => {
     }
   };
 
+  const fetchMe = async () => {
+    try {
+      const res = await api.get('/auth/me');
+      setHasCookies(res.data.has_cookies);
+    } catch (e) {}
+  };
+
   useEffect(() => {
     fetchStreamers();
+    fetchMe();
     const interval = setInterval(fetchStreamers, 30000);
     return () => clearInterval(interval);
   }, []);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (
+        dropdownRef.current && !dropdownRef.current.contains(e.target as Node) &&
+        inputRef.current && !inputRef.current.contains(e.target as Node)
+      ) {
+        setShowFollowDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const handleInputFocus = async () => {
+    if (!hasCookies) return;
+    setShowFollowDropdown(true);
+    if (!followFetched) {
+      setFollowLoading(true);
+      try {
+        const res = await api.get('/streamers/following');
+        setFollowedStreamers(res.data);
+        setFollowFetched(true);
+      } catch (error: any) {
+        const msg = error.response?.data?.message || '팔로우 목록을 가져오는데 실패했습니다.';
+        toast.error(msg);
+        setShowFollowDropdown(false);
+      } finally {
+        setFollowLoading(false);
+      }
+    }
+  };
 
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,13 +83,28 @@ export const Live = () => {
       await api.post('/streamers/add_streamer', { channel_url: newUrl });
       toast.success('스트리머가 추가되었습니다.');
       setNewUrl('');
+      setShowFollowDropdown(false);
       fetchStreamers();
     } catch (error: any) {
       toast.error(error.response?.data?.message || '추가 실패');
     }
   };
 
-  const handleRemove = async (id: number) => {
+  const handleAddFromFollowing = async (channel: any) => {
+    setAddingId(channel.channelId);
+    setShowFollowDropdown(false);
+    try {
+      await api.post('/streamers/add_streamer', { channel_url: channel.channel_url });
+      toast.success(`${channel.channelName}이(가) 추가되었습니다.`);
+      fetchStreamers();
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || '추가 실패');
+    } finally {
+      setAddingId(null);
+    }
+  };
+
+  const handleRemove = async (id: string) => {
     if (!confirm('정말 삭제하시겠습니까?')) return;
     try {
       await api.post(`/streamers/remove_streamer/${id}`);
@@ -49,7 +115,7 @@ export const Live = () => {
     }
   };
 
-  const handleStopRecording = async (id: number) => {
+  const handleStopRecording = async (id: string) => {
     if (!confirm('녹화를 중지하시겠습니까?')) return;
     try {
       await api.post(`/streamers/stop_recording/${id}`);
@@ -59,6 +125,14 @@ export const Live = () => {
       toast.error(error.response?.data?.message || '중지 실패');
     }
   };
+
+  // Filter followed by current input text
+  const filteredFollowed = followedStreamers.filter(ch =>
+    !newUrl || ch.channelName?.toLowerCase().includes(newUrl.toLowerCase())
+  );
+
+  // Check if already added
+  const addedUrls = new Set(streamers.map(s => s.channel_url));
 
   return (
     <div className="space-y-6">
@@ -72,16 +146,108 @@ export const Live = () => {
       <Card>
         <CardHeader>
           <CardTitle>새 스트리머 추가</CardTitle>
-          <CardDescription>치지직 채널 URL을 입력하여 자동 녹화를 설정하세요.</CardDescription>
+          <CardDescription>
+            치지직 채널 URL을 입력하여 자동 녹화를 설정하세요.
+            {hasCookies && (
+              <span className="ml-2 text-green-600 dark:text-green-400">인풋을 클릭하면 팔로우 중인 스트리머 목록을 확인할 수 있습니다.</span>
+            )}
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleAdd} className="flex space-x-2">
-            <Input
-              value={newUrl}
-              onChange={e => setNewUrl(e.target.value)}
-              placeholder="https://chzzk.naver.com/..."
-              required
-            />
+            <div className="relative flex-1">
+              <Input
+                ref={inputRef}
+                value={newUrl}
+                onChange={e => setNewUrl(e.target.value)}
+                onFocus={handleInputFocus}
+                placeholder="https://chzzk.naver.com/..."
+                required
+                autoComplete="off"
+              />
+
+              {/* Following Dropdown */}
+              {showFollowDropdown && hasCookies && (
+                <div
+                  ref={dropdownRef}
+                  className="absolute top-full left-0 right-0 mt-1 z-50 bg-popover border border-border rounded-lg shadow-lg overflow-hidden"
+                >
+                  {followLoading ? (
+                    <div className="flex items-center justify-center py-6 text-muted-foreground text-sm gap-2">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      팔로우 목록 불러오는 중...
+                    </div>
+                  ) : filteredFollowed.length === 0 ? (
+                    <div className="py-4 px-3 text-center text-sm text-muted-foreground">
+                      {newUrl ? '검색 결과가 없습니다.' : '팔로우 중인 스트리머가 없습니다.'}
+                    </div>
+                  ) : (
+                    <div className="max-h-64 overflow-y-auto">
+                      <div className="px-3 py-2 text-xs text-muted-foreground font-medium border-b border-border bg-muted/30">
+                        팔로우 중인 채널 ({filteredFollowed.length})
+                      </div>
+                      {filteredFollowed.map((ch) => {
+                        const isAdded = addedUrls.has(ch.channel_url);
+                        const isAdding = addingId === ch.channelId;
+                        return (
+                          <button
+                            key={ch.channelId}
+                            type="button"
+                            disabled={isAdded || isAdding}
+                            onClick={() => !isAdded && handleAddFromFollowing(ch)}
+                            className={`w-full flex items-center gap-3 px-3 py-2.5 text-left transition-colors ${
+                              isAdded
+                                ? 'opacity-50 cursor-not-allowed'
+                                : 'hover:bg-accent hover:text-accent-foreground cursor-pointer'
+                            }`}
+                          >
+                            {ch.channelImageUrl ? (
+                              <img
+                                src={ch.channelImageUrl}
+                                alt={ch.channelName}
+                                className="h-7 w-7 rounded-full object-cover flex-shrink-0"
+                              />
+                            ) : (
+                              <div className="h-7 w-7 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 text-xs font-bold text-primary">
+                                {ch.channelName?.charAt(0)}
+                              </div>
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-1">
+                                <p className="text-sm font-medium truncate">{ch.channelName}</p>
+                                {ch.verifiedMark && (
+                                  <svg className="h-3.5 w-3.5 text-blue-500 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                  </svg>
+                                )}
+                              </div>
+                              {ch.openLive && ch.liveTitle && (
+                                <p className="text-xs text-muted-foreground truncate">{ch.liveTitle}</p>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-1.5 flex-shrink-0">
+                              {ch.openLive && (
+                                <span className="inline-flex items-center gap-1 text-xs text-red-500 font-medium">
+                                  <Radio className="h-3 w-3" />
+                                  {ch.concurrentUserCount > 0 ? ch.concurrentUserCount.toLocaleString() : 'LIVE'}
+                                </span>
+                              )}
+                              {isAdding ? (
+                                <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                              ) : isAdded ? (
+                                <span className="text-xs text-muted-foreground">추가됨</span>
+                              ) : (
+                                <Plus className="h-4 w-4 text-muted-foreground" />
+                              )}
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
             <Button type="submit">
               <Plus className="mr-2 h-4 w-4" /> 추가
             </Button>

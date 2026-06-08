@@ -12,6 +12,11 @@ export class StreamersController {
     return this.streamersService.getStreamers(req.user);
   }
 
+  @Get('following')
+  async getFollowedStreamers(@Req() req: any) {
+    return this.streamersService.getFollowedStreamers(req.user);
+  }
+
   @Post('add_streamer')
   async addStreamer(@Req() req: any, @Body() body: any) {
     const streamer = await this.streamersService.addStreamer(body.channel_url, req.user);

@@ -121,4 +121,45 @@ export class StreamersService {
 
     return { status: 'success' };
   }
+
+  async getFollowedStreamers(user: any) {
+    const dbUser = await this.prisma.user.findUnique({ where: { id: user.id } });
+    if (!dbUser?.nid_aut || !dbUser?.nid_ses) {
+      throw new BadRequestException('쿠키가 설정되지 않았습니다. 설정에서 치지직 쿠키를 먼저 설정해주세요.');
+    }
+
+    const headers = {
+      'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36',
+      'Accept': 'application/json, text/plain, */*',
+      'Accept-Language': 'ko-KR,ko;q=0.8',
+      'Cache-Control': 'no-cache',
+      'Pragma': 'no-cache',
+      'Origin': 'https://chzzk.naver.com',
+      'Referer': 'https://chzzk.naver.com/',
+      'front-client-platform-type': 'PC',
+      'front-client-product-type': 'web',
+      'if-modified-since': 'Mon, 26 Jul 1997 05:00:00 GMT',
+      'Cookie': `NID_AUT=${dbUser.nid_aut}; NID_SES=${dbUser.nid_ses}`,
+    };
+
+    const response = await axios.get(
+      'https://api.chzzk.naver.com/service/v1/channels/followings?page=0&size=505&sortType=FOLLOW',
+      { headers }
+    );
+
+    if (response.data?.code !== 200 || !response.data?.content?.followingList) {
+      throw new BadRequestException('쿠키가 유효하지 않거나 팔로우 목록을 가져올 수 없습니다.');
+    }
+
+    return response.data.content.followingList.map((item: any) => ({
+      channelId: item.channelId,
+      channelName: item.channel?.channelName ?? '',
+      channelImageUrl: item.channel?.channelImageUrl ?? '',
+      verifiedMark: item.channel?.verifiedMark ?? false,
+      openLive: item.streamer?.openLive ?? false,
+      liveTitle: item.liveInfo?.liveTitle ?? null,
+      concurrentUserCount: item.liveInfo?.concurrentUserCount ?? 0,
+      channel_url: `https://chzzk.naver.com/${item.channelId}`,
+    }));
+  }
 }

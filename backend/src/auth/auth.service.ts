@@ -1,8 +1,9 @@
-import { Injectable, UnauthorizedException, BadRequestException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { JwtService } from '@nestjs/jwt';
 import { authenticator } from 'otplib';
 import * as crypto from 'crypto';
+import axios from 'axios';
 
 @Injectable()
 export class AuthService {
@@ -31,19 +32,20 @@ export class AuthService {
         const derived = crypto.scryptSync(password, saltBuffer, hashBuffer.length, { N, r, p, maxmem: 64 * 1024 * 1024 });
         return crypto.timingSafeEqual(hashBuffer, derived);
       } else if (methodParts[0] === 'pbkdf2') {
-        const algorithm = methodParts[1];
-        const iterations = parseInt(methodParts[2], 10);
-        
-        const saltBuffer = Buffer.from(salt, 'utf-8');
-        const hashBuffer = Buffer.from(actualHash, 'hex'); // werkzeug pbkdf2 uses hex for hash, wait no, actually it might use hex or base64. Usually hex for pbkdf2 in older werkzeug.
-        
-        // We'll just fallback to simple check or let users reset.
+        // fallback
       }
       return false;
     } catch (e) {
       console.error('Error verifying hash', e);
       return false;
     }
+  }
+
+  private hashPassword(pass: string): string {
+    const salt = crypto.randomBytes(16);
+    const N = 32768, r = 8, p = 1;
+    const derived = crypto.scryptSync(pass, salt, 32, { N, r, p, maxmem: 64 * 1024 * 1024 });
+    return `scrypt:${N}:${r}:${p}$${salt.toString('base64').replace(/=/g, '')}$${derived.toString('base64').replace(/=/g, '')}`;
   }
 
   async validateUser(username: string, pass: string): Promise<any> {
@@ -54,8 +56,7 @@ export class AuthService {
     if (user.password_hash.startsWith('scrypt:') || user.password_hash.startsWith('pbkdf2:')) {
       isMatch = this.checkWerkzeugHash(pass, user.password_hash);
     } else {
-      // Future bcrypt or other
-      isMatch = false; // Add bcrypt check if needed
+      isMatch = false;
     }
 
     if (isMatch) {
@@ -78,12 +79,7 @@ export class AuthService {
       throw new BadRequestException('Admin already exists');
     }
     
-    // Create new password hash (scrypt compatible with werkzeug or just use a new one)
-    // For simplicity, we'll store a basic hash, but since we only check werkzeug above, we MUST generate werkzeug format.
-    const salt = crypto.randomBytes(16);
-    const N = 32768, r = 8, p = 1;
-    const derived = crypto.scryptSync(pass, salt, 32, { N, r, p, maxmem: 64 * 1024 * 1024 });
-    const hashStr = `scrypt:${N}:${r}:${p}$${salt.toString('base64').replace(/=/g,'')}$${derived.toString('base64').replace(/=/g,'')}`;
+    const hashStr = this.hashPassword(pass);
 
     const user = await this.prisma.user.create({
       data: {
@@ -102,6 +98,108 @@ export class AuthService {
     }
 
     return this.login(user);
+  }
+
+  async changePassword(userId: string, currentPass: string, newPass: string) {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new BadRequestException('사용자를 찾을 수 없습니다.');
+
+    const isMatch = this.checkWerkzeugHash(currentPass, user.password_hash);
+    if (!isMatch) throw new UnauthorizedException('현재 비밀번호가 올바르지 않습니다.');
+
+    if (newPass.length < 6) throw new BadRequestException('새 비밀번호는 6자 이상이어야 합니다.');
+
+    const newHash = this.hashPassword(newPass);
+    await this.prisma.user.update({ where: { id: userId }, data: { password_hash: newHash } });
+    return { success: true };
+  }
+
+  async listUsers(requesterId: string) {
+    const requester = await this.prisma.user.findUnique({ where: { id: requesterId } });
+    if (!requester?.is_admin) throw new ForbiddenException('관리자 권한이 필요합니다.');
+
+    const users = await this.prisma.user.findMany({
+      select: { id: true, username: true, is_admin: true, created_at: true, nid_aut: true, nid_ses: true }
+    });
+    return users;
+  }
+
+  async createUser(requesterId: string, username: string, pass: string, isAdmin: boolean) {
+    const requester = await this.prisma.user.findUnique({ where: { id: requesterId } });
+    if (!requester?.is_admin) throw new ForbiddenException('관리자 권한이 필요합니다.');
+
+    const existing = await this.prisma.user.findUnique({ where: { username } });
+    if (existing) throw new BadRequestException('이미 존재하는 사용자명입니다.');
+
+    if (pass.length < 6) throw new BadRequestException('비밀번호는 6자 이상이어야 합니다.');
+
+    const hashStr = this.hashPassword(pass);
+    const user = await this.prisma.user.create({
+      data: { username, password_hash: hashStr, is_admin: isAdmin, created_at: new Date() }
+    });
+
+    return { id: user.id, username: user.username, is_admin: user.is_admin };
+  }
+
+  async deleteUser(requesterId: string, targetUserId: string) {
+    const requester = await this.prisma.user.findUnique({ where: { id: requesterId } });
+    if (!requester?.is_admin) throw new ForbiddenException('관리자 권한이 필요합니다.');
+    if (requesterId === targetUserId) throw new BadRequestException('자기 자신은 삭제할 수 없습니다.');
+
+    await this.prisma.user.delete({ where: { id: targetUserId } });
+    return { success: true };
+  }
+
+  async updateCookies(userId: string, nid_aut: string | null, nid_ses: string | null) {
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { nid_aut, nid_ses }
+    });
+    return { success: true };
+  }
+
+  async getCookies(userId: string) {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    return {
+      nid_aut: user?.nid_aut ?? null,
+      nid_ses: user?.nid_ses ?? null,
+    };
+  }
+
+  async verifyCookies(nid_aut: string, nid_ses: string) {
+    try {
+      const commonHeaders = {
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36',
+        'Accept': 'application/json, text/plain, */*',
+        'Accept-Language': 'ko-KR,ko;q=0.8',
+        'Cache-Control': 'no-cache',
+        'Pragma': 'no-cache',
+        'Origin': 'https://chzzk.naver.com',
+        'Referer': 'https://chzzk.naver.com/',
+        'front-client-platform-type': 'PC',
+        'front-client-product-type': 'web',
+        'if-modified-since': 'Mon, 26 Jul 1997 05:00:00 GMT',
+        'Cookie': `NID_AUT=${nid_aut}; NID_SES=${nid_ses}`,
+      };
+
+      // 쿠키 유효성 확인 (팔로잉 API)
+      const followRes = await axios.get(
+        'https://api.chzzk.naver.com/service/v1/channels/followings?page=0&size=1&sortType=FOLLOW',
+        { headers: commonHeaders }
+      );
+      if (followRes.data?.code !== 200) return { valid: false };
+
+      // 닉네임 조회
+      const userRes = await axios.get(
+        'https://comm-api.game.naver.com/nng_main/v1/user/getUserStatus',
+        { headers: commonHeaders }
+      );
+      const nickname = userRes.data?.content?.nickname ?? null;
+
+      return { valid: true, nickname };
+    } catch (e) {
+      return { valid: false };
+    }
   }
 
   async generateTwoFactorAuthenticationSecret(user: any) {

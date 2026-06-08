@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Get, UseGuards, Req, Res, UnauthorizedException, BadRequestException } from '@nestjs/common';
+import { Controller, Post, Body, Get, Delete, Param, UseGuards, Req, Res, UnauthorizedException, BadRequestException } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { JwtAuthGuard } from './jwt-auth.guard';
@@ -71,8 +71,58 @@ export class AuthController {
       username: user?.username,
       is_admin: user?.is_admin,
       totp_enabled: user?.totp_enabled,
-      has_secret: !!user?.totp_secret
+      has_secret: !!user?.totp_secret,
+      has_cookies: !!(user?.nid_aut && user?.nid_ses),
     };
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('change-password')
+  async changePassword(@Req() req: any, @Body() body: any) {
+    const { currentPassword, newPassword } = body;
+    if (!currentPassword || !newPassword) throw new BadRequestException('현재 비밀번호와 새 비밀번호를 입력해주세요.');
+    return this.authService.changePassword(req.user.id, currentPassword, newPassword);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('users')
+  async listUsers(@Req() req: any) {
+    return this.authService.listUsers(req.user.id);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('users')
+  async createUser(@Req() req: any, @Body() body: any) {
+    const { username, password, is_admin } = body;
+    if (!username || !password) throw new BadRequestException('사용자명과 비밀번호를 입력해주세요.');
+    return this.authService.createUser(req.user.id, username, password, !!is_admin);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Delete('users/:id')
+  async deleteUser(@Req() req: any, @Param('id') id: string) {
+    return this.authService.deleteUser(req.user.id, id);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('cookies')
+  async getCookies(@Req() req: any) {
+    return this.authService.getCookies(req.user.id);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('cookies')
+  async updateCookies(@Req() req: any, @Body() body: any) {
+    const { nid_aut, nid_ses } = body;
+    return this.authService.updateCookies(req.user.id, nid_aut || null, nid_ses || null);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('verify-cookies')
+  async verifyCookies(@Req() req: any, @Body() body: any) {
+    const { nid_aut, nid_ses } = body;
+    if (!nid_aut || !nid_ses) throw new BadRequestException('쿠키 값을 입력해주세요.');
+    return this.authService.verifyCookies(nid_aut, nid_ses);
   }
 
   @UseGuards(JwtAuthGuard)
