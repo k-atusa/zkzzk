@@ -2,6 +2,7 @@ from flask import Blueprint, render_template, request, jsonify, g
 import os
 import subprocess
 import re
+from datetime import datetime
 from core.utils import get_vod_info, get_vod_stream_urls
 
 vod_bp = Blueprint('vod', __name__)
@@ -87,24 +88,30 @@ def download_vod():
     try:
         data = request.get_json()
         download_url = data.get('download_url')
-        filename = data.get('filename')
-        video_info = data.get('video_info')
+        video_info = data.get('video_info') or {}
         resolution = data.get('resolution')
         download_type = (resolution or {}).get('download_type', 'direct')
         
-        print(f"[VOD DOWNLOAD] Starting server download: {filename}")
-        print(f"[VOD DOWNLOAD] URL: {download_url}")
-        
-        if not download_url or not filename:
-            return jsonify({'status': 'error', 'message': '다운로드 URL과 파일명이 필요합니다.'}), 400
+        if not download_url:
+            return jsonify({'status': 'error', 'message': '다운로드 URL이 필요합니다.'}), 400
 
         if not g.user or not g.user.username:
             return jsonify({'status': 'error', 'message': '로그인이 필요합니다.'}), 401
         
+        streamer_nickname = video_info.get('author') or 'Unknown'
+        streamer_nickname = re.sub(r'[<>:"/\\|?*]', '', streamer_nickname).strip()
+        
+        current_date = datetime.now().strftime('%y%m%d_%H%M%S')
+        clean_title = re.sub(r'[<>:"/\\|?*]', '', video_info.get('title', 'Unknown')).strip()
+        filename = f"{current_date} {clean_title} [{streamer_nickname}].mp4"
+
+        print(f"[VOD DOWNLOAD] Starting server download: {filename}")
+        print(f"[VOD DOWNLOAD] URL: {download_url}")
+        
         if not os.path.exists('downloads'):
             os.makedirs('downloads')
         
-        vod_dir = os.path.join('downloads', g.user.username, 'vod')
+        vod_dir = os.path.join('downloads', g.user.username, 'vod', streamer_nickname)
         if not os.path.exists(vod_dir):
             os.makedirs(vod_dir)
         

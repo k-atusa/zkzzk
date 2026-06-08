@@ -244,27 +244,15 @@
 		function generateFilename(videoInfo, resolution) {
 			const title = videoInfo.title || 'Unknown';
 			const author = videoInfo.author || 'Unknown';
-			const quality = resolution.quality || '720p';
 
-			let datePrefix = '';
-			if (videoInfo.publish_date) {
-				try {
-					const date = new Date(videoInfo.publish_date);
-					const year = date.getFullYear().toString().slice(-2);
-					const month = (date.getMonth() + 1).toString().padStart(2, '0');
-					const day = date.getDate().toString().padStart(2, '0');
-					datePrefix = `${year}${month}${day}`;
-				} catch (e) {
-					console.error('Error parsing date:', e);
-					datePrefix = new Date().toISOString().slice(2, 8).replace(/-/g, '');
-				}
-			} else {
-				const now = new Date();
-				const year = now.getFullYear().toString().slice(-2);
-				const month = (now.getMonth() + 1).toString().padStart(2, '0');
-				const day = now.getDate().toString().padStart(2, '0');
-				datePrefix = `${year}${month}${day}`;
-			}
+			const now = new Date();
+			const year = now.getFullYear().toString().slice(-2);
+			const month = (now.getMonth() + 1).toString().padStart(2, '0');
+			const day = now.getDate().toString().padStart(2, '0');
+			const hours = now.getHours().toString().padStart(2, '0');
+			const minutes = now.getMinutes().toString().padStart(2, '0');
+			const seconds = now.getSeconds().toString().padStart(2, '0');
+			const datePrefix = `${year}${month}${day}_${hours}${minutes}${seconds}`;
 
 			const cleanTitle = title.replace(/[<>:"/\\|?*]/g, '').trim();
 			const cleanAuthor = author.replace(/[<>:"/\\|?*]/g, '').trim();

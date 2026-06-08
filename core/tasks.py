@@ -26,7 +26,7 @@ def download_stream(app, channel_id, broadcast_title, streamer_nickname, streame
         if not os.path.exists(user_downloads_dir):
             os.makedirs(user_downloads_dir)
 
-        streamer_dir = os.path.join(user_downloads_dir, streamer_nickname)
+        streamer_dir = os.path.join(user_downloads_dir, 'live', streamer_nickname)
         if not os.path.exists(streamer_dir):
             os.makedirs(streamer_dir)
 
@@ -63,7 +63,7 @@ def download_stream(app, channel_id, broadcast_title, streamer_nickname, streame
             recording = Recording(
                 streamer_id=streamer_id,
                 user_id=streamer.user_id,
-                filename=os.path.join(streamer_nickname, filename),
+                filename=os.path.join('live', streamer_nickname, filename),
                 title=broadcast_title
             )
             db.session.add(recording)
@@ -89,7 +89,7 @@ def download_stream(app, channel_id, broadcast_title, streamer_nickname, streame
                     os.remove(filepath)
                     
                     with app.app_context():
-                        recording.filename = os.path.join(streamer_nickname, mp4_filename)
+                        recording.filename = os.path.join('live', streamer_nickname, mp4_filename)
                         db.session.commit()
                 except Exception as e:
                     print(f"Error converting to MP4: {e}")

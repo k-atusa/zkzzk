@@ -20,7 +20,24 @@ def recordings():
                     filepath = os.path.join(root, filename)
                     created_at = datetime.fromtimestamp(os.path.getctime(filepath), tz=datetime.now().tzinfo)
                     rel_path = os.path.relpath(filepath, 'downloads').replace(os.sep, '/')
-                    streamer_name = os.path.dirname(os.path.relpath(filepath, user_downloads_dir))
+                    rel_to_user = os.path.relpath(filepath, user_downloads_dir)
+                    parts = rel_to_user.split(os.sep)
+                    if len(parts) >= 3:
+                        category = parts[0]
+                        streamer_folder = parts[1]
+                        if category == 'live':
+                            streamer_name = f"{streamer_folder} (라이브)"
+                        elif category == 'vod':
+                            streamer_name = f"{streamer_folder} (다시보기)"
+                        else:
+                            streamer_name = f"{streamer_folder} ({category})"
+                    elif len(parts) == 2:
+                        if parts[0] == 'vod':
+                            streamer_name = '다시보기 (기존)'
+                        else:
+                            streamer_name = parts[0]
+                    else:
+                        streamer_name = '기타'
                     file_size = os.path.getsize(filepath)
                     
                     match = re.match(r'^\d{6}_\d{6} (.+) \[.+\]\.(ts|mp4)$', filename)
