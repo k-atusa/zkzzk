@@ -7,7 +7,7 @@ import { toast } from 'sonner';
 import { Plus, Trash2, StopCircle, RefreshCw } from 'lucide-react';
 import api from '@/api';
 
-export function Live() {
+export const Live = () => {
   const [streamers, setStreamers] = useState<any[]>([]);
   const [newUrl, setNewUrl] = useState('');
 

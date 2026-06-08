@@ -8,7 +8,7 @@ import { toast } from 'sonner';
 import { ShieldCheck, ShieldAlert, KeyRound } from 'lucide-react';
 import api from '@/api';
 
-export function Settings() {
+export const Settings = () => {
   const [user, setUser] = useState<any>(null);
   const [qrCode, setQrCode] = useState('');
   const [otp, setOtp] = useState('');

@@ -8,7 +8,7 @@ import api from '@/api';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
 
-export function Recordings() {
+export const Recordings = () => {
   const [recordings, setRecordings] = useState<Record<string, any[]>>({});
 
   const fetchRecordings = async () => {

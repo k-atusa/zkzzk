@@ -11,7 +11,7 @@ const navItems = [
   { path: '/settings', icon: Settings, label: '설정' },
 ];
 
-export function Layout() {
+export const Layout = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [user, setUser] = useState<{ username: string; is_admin: boolean } | null>(null);

@@ -6,7 +6,7 @@ import { toast } from 'sonner';
 import { Search, Download } from 'lucide-react';
 import api from '@/api';
 
-export function Vod() {
+export const Vod = () => {
   const [url, setUrl] = useState('');
   const [vodInfo, setVodInfo] = useState<any>(null);
   const [loading, setLoading] = useState(false);

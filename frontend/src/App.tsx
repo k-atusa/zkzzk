@@ -8,7 +8,7 @@ import { Settings } from './pages/Settings';
 import { Toaster } from '@/components/ui/sonner';
 import { useEffect } from 'react';
 
-function App() {
+const App = () => {
   useEffect(() => {
     const savedTheme = (localStorage.getItem('theme') as 'light' | 'dark' | 'system') || 'system';
     

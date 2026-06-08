@@ -1,11 +1,11 @@
 import axios from 'axios';
 
-export function extractChannelId(url: string): string | null {
+export const extractChannelId = (url: string): string | null => {
   const match = url.match(/chzzk\.naver\.com\/([a-f0-9]{32})/);
   return match ? match[1] : null;
-}
+};
 
-export async function getChannelInfo(channelId: string): Promise<string | null> {
+export const getChannelInfo = async (channelId: string): Promise<string | null> => {
   try {
     const url = `https://api.chzzk.naver.com/service/v3/channels/${channelId}/live-detail`;
     const response = await axios.get(url, {
@@ -25,4 +25,4 @@ export async function getChannelInfo(channelId: string): Promise<string | null> 
     console.error(`Error fetching channel info:`, error instanceof Error ? error.message : String(error));
     return null;
   }
-}
+};
