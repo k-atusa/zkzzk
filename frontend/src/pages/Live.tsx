@@ -6,6 +6,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { toast } from 'sonner';
 import { Plus, Trash2, StopCircle, RefreshCw, Loader2, Radio, PlayCircle } from 'lucide-react';
 import api from '@/api';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 
 export const Live = () => {
   const [streamers, setStreamers] = useState<any[]>([]);
@@ -18,6 +19,12 @@ export const Live = () => {
   const [followLoading, setFollowLoading] = useState(false);
   const [followFetched, setFollowFetched] = useState(false);
   const [addingId, setAddingId] = useState<string | null>(null);
+  const [confirmConfig, setConfirmConfig] = useState<{
+    title: string;
+    description: string | React.ReactNode;
+    onConfirm: () => void;
+    isDestructive?: boolean;
+  } | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -108,26 +115,43 @@ export const Live = () => {
     }
   };
 
-  const handleRemove = async (id: string) => {
-    if (!confirm('정말 삭제하시겠습니까?')) return;
-    try {
-      await api.post(`/streamers/remove_streamer/${id}`);
-      toast.success('삭제되었습니다.');
-      fetchStreamers();
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || '삭제 실패');
-    }
+  const handleRemove = (streamer: any) => {
+    setConfirmConfig({
+      title: '스트리머 삭제',
+      description: (
+        <>
+          정말 <strong>{streamer.nickname}</strong>님을 삭제하시겠습니까? <br />
+          삭제하시면 자동 녹화 대상에서 제외됩니다.
+        </>
+      ),
+      isDestructive: true,
+      onConfirm: async () => {
+        try {
+          await api.post(`/streamers/remove_streamer/${streamer.id}`);
+          toast.success('삭제되었습니다.');
+          fetchStreamers();
+        } catch (error: any) {
+          toast.error(error.response?.data?.message || '삭제 실패');
+        }
+      }
+    });
   };
 
-  const handleStopRecording = async (id: string) => {
-    if (!confirm('자동 녹화를 일시중지하시겠습니까? (현재 방송 중이면 녹화가 종료됩니다)')) return;
-    try {
-      await api.post(`/streamers/stop_recording/${id}`);
-      toast.success('녹화가 중지되었습니다.');
-      fetchStreamers();
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || '중지 실패');
-    }
+  const handleStopRecording = (id: string) => {
+    setConfirmConfig({
+      title: '녹화 일시중지',
+      description: '자동 녹화를 일시중지하시겠습니까? (현재 방송 중이면 녹화가 종료됩니다)',
+      isDestructive: true,
+      onConfirm: async () => {
+        try {
+          await api.post(`/streamers/stop_recording/${id}`);
+          toast.success('녹화가 중지되었습니다.');
+          fetchStreamers();
+        } catch (error: any) {
+          toast.error(error.response?.data?.message || '중지 실패');
+        }
+      }
+    });
   };
 
   const handleResumeRecording = async (id: string) => {
@@ -361,7 +385,7 @@ export const Live = () => {
                         <StopCircle className="h-4 w-4" />
                       </Button>
                     )}
-                    <Button variant="destructive" size="sm" onClick={() => handleRemove(s.id)} title="스트리머 삭제">
+                    <Button variant="destructive" size="sm" onClick={() => handleRemove(s)} title="스트리머 삭제">
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </TableCell>
@@ -371,6 +395,28 @@ export const Live = () => {
           </Table>
         </CardContent>
       </Card>
+
+      <Dialog open={!!confirmConfig} onOpenChange={(open) => { if (!open) setConfirmConfig(null); }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{confirmConfig?.title}</DialogTitle>
+            <DialogDescription>
+              {confirmConfig?.description}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex justify-end gap-2 mt-4">
+            <Button variant="outline" onClick={() => setConfirmConfig(null)}>
+              취소
+            </Button>
+            <Button variant={confirmConfig?.isDestructive ? "destructive" : "default"} onClick={() => {
+              confirmConfig?.onConfirm();
+              setConfirmConfig(null);
+            }}>
+              확인
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

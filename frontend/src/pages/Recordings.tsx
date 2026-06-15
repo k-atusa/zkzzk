@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { toast } from 'sonner';
 import { Download, Trash2, Video, Film, FileText, MonitorPlay, Play, AlertCircle } from 'lucide-react';
 import api from '@/api';
@@ -107,6 +107,12 @@ export const Recordings = () => {
   const [recordings, setRecordings] = useState<Record<string, any[]>>({});
   const [activeTab, setActiveTab] = useState<'live' | 'vod' | 'other'>('live');
   const [playingVideo, setPlayingVideo] = useState<{ filename: string; title: string } | null>(null);
+  const [confirmConfig, setConfirmConfig] = useState<{
+    title: string;
+    description: string | React.ReactNode;
+    onConfirm: () => void;
+    isDestructive?: boolean;
+  } | null>(null);
 
   const fetchRecordings = async () => {
     try {
@@ -155,15 +161,21 @@ export const Recordings = () => {
     }
   }, [recordings, otherCount]);
 
-  const handleDelete = async (filename: string) => {
-    if (!confirm('정말 삭제하시겠습니까?')) return;
-    try {
-      await api.post('/recordings/delete', { filename });
-      toast.success('삭제되었습니다.');
-      fetchRecordings();
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || '삭제 실패');
-    }
+  const handleDelete = (filename: string) => {
+    setConfirmConfig({
+      title: '녹화본 삭제',
+      description: '정말 이 녹화본 파일을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.',
+      isDestructive: true,
+      onConfirm: async () => {
+        try {
+          await api.post('/recordings/delete', { filename });
+          toast.success('삭제되었습니다.');
+          fetchRecordings();
+        } catch (error: any) {
+          toast.error(error.response?.data?.message || '삭제 실패');
+        }
+      }
+    });
   };
 
   const handleDownload = (filename: string) => {
@@ -315,6 +327,28 @@ export const Recordings = () => {
               <VideoPlayer filename={playingVideo.filename} />
             )}
           </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!confirmConfig} onOpenChange={(open) => { if (!open) setConfirmConfig(null); }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{confirmConfig?.title}</DialogTitle>
+            <DialogDescription>
+              {confirmConfig?.description}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex justify-end gap-2 mt-4">
+            <Button variant="outline" onClick={() => setConfirmConfig(null)}>
+              취소
+            </Button>
+            <Button variant={confirmConfig?.isDestructive ? "destructive" : "default"} onClick={() => {
+              confirmConfig?.onConfirm();
+              setConfirmConfig(null);
+            }}>
+              확인
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

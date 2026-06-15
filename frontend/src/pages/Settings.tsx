@@ -11,9 +11,16 @@ import {
   Eye, EyeOff, ShieldQuestion, ZoomIn
 } from 'lucide-react';
 import api from '@/api';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 
 export const Settings = () => {
   const [user, setUser] = useState<any>(null);
+  const [confirmConfig, setConfirmConfig] = useState<{
+    title: string;
+    description: string | React.ReactNode;
+    onConfirm: () => void;
+    isDestructive?: boolean;
+  } | null>(null);
 
   // UI Scale
   const [scale, setScale] = useState(() => {
@@ -112,15 +119,21 @@ export const Settings = () => {
     }
   };
 
-  const handleDisable2FA = async () => {
-    if (!confirm('2차 인증을 비활성화하시겠습니까?')) return;
-    try {
-      await api.post('/auth/2fa/disable');
-      toast.success('2차 인증이 비활성화되었습니다.');
-      fetchMe();
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || '비활성화 실패');
-    }
+  const handleDisable2FA = () => {
+    setConfirmConfig({
+      title: '2차 인증 비활성화',
+      description: '2차 인증을 비활성화하시겠습니까?',
+      isDestructive: true,
+      onConfirm: async () => {
+        try {
+          await api.post('/auth/2fa/disable');
+          toast.success('2차 인증이 비활성화되었습니다.');
+          fetchMe();
+        } catch (error: any) {
+          toast.error(error.response?.data?.message || '비활성화 실패');
+        }
+      }
+    });
   };
 
   // Password Change
@@ -185,21 +198,27 @@ export const Settings = () => {
     }
   };
 
-  const handleClearCookies = async () => {
-    if (!confirm('쿠키를 초기화하시겠습니까?')) return;
-    setCookieSaveLoading(true);
-    try {
-      await api.post('/auth/cookies', { nid_aut: null, nid_ses: null });
-      setNidAut('');
-      setNidSes('');
-      setCookieVerified(null);
-      toast.success('쿠키가 초기화되었습니다.');
-      fetchMe();
-    } catch (error: any) {
-      toast.error('쿠키 초기화 실패');
-    } finally {
-      setCookieSaveLoading(false);
-    }
+  const handleClearCookies = () => {
+    setConfirmConfig({
+      title: '쿠키 초기화',
+      description: '쿠키를 초기화하시겠습니까?',
+      isDestructive: true,
+      onConfirm: async () => {
+        setCookieSaveLoading(true);
+        try {
+          await api.post('/auth/cookies', { nid_aut: null, nid_ses: null });
+          setNidAut('');
+          setNidSes('');
+          setCookieVerified(null);
+          toast.success('쿠키가 초기화되었습니다.');
+          fetchMe();
+        } catch (error: any) {
+          toast.error('쿠키 초기화 실패');
+        } finally {
+          setCookieSaveLoading(false);
+        }
+      }
+    });
   };
 
   // User Management
@@ -221,15 +240,21 @@ export const Settings = () => {
     }
   };
 
-  const handleDeleteUser = async (userId: string, username: string) => {
-    if (!confirm(`'${username}' 사용자를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.`)) return;
-    try {
-      await api.delete(`/auth/users/${userId}`);
-      toast.success(`'${username}' 사용자가 삭제되었습니다.`);
-      fetchUsers();
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || '사용자 삭제 실패');
-    }
+  const handleDeleteUser = (userId: string, username: string) => {
+    setConfirmConfig({
+      title: '사용자 삭제',
+      description: `'${username}' 사용자를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.`,
+      isDestructive: true,
+      onConfirm: async () => {
+        try {
+          await api.delete(`/auth/users/${userId}`);
+          toast.success(`'${username}' 사용자가 삭제되었습니다.`);
+          fetchUsers();
+        } catch (error: any) {
+          toast.error(error.response?.data?.message || '사용자 삭제 실패');
+        }
+      }
+    });
   };
 
   if (!user) return null;
@@ -577,6 +602,27 @@ export const Settings = () => {
           </CardContent>
         </Card>
       )}
+      <Dialog open={!!confirmConfig} onOpenChange={(open) => { if (!open) setConfirmConfig(null); }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{confirmConfig?.title}</DialogTitle>
+            <DialogDescription>
+              {confirmConfig?.description}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex justify-end gap-2 mt-4">
+            <Button variant="outline" onClick={() => setConfirmConfig(null)}>
+              취소
+            </Button>
+            <Button variant={confirmConfig?.isDestructive ? "destructive" : "default"} onClick={() => {
+              confirmConfig?.onConfirm();
+              setConfirmConfig(null);
+            }}>
+              확인
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
