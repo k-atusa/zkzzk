@@ -260,7 +260,7 @@ export const Live = () => {
                               {ch.openLive && (
                                 <span className="inline-flex items-center gap-1 text-xs text-red-500 font-medium">
                                   <Radio className="h-3 w-3" />
-                                  {ch.concurrentUserCount > 0 ? ch.concurrentUserCount.toLocaleString() : 'LIVE'}
+                                  {(ch.concurrentUserCount ?? 0).toLocaleString()}
                                 </span>
                               )}
                               {isAdding ? (
