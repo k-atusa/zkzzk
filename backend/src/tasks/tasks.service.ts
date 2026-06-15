@@ -13,12 +13,12 @@ export class TasksService {
 
   constructor(private prisma: PrismaService) { }
 
-  private async sendDiscordWebhook(message: string) {
+  private async sendDiscordWebhook(embed: any) {
     try {
       const settings = await this.prisma.settings.findFirst();
       if (settings?.discord_webhook_url) {
         await axios.post(settings.discord_webhook_url, {
-          content: message,
+          embeds: [embed],
         }).catch(() => {});
       }
     } catch (e) {
@@ -183,7 +183,16 @@ export class TasksService {
         }
       });
 
-      this.sendDiscordWebhook(`✅ **녹화 시작**: ${streamerNickname} - ${broadcastTitle}`);
+      this.sendDiscordWebhook({
+        title: `✅ 녹화 시작`,
+        description: `**${streamerNickname}**님의 녹화가 시작되었습니다.\n\n**방송 제목**: ${broadcastTitle}`,
+        color: 0x00FFA3, // Neon Green
+        timestamp: new Date().toISOString(),
+        author: {
+          name: streamerNickname,
+          url: `https://chzzk.naver.com/${channelId}`,
+        }
+      });
 
       child.on('close', async (code) => {
         this.logger.log(`Streamlink exited with code ${code}`);
@@ -196,7 +205,16 @@ export class TasksService {
               process_id: null
             }
           });
-          this.sendDiscordWebhook(`🛑 **녹화 종료**: ${streamerNickname}`);
+          this.sendDiscordWebhook({
+            title: `🛑 녹화 종료`,
+            description: `**${streamerNickname}**님의 녹화가 종료되었습니다.`,
+            color: 0xFF4D4D, // Red
+            timestamp: new Date().toISOString(),
+            author: {
+              name: streamerNickname,
+              url: `https://chzzk.naver.com/${channelId}`,
+            }
+          });
         } catch (dbErr: any) {
           this.logger.error(`Database update failed on streamlink close: ${dbErr.message}`);
         }
