@@ -166,9 +166,6 @@ export const Live = () => {
           <CardTitle>새 스트리머 추가</CardTitle>
           <CardDescription>
             치지직 채널 URL을 입력하여 자동 녹화를 설정하세요.
-            {hasCookies && (
-              <span className="ml-2 text-green-600 dark:text-green-400">인풋을 클릭하면 팔로우 중인 스트리머 목록을 확인할 수 있습니다.</span>
-            )}
           </CardDescription>
         </CardHeader>
         <CardContent className="!overflow-visible">
