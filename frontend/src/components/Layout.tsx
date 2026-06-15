@@ -54,7 +54,7 @@ export const Layout = () => {
   if (!user) return null;
 
   return (
-    <div className="flex min-h-screen bg-background text-foreground transition-colors duration-200">
+    <div className="flex h-screen bg-background text-foreground transition-colors duration-200 overflow-hidden">
       {/* Sidebar */}
       <aside className="w-64 border-r border-border bg-card px-4 py-6 flex flex-col justify-between">
         <div className="flex flex-col flex-1">
