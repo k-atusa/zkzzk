@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -188,9 +188,6 @@ export const Live = () => {
       <Card className="!overflow-visible">
         <CardHeader>
           <CardTitle>새 스트리머 추가</CardTitle>
-          <CardDescription>
-            치지직 채널 URL을 입력하여 자동 녹화를 설정하세요.
-          </CardDescription>
         </CardHeader>
         <CardContent className="!overflow-visible">
           <form onSubmit={handleAdd} className="flex space-x-2">
@@ -282,8 +279,8 @@ export const Live = () => {
                             </div>
                             <div className="flex items-center gap-1.5 flex-shrink-0">
                               {ch.openLive && (
-                                <span className="inline-flex items-center gap-1 text-xs text-red-500 font-medium">
-                                  <Radio className="h-3 w-3" />
+                                <span className={`inline-flex items-center gap-1 text-xs font-medium ${ch.concurrentUserCount > 0 ? 'text-red-500' : 'text-muted-foreground'}`}>
+                                  {ch.concurrentUserCount > 0 && <Radio className="h-3 w-3" />}
                                   {(ch.concurrentUserCount ?? 0).toLocaleString()}
                                 </span>
                               )}

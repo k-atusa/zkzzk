@@ -13,6 +13,19 @@ export class TasksService {
 
   constructor(private prisma: PrismaService) { }
 
+  private async sendDiscordWebhook(message: string) {
+    try {
+      const settings = await this.prisma.settings.findFirst();
+      if (settings?.discord_webhook_url) {
+        await axios.post(settings.discord_webhook_url, {
+          content: message,
+        }).catch(() => {});
+      }
+    } catch (e) {
+      // Ignore webhook errors
+    }
+  }
+
   @Cron('*/30 * * * * *')
   async handleCron() {
     try {
@@ -170,6 +183,8 @@ export class TasksService {
         }
       });
 
+      this.sendDiscordWebhook(`✅ **녹화 시작**: ${streamerNickname} - ${broadcastTitle}`);
+
       child.on('close', async (code) => {
         this.logger.log(`Streamlink exited with code ${code}`);
         // Reset streamer recording status
@@ -181,6 +196,7 @@ export class TasksService {
               process_id: null
             }
           });
+          this.sendDiscordWebhook(`🛑 **녹화 종료**: ${streamerNickname}`);
         } catch (dbErr: any) {
           this.logger.error(`Database update failed on streamlink close: ${dbErr.message}`);
         }

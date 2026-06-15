@@ -148,4 +148,16 @@ export class AuthController {
   async disable2fa(@Req() req: any) {
     return this.authService.disableTwoFactorAuthentication(req.user);
   }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('system-settings')
+  async getSystemSettings(@Req() req: any) {
+    return this.authService.getSystemSettings(req.user.id);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('system-settings')
+  async updateSystemSettings(@Req() req: any, @Body() body: any) {
+    return this.authService.updateSystemSettings(req.user.id, body.discord_webhook_url || null);
+  }
 }

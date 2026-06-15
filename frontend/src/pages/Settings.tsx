@@ -8,7 +8,7 @@ import { toast } from 'sonner';
 import {
   ShieldCheck, ShieldAlert, KeyRound, Lock, Cookie,
   Users, Plus, Trash2, UserCheck, Loader2, CheckCircle2,
-  Eye, EyeOff, ShieldQuestion, ZoomIn
+  Eye, EyeOff, ShieldQuestion, ZoomIn, Bell, Save
 } from 'lucide-react';
 import api from '@/api';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
@@ -21,6 +21,10 @@ export const Settings = () => {
     onConfirm: () => void;
     isDestructive?: boolean;
   } | null>(null);
+
+  // System Settings
+  const [discordWebhookUrl, setDiscordWebhookUrl] = useState('');
+  const [webhookLoading, setWebhookLoading] = useState(false);
 
   // UI Scale
   const [scale, setScale] = useState(() => {
@@ -67,6 +71,7 @@ export const Settings = () => {
       setUser(res.data);
       if (res.data.is_admin) {
         fetchUsers();
+        fetchSystemSettings();
       }
       if (res.data.has_cookies) {
         fetchCookies();
@@ -74,6 +79,13 @@ export const Settings = () => {
     } catch (e) {
       toast.error('설정을 불러오는데 실패했습니다.');
     }
+  };
+
+  const fetchSystemSettings = async () => {
+    try {
+      const res = await api.get('/auth/system-settings');
+      if (res.data.discord_webhook_url) setDiscordWebhookUrl(res.data.discord_webhook_url);
+    } catch (e) {}
   };
 
   const fetchCookies = async () => {
@@ -219,6 +231,19 @@ export const Settings = () => {
         }
       }
     });
+  };
+
+  // System Settings handlers
+  const handleSaveSystemSettings = async () => {
+    setWebhookLoading(true);
+    try {
+      await api.post('/auth/system-settings', { discord_webhook_url: discordWebhookUrl.trim() });
+      toast.success('시스템 설정이 저장되었습니다.');
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || '저장 실패');
+    } finally {
+      setWebhookLoading(false);
+    }
   };
 
   // User Management
@@ -602,6 +627,38 @@ export const Settings = () => {
           </CardContent>
         </Card>
       )}
+
+      {/* System Settings Card (Admin only) */}
+      {user.is_admin && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Bell className="h-5 w-5" /> 시스템 설정
+              <span className="text-xs font-normal px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-600 border border-amber-500/20">관리자 전용</span>
+            </CardTitle>
+            <CardDescription>Discord Webhook 등 시스템 전역 설정을 관리합니다.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="discordWebhookUrl">Discord Webhook URL</Label>
+              <Input
+                id="discordWebhookUrl"
+                value={discordWebhookUrl}
+                onChange={e => setDiscordWebhookUrl(e.target.value)}
+                placeholder="https://discord.com/api/webhooks/..."
+              />
+              <p className="text-xs text-muted-foreground">
+                디스코드 웹훅을 등록하면 녹화 시작/종료 시 알림을 받을 수 있습니다.
+              </p>
+            </div>
+            <Button onClick={handleSaveSystemSettings} disabled={webhookLoading}>
+              {webhookLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+              저장
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
       <Dialog open={!!confirmConfig} onOpenChange={(open) => { if (!open) setConfirmConfig(null); }}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>

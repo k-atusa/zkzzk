@@ -244,4 +244,28 @@ export class AuthService {
     });
     return { enabled: false };
   }
+
+  async getSystemSettings(requesterId: string) {
+    const requester = await this.prisma.user.findUnique({ where: { id: requesterId } });
+    if (!requester?.is_admin) throw new ForbiddenException('관리자 권한이 필요합니다.');
+    const settings = await this.prisma.settings.findFirst();
+    return {
+      discord_webhook_url: settings?.discord_webhook_url || null,
+    };
+  }
+
+  async updateSystemSettings(requesterId: string, discord_webhook_url: string | null) {
+    const requester = await this.prisma.user.findUnique({ where: { id: requesterId } });
+    if (!requester?.is_admin) throw new ForbiddenException('관리자 권한이 필요합니다.');
+    let settings = await this.prisma.settings.findFirst();
+    if (!settings) {
+      settings = await this.prisma.settings.create({ data: { initialized: true, discord_webhook_url } });
+    } else {
+      settings = await this.prisma.settings.update({
+        where: { id: settings.id },
+        data: { discord_webhook_url }
+      });
+    }
+    return { success: true };
+  }
 }

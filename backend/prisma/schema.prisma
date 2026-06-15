@@ -25,8 +25,9 @@ model user {
 }
 
 model settings {
-  id          String   @id @default(uuid())
-  initialized Boolean?
+  id                  String   @id @default(uuid())
+  initialized         Boolean?
+  discord_webhook_url String?
 
   @@map("settings")
 }
