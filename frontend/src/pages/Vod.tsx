@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -10,9 +10,24 @@ export const Vod = () => {
   const [url, setUrl] = useState('');
   const [vodInfo, setVodInfo] = useState<any>(null);
   const [loading, setLoading] = useState(false);
+  const [hasCookies, setHasCookies] = useState(false);
+
+  useEffect(() => {
+    const fetchMe = async () => {
+      try {
+        const res = await api.get('/auth/me');
+        setHasCookies(res.data.has_cookies);
+      } catch (e) {}
+    };
+    fetchMe();
+  }, []);
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!hasCookies) {
+      toast.error('먼저 설정 메뉴에서 치지직 쿠키를 설정해주세요.');
+      return;
+    }
     setLoading(true);
     try {
       const res = await api.post('/vod/get_vod_info', { vod_url: url });

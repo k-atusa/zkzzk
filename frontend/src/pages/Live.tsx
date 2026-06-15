@@ -79,6 +79,10 @@ export const Live = () => {
 
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!hasCookies) {
+      toast.error('먼저 설정 메뉴에서 치지직 쿠키를 설정해주세요.');
+      return;
+    }
     try {
       await api.post('/streamers/add_streamer', { channel_url: newUrl });
       toast.success('스트리머가 추가되었습니다.');
