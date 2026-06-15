@@ -3,12 +3,12 @@ generator client {
 }
 
 datasource db {
-  provider = "mongodb"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
 model user {
-  id             String      @id @default(auto()) @map("_id") @db.ObjectId
+  id             String      @id @default(uuid())
   username       String      @unique
   password_hash  String
   is_admin       Boolean?
@@ -25,18 +25,18 @@ model user {
 }
 
 model settings {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  id          String   @id @default(uuid())
   initialized Boolean?
 
   @@map("settings")
 }
 
 model streamer {
-  id                      String      @id @default(auto()) @map("_id") @db.ObjectId
+  id                      String      @id @default(uuid())
   channel_url             String
   nickname                String?
-  user_id                 String?     @db.ObjectId
-  cookie_user_id          String?     @db.ObjectId
+  user_id                 String?
+  cookie_user_id          String?
   is_active               Boolean?
   created_at              DateTime?   @default(now())
   last_checked            DateTime?
@@ -45,7 +45,7 @@ model streamer {
   is_paused               Boolean?    @default(false)
   current_broadcast_title String?
   current_broadcast_category String?
-  current_broadcast_tags     String[]
+  current_broadcast_tags     String?
   process_id              Int?
   recordings              recording[]
   cookie_user             user?       @relation("StreamerCookieUser", fields: [cookie_user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
@@ -56,9 +56,9 @@ model streamer {
 }
 
 model recording {
-  id          String    @id @default(auto()) @map("_id") @db.ObjectId
-  streamer_id String    @db.ObjectId
-  user_id     String?   @db.ObjectId
+  id          String    @id @default(uuid())
+  streamer_id String
+  user_id     String?
   filename    String
   title       String?
   created_at  DateTime? @default(now())

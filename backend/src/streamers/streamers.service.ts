@@ -81,10 +81,16 @@ export class StreamersService {
   }
 
   async getStreamers(user: any) {
+    let streamers;
     if (user.is_admin) {
-      return this.prisma.streamer.findMany({ include: { user: true } });
+      streamers = await this.prisma.streamer.findMany({ include: { user: true } });
+    } else {
+      streamers = await this.prisma.streamer.findMany({ where: { user_id: user.id } });
     }
-    return this.prisma.streamer.findMany({ where: { user_id: user.id } });
+    return streamers.map(s => ({
+      ...s,
+      current_broadcast_tags: s.current_broadcast_tags ? JSON.parse(s.current_broadcast_tags) : []
+    }));
   }
 
   async stopRecording(streamerId: string, user: any) {

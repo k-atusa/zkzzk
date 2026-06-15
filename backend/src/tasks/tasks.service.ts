@@ -56,7 +56,7 @@ export class TasksService {
               last_live: new Date(),
               current_broadcast_title: broadcastTitle,
               current_broadcast_category: liveCategoryValue || null,
-              current_broadcast_tags: tags
+              current_broadcast_tags: tags ? JSON.stringify(tags) : null
             }
           });
 
@@ -71,7 +71,7 @@ export class TasksService {
               is_recording: false,
               current_broadcast_title: null,
               current_broadcast_category: null,
-              current_broadcast_tags: []
+              current_broadcast_tags: null
             }
           });
         }
@@ -155,7 +155,7 @@ export class TasksService {
           is_recording: true,
           current_broadcast_title: broadcastTitle,
           current_broadcast_category: liveCategoryValue || null,
-          current_broadcast_tags: tags || [],
+          current_broadcast_tags: tags ? JSON.stringify(tags) : null,
           process_id: child.pid
         }
       });
