@@ -104,18 +104,7 @@ export class AuthController {
     return this.authService.deleteUser(req.user.id, id);
   }
 
-  @UseGuards(JwtAuthGuard)
-  @Get('cookies')
-  async getCookies(@Req() req: any) {
-    return this.authService.getCookies(req.user.id);
-  }
 
-  @UseGuards(JwtAuthGuard)
-  @Post('cookies')
-  async updateCookies(@Req() req: any, @Body() body: any) {
-    const { nid_aut, nid_ses } = body;
-    return this.authService.updateCookies(req.user.id, nid_aut || null, nid_ses || null);
-  }
 
   @UseGuards(JwtAuthGuard)
   @Post('verify-cookies')
@@ -158,6 +147,13 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   @Post('user-settings')
   async updateUserSettings(@Req() req: any, @Body() body: any) {
-    return this.authService.updateUserSettings(req.user.id, body.discord_webhook_url || null, body.youtube_client_id || null, body.youtube_client_secret || null);
+    return this.authService.updateUserSettings(
+      req.user.id,
+      body.discord_webhook_url !== undefined ? body.discord_webhook_url : undefined,
+      body.youtube_client_id !== undefined ? body.youtube_client_id : undefined,
+      body.youtube_client_secret !== undefined ? body.youtube_client_secret : undefined,
+      body.nid_aut !== undefined ? body.nid_aut : undefined,
+      body.nid_ses !== undefined ? body.nid_ses : undefined
+    );
   }
 }

@@ -121,7 +121,13 @@ export class AuthService {
     const users = await this.prisma.user.findMany({
       select: { id: true, username: true, is_admin: true, created_at: true, nid_aut: true, nid_ses: true }
     });
-    return users;
+    return users.map(u => ({
+      id: u.id,
+      username: u.username,
+      is_admin: u.is_admin,
+      created_at: u.created_at,
+      has_cookies: !!(u.nid_aut && u.nid_ses)
+    }));
   }
 
   async createUser(requesterId: string, username: string, pass: string, isAdmin: boolean) {
@@ -150,21 +156,7 @@ export class AuthService {
     return { success: true };
   }
 
-  async updateCookies(userId: string, nid_aut: string | null, nid_ses: string | null) {
-    await this.prisma.user.update({
-      where: { id: userId },
-      data: { nid_aut, nid_ses }
-    });
-    return { success: true };
-  }
 
-  async getCookies(userId: string) {
-    const user = await this.prisma.user.findUnique({ where: { id: userId } });
-    return {
-      nid_aut: user?.nid_aut ?? null,
-      nid_ses: user?.nid_ses ?? null,
-    };
-  }
 
   async verifyCookies(nid_aut: string, nid_ses: string) {
     try {
@@ -252,13 +244,22 @@ export class AuthService {
       youtube_client_id: user?.youtube_client_id || null,
       youtube_client_secret: user?.youtube_client_secret || null,
       youtube_connected: !!user?.youtube_refresh_token,
+      nid_aut: user?.nid_aut || null,
+      nid_ses: user?.nid_ses || null,
     };
   }
 
-  async updateUserSettings(requesterId: string, discord_webhook_url: string | null, youtube_client_id: string | null, youtube_client_secret: string | null) {
+  async updateUserSettings(requesterId: string, discord_webhook_url?: string | null, youtube_client_id?: string | null, youtube_client_secret?: string | null, nid_aut?: string | null, nid_ses?: string | null) {
+    const updateData: any = {};
+    if (discord_webhook_url !== undefined) updateData.discord_webhook_url = discord_webhook_url;
+    if (youtube_client_id !== undefined) updateData.youtube_client_id = youtube_client_id;
+    if (youtube_client_secret !== undefined) updateData.youtube_client_secret = youtube_client_secret;
+    if (nid_aut !== undefined) updateData.nid_aut = nid_aut;
+    if (nid_ses !== undefined) updateData.nid_ses = nid_ses;
+
     await this.prisma.user.update({
       where: { id: requesterId },
-      data: { discord_webhook_url, youtube_client_id, youtube_client_secret }
+      data: updateData
     });
     return { success: true };
   }

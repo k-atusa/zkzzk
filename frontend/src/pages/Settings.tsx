@@ -93,9 +93,6 @@ export const Settings = () => {
         fetchUsers();
       }
       fetchUserSettings();
-      if (res.data.has_cookies) {
-        fetchCookies();
-      }
     } catch (e) {
       toast.error('설정을 불러오는데 실패했습니다.');
     }
@@ -108,12 +105,6 @@ export const Settings = () => {
       if (res.data.youtube_client_id) setYoutubeClientId(res.data.youtube_client_id);
       if (res.data.youtube_client_secret) setYoutubeClientSecret(res.data.youtube_client_secret);
       if (res.data.youtube_connected) setYoutubeConnected(true);
-    } catch (e) { }
-  };
-
-  const fetchCookies = async () => {
-    try {
-      const res = await api.get('/auth/cookies');
       if (res.data.nid_aut) setNidAut(res.data.nid_aut);
       if (res.data.nid_ses) setNidSes(res.data.nid_ses);
     } catch (e) { }
@@ -238,7 +229,7 @@ export const Settings = () => {
   const handleSaveCookies = async () => {
     setCookieSaveLoading(true);
     try {
-      await api.post('/auth/cookies', { nid_aut: nidAut.trim() || null, nid_ses: nidSes.trim() || null });
+      await api.post('/auth/user-settings', { nid_aut: nidAut.trim() || null, nid_ses: nidSes.trim() || null });
       toast.success('쿠키가 저장되었습니다.');
       fetchMe();
     } catch (error: any) {
@@ -256,7 +247,7 @@ export const Settings = () => {
       onConfirm: async () => {
         setCookieSaveLoading(true);
         try {
-          await api.post('/auth/cookies', { nid_aut: null, nid_ses: null });
+          await api.post('/auth/user-settings', { nid_aut: null, nid_ses: null });
           setNidAut('');
           setNidSes('');
           setCookieVerified(null);
@@ -648,7 +639,7 @@ export const Settings = () => {
                           {u.is_admin && (
                             <span className="text-xs px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-600 border border-amber-500/20">관리자</span>
                           )}
-                          {(u.nid_aut && u.nid_ses) && (
+                          {u.has_cookies && (
                             <span className="text-xs px-1.5 py-0.5 rounded bg-green-500/10 text-green-600 border border-green-500/20 flex items-center gap-0.5">
                               <Cookie className="h-2.5 w-2.5" /> 쿠키 설정됨
                             </span>
