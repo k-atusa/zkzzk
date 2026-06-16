@@ -44,17 +44,37 @@ export class YoutubeService {
     return url;
   }
 
-  async setCredentials(code: string) {
+  async setCredentials(code: string): Promise<string | null> {
     const oauth2Client = await this.getAuthClient();
     const { tokens } = await oauth2Client.getToken(code);
     
+    oauth2Client.setCredentials(tokens);
+
     if (tokens.refresh_token) {
       await this.prisma.settings.updateMany({
         data: { youtube_refresh_token: tokens.refresh_token }
       });
-      return true;
+    } else {
+      // In case Google OAuth doesn't return a refresh_token (already consented),
+      // we still check if we have an existing one. If not, we still proceed to get the channel name.
+      const settings = await this.prisma.settings.findFirst();
+      if (!settings?.youtube_refresh_token) {
+        this.logger.warn('No refresh token received and none stored in database.');
+      }
     }
-    return false;
+
+    try {
+      const youtube = google.youtube({ version: 'v3', auth: oauth2Client });
+      const response = await youtube.channels.list({
+        part: ['snippet'],
+        mine: true,
+      });
+      const channelName = response.data.items?.[0]?.snippet?.title || null;
+      return channelName;
+    } catch (e: any) {
+      this.logger.error(`Failed to fetch YouTube channel info: ${e.message}`);
+      return '인증된 채널';
+    }
   }
 
   async checkDuplicateVideo(title: string): Promise<boolean> {

@@ -133,7 +133,11 @@ export const Settings = () => {
   useEffect(() => {
     const searchParams = new URLSearchParams(window.location.search);
     if (searchParams.get('youtube') === 'success') {
-      toast.success('YouTube 인증이 완료되었습니다.');
+      const channelName = searchParams.get('channelName');
+      toast.success(channelName 
+        ? `YouTube 인증이 완료되었습니다. (채널: ${channelName})` 
+        : 'YouTube 인증이 완료되었습니다.'
+      );
       window.history.replaceState({}, document.title, window.location.pathname);
     } else if (searchParams.get('youtube') === 'error') {
       toast.error('YouTube 인증 중 오류가 발생했습니다.');

@@ -25,9 +25,10 @@ export class YoutubeController {
     }
 
     try {
-      const success = await this.youtubeService.setCredentials(code);
-      if (success) {
-        return res.redirect('http://localhost:5173/settings?youtube=success');
+      const channelName = await this.youtubeService.setCredentials(code);
+      if (channelName) {
+        const encodedName = encodeURIComponent(channelName);
+        return res.redirect(`http://localhost:5173/settings?youtube=success&channelName=${encodedName}`);
       } else {
         return res.redirect('http://localhost:5173/settings?youtube=error');
       }
