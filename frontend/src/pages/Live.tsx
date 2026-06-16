@@ -374,7 +374,13 @@ export const Live = () => {
                   </TableCell>
                   <TableCell className="text-right space-x-2">
                     {s.is_paused ? (
-                      <Button variant="outline" size="sm" onClick={() => handleResumeRecording(s.id)} title="녹화 재개">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleResumeRecording(s.id)}
+                        className="h-8 w-8 p-0 bg-transparent hover:bg-green-500/10 border-border/50 hover:border-green-500/50 transition-colors"
+                        title="녹화 재개"
+                      >
                         <PlayCircle className="h-4 w-4 text-green-500" />
                       </Button>
                     ) : (
