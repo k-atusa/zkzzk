@@ -43,6 +43,7 @@ export const Settings = () => {
   const [discordWebhookUrl, setDiscordWebhookUrl] = useState('');
   const [youtubeClientId, setYoutubeClientId] = useState('');
   const [youtubeClientSecret, setYoutubeClientSecret] = useState('');
+  const [showYoutubeClientSecret, setShowYoutubeClientSecret] = useState(false);
   const [youtubeConnected, setYoutubeConnected] = useState(false);
   const [youtubeAutoUpload, setYoutubeAutoUpload] = useState(true);
   const [webhookLoading, setWebhookLoading] = useState(false);
@@ -616,13 +617,22 @@ export const Settings = () => {
             </div>
             <div className="space-y-2">
               <Label htmlFor="youtubeClientSecret">YouTube Client Secret</Label>
-              <Input
-                id="youtubeClientSecret"
-                value={youtubeClientSecret}
-                onChange={e => setYoutubeClientSecret(e.target.value)}
-                placeholder="Google Cloud Console에서 발급받은 Client Secret"
-                type="password"
-              />
+              <div className="relative">
+                <Input
+                  id="youtubeClientSecret"
+                  value={youtubeClientSecret}
+                  onChange={e => setYoutubeClientSecret(e.target.value)}
+                  placeholder="Google Cloud Console에서 발급받은 Client Secret"
+                  type={showYoutubeClientSecret ? 'text' : 'password'}
+                />
+                <button
+                  type="button"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  onClick={() => setShowYoutubeClientSecret(v => !v)}
+                >
+                  {showYoutubeClientSecret ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
               <div className="text-xs text-muted-foreground mt-2 mb-2 p-3 bg-muted rounded-md space-y-3">
                 <div>
                   <p className="font-semibold mb-1 text-foreground">💡 자동 업로드 설정 방법:</p>

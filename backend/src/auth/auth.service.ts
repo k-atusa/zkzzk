@@ -241,6 +241,7 @@ export class AuthService {
     return {
       discord_webhook_url: user?.discord_webhook_url || null,
       youtube_client_id: user?.youtube_client_id || null,
+      youtube_client_secret: user?.youtube_client_secret || null,
       youtube_connected: !!user?.youtube_refresh_token,
       youtube_auto_upload: user?.youtube_auto_upload ?? true,
       nid_aut: user?.nid_aut || null,
