@@ -333,20 +333,20 @@ export const Recordings = () => {
                       <TableCell className="text-muted-foreground text-sm">
                         {format(new Date(r.created_at), 'PPP pp', { locale: ko })}
                       </TableCell>
-                      <TableCell className="text-right pr-6 py-4 space-x-2">
+                      <TableCell className="text-right pr-6 py-4 flex justify-end gap-2">
                         {r.id && r.youtube_status !== 'UPLOADING' && r.youtube_status !== 'UPLOADED' && activeTab === 'vod' && (
-                          <Button variant="outline" size="sm" onClick={() => handleYoutubeUpload(r.id, r.filename, r.title)} className="h-8 w-8 p-0" title="유튜브 업로드">
+                          <Button variant="outline" size="sm" onClick={() => handleYoutubeUpload(r.id, r.filename, r.title)} className="h-8 w-8 p-0 bg-transparent hover:bg-red-500/10 border-border/50 hover:border-red-500/50 transition-colors" title="유튜브 업로드">
                             <Youtube className="h-4 w-4 text-red-500" />
                           </Button>
                         )}
-                        <Button variant="outline" size="sm" onClick={() => setPlayingVideo({ filename: r.filename, title: r.title })} className="h-8 w-8 p-0" title="재생">
-                          <Play className="h-4 w-4" />
+                        <Button variant="outline" size="sm" onClick={() => setPlayingVideo({ filename: r.filename, title: r.title })} className="h-8 w-8 p-0 bg-transparent hover:bg-primary/10 border-border/50 hover:border-primary/50 transition-colors" title="재생">
+                          <Play className="h-4 w-4 text-foreground" />
                         </Button>
-                        <Button variant="secondary" size="sm" onClick={() => handleDownload(r.filename)} className="h-8 w-8 p-0" title="다운로드">
-                          <Download className="h-4 w-4" />
+                        <Button variant="outline" size="sm" onClick={() => handleDownload(r.filename)} className="h-8 w-8 p-0 bg-transparent hover:bg-primary/10 border-border/50 hover:border-primary/50 transition-colors" title="다운로드">
+                          <Download className="h-4 w-4 text-foreground" />
                         </Button>
-                        <Button variant="destructive" size="sm" onClick={() => handleDelete(r.filename)} className="h-8 w-8 p-0" title="삭제">
-                          <Trash2 className="h-4 w-4" />
+                        <Button variant="outline" size="sm" onClick={() => handleDelete(r.filename)} className="h-8 w-8 p-0 bg-transparent hover:bg-red-500/10 border-border/50 hover:border-red-500/50 transition-colors" title="삭제">
+                          <Trash2 className="h-4 w-4 text-red-500" />
                         </Button>
                       </TableCell>
                     </TableRow>

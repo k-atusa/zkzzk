@@ -126,7 +126,6 @@ export class YoutubeService {
             title,
             description: `Auto-uploaded recording: ${title}`,
             tags: tags,
-            categoryId: category,
           },
           status: {
             privacyStatus: 'unlisted', // 'private', 'public', or 'unlisted'
