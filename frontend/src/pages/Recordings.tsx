@@ -191,7 +191,8 @@ export const Recordings = () => {
   };
 
   const handleYoutubeUploadClick = (id: string, filename: string) => {
-    const defaultTitle = filename.split('/').pop() || filename;
+    let defaultTitle = filename.split('/').pop() || filename;
+    defaultTitle = defaultTitle.replace(/\.(mp4|ts|mkv|avi)$/i, '');
     setUploadConfig({
       id,
       filename,

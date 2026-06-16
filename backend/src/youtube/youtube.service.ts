@@ -98,18 +98,20 @@ export class YoutubeService {
       const auth = await this.getAuthClient(userId);
       const youtube = google.youtube({ version: 'v3', auth });
 
+      const cleanTitle = title.replace(/\.(mp4|ts|mkv|avi)$/i, '');
+
       const response = await youtube.search.list({
         part: ['snippet'],
         forMine: true,
         type: ['video'],
-        q: title,
+        q: cleanTitle,
         maxResults: 10,
       });
 
       const items = response.data.items || [];
       // Exact title match check
       for (const item of items) {
-        if (item.snippet?.title === title) {
+        if (item.snippet?.title === cleanTitle) {
           return true;
         }
       }
@@ -122,6 +124,7 @@ export class YoutubeService {
 
   async uploadVideo(recordingId: string | null, filePath: string, title: string, description?: string, category: string = '20', tags: string[] = [], userId?: string): Promise<void> {
     let finalUserId = userId;
+    const cleanTitle = title.replace(/\.(mp4|ts|mkv|avi)$/i, '');
     try {
       if (recordingId) {
         const recording = await this.prisma.recording.findUnique({ where: { id: recordingId } });
@@ -141,7 +144,7 @@ export class YoutubeService {
 
       this.sendDiscordWebhook(finalUserId, {
         title: `📤 유튜브 업로드 시작`,
-        description: `**${title}** 영상의 유튜브 업로드를 시작합니다.`,
+        description: `**${cleanTitle}** 영상의 유튜브 업로드를 시작합니다.`,
         color: 0x9B59B6, // Purple
         timestamp: new Date().toISOString()
       });
@@ -158,8 +161,8 @@ export class YoutubeService {
         part: ['snippet', 'status'],
         requestBody: {
           snippet: {
-            title,
-            description: description || `Auto-uploaded recording: ${title}`,
+            title: cleanTitle,
+            description: description || `Auto-uploaded recording: ${cleanTitle}`,
             tags: tags,
           },
           status: {
@@ -170,7 +173,7 @@ export class YoutubeService {
       }, {
         onUploadProgress: evt => {
           const progress = (evt.bytesRead / fileSize) * 100;
-          this.logger.log(`Uploading ${title} - ${Math.round(progress)}%`);
+          this.logger.log(`Uploading ${cleanTitle} - ${Math.round(progress)}%`);
         },
       });
 
@@ -184,16 +187,16 @@ export class YoutubeService {
             }
           });
         }
-        this.logger.log(`Upload completed for ${title}`);
+        this.logger.log(`Upload completed for ${cleanTitle}`);
         this.sendDiscordWebhook(finalUserId, {
           title: `✅ 유튜브 업로드 완료`,
-          description: `**${title}** 영상이 유튜브에 성공적으로 업로드되었습니다.\n\n**비디오 링크**: [youtu.be/${res.data.id}](https://youtu.be/${res.data.id})`,
+          description: `**${cleanTitle}** 영상이 유튜브에 성공적으로 업로드되었습니다.\n\n**비디오 링크**: [youtu.be/${res.data.id}](https://youtu.be/${res.data.id})`,
           color: 0x2ECC71, // Emerald Green
           timestamp: new Date().toISOString()
         });
       }
     } catch (e: any) {
-      this.logger.error(`Upload failed for ${title}: ${e.message}`);
+      this.logger.error(`Upload failed for ${cleanTitle}: ${e.message}`);
       if (recordingId) {
         await this.prisma.recording.updateMany({
           where: { id: recordingId },
@@ -203,7 +206,7 @@ export class YoutubeService {
       if (finalUserId) {
         this.sendDiscordWebhook(finalUserId, {
           title: `❌ 유튜브 업로드 실패`,
-          description: `**${title}** 영상의 유튜브 업로드가 실패했습니다.\n\n**오류**: ${e.message}`,
+          description: `**${cleanTitle}** 영상의 유튜브 업로드가 실패했습니다.\n\n**오류**: ${e.message}`,
           color: 0xFF0000, // Red
           timestamp: new Date().toISOString()
         });
