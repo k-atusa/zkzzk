@@ -9,7 +9,7 @@ import axios from 'axios';
 export class YoutubeService {
   private readonly logger = new Logger(YoutubeService.name);
 
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
 
   private async sendDiscordWebhook(embed: any) {
     try {
@@ -17,7 +17,7 @@ export class YoutubeService {
       if (settings?.discord_webhook_url) {
         await axios.post(settings.discord_webhook_url, {
           embeds: [embed],
-        }).catch(() => {});
+        }).catch(() => { });
       }
     } catch (e) {
       // Ignore webhook errors
@@ -61,7 +61,7 @@ export class YoutubeService {
   async setCredentials(code: string): Promise<string | null> {
     const oauth2Client = await this.getAuthClient();
     const { tokens } = await oauth2Client.getToken(code);
-    
+
     oauth2Client.setCredentials(tokens);
 
     if (tokens.refresh_token) {
@@ -163,7 +163,7 @@ export class YoutubeService {
       if (res.data.id) {
         await this.prisma.recording.updateMany({
           where: { id: recordingId },
-          data: { 
+          data: {
             youtube_status: 'UPLOADED',
             youtube_video_id: res.data.id
           }
