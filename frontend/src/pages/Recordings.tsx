@@ -3,12 +3,15 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { Trash2, Video, Film, FileText, MonitorPlay, Play, AlertCircle, CheckCircle2, Loader2 } from 'lucide-react';
 import api from '@/api';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import mpegts from 'mpegts.js';
+import pkg from '../../package.json';
 
 // Custom YouTube Icon SVG component as the old lucide-react package doesn't export it
 const Youtube = ({ className }: { className?: string }) => (
@@ -130,6 +133,13 @@ export const Recordings = () => {
     onConfirm: () => void;
     isDestructive?: boolean;
   } | null>(null);
+  
+  const [uploadConfig, setUploadConfig] = useState<{
+    id: string;
+    filename: string;
+    title: string;
+    description: string;
+  } | null>(null);
 
   const fetchRecordings = async () => {
     try {
@@ -195,10 +205,28 @@ export const Recordings = () => {
     });
   };
 
-  const handleYoutubeUpload = async (id: string, filename: string, title: string) => {
+  const handleYoutubeUploadClick = (id: string, filename: string) => {
+    const defaultTitle = filename.split('/').pop() || filename;
+    setUploadConfig({
+      id,
+      filename,
+      title: defaultTitle,
+      description: `Automatically uploaded via ZKZZK version ${pkg.version}`
+    });
+  };
+
+  const submitYoutubeUpload = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!uploadConfig) return;
     try {
-      await api.post('/youtube/upload', { recordingId: id, filePath: filename, title });
+      await api.post('/youtube/upload', { 
+        recordingId: uploadConfig.id, 
+        filePath: uploadConfig.filename, 
+        title: uploadConfig.title,
+        description: uploadConfig.description
+      });
       toast.success('유튜브 업로드가 시작되었습니다.');
+      setUploadConfig(null);
       fetchRecordings();
     } catch (error: any) {
       toast.error(error.response?.data?.message || '유튜브 업로드 요청 실패');
@@ -331,7 +359,7 @@ export const Recordings = () => {
                       </TableCell>
                       <TableCell className="text-right pr-6 py-4 flex justify-end gap-2">
                         {r.id && r.youtube_status !== 'UPLOADING' && r.youtube_status !== 'UPLOADED' && (
-                          <Button variant="outline" size="sm" onClick={() => handleYoutubeUpload(r.id, r.filename, r.title)} className="h-8 w-8 p-0 bg-transparent hover:bg-red-500/10 border-border/50 hover:border-red-500/50 transition-colors" title="유튜브 업로드">
+                          <Button variant="outline" size="sm" onClick={() => handleYoutubeUploadClick(r.id, r.filename)} className="h-8 w-8 p-0 bg-transparent hover:bg-red-500/10 border-border/50 hover:border-red-500/50 transition-colors" title="유튜브 업로드">
                             <Youtube className="h-4 w-4 text-red-500" />
                           </Button>
                         )}
@@ -365,6 +393,48 @@ export const Recordings = () => {
               <VideoPlayer filename={playingVideo.filename} />
             )}
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Youtube Upload Modal */}
+      <Dialog open={!!uploadConfig} onOpenChange={(open) => { if (!open) setUploadConfig(null); }}>
+        <DialogContent className="sm:max-w-md">
+          <form onSubmit={submitYoutubeUpload}>
+            <DialogHeader>
+              <DialogTitle>YouTube 영상 업로드</DialogTitle>
+              <DialogDescription>
+                업로드할 영상의 제목과 설명을 입력해주세요.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="yt-title">영상 제목</Label>
+                <Input
+                  id="yt-title"
+                  value={uploadConfig?.title || ''}
+                  onChange={(e) => setUploadConfig(prev => prev ? { ...prev, title: e.target.value } : null)}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="yt-desc">설명</Label>
+                <textarea
+                  id="yt-desc"
+                  className="flex min-h-[80px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                  value={uploadConfig?.description || ''}
+                  onChange={(e) => setUploadConfig(prev => prev ? { ...prev, description: e.target.value } : null)}
+                />
+              </div>
+            </div>
+            <DialogFooter className="flex justify-end gap-2">
+              <Button type="button" variant="outline" onClick={() => setUploadConfig(null)}>
+                취소
+              </Button>
+              <Button type="submit">
+                업로드
+              </Button>
+            </DialogFooter>
+          </form>
         </DialogContent>
       </Dialog>
 

@@ -58,7 +58,8 @@ export class RecordingsService {
             const match = file.match(/^\d{6}_\d{6} (.+) \[.+\]\.(ts|mp4)$/);
             const title = match ? match[1] : file;
 
-            const dbRec = dbRecordingMap.get(relPath);
+            const dbLookupPath = path.relative(userDownloadsDir, filepath).replace(/\\/g, '/');
+            const dbRec = dbRecordingMap.get(dbLookupPath);
 
             recordings.push({
               id: dbRec?.id,
@@ -98,6 +99,13 @@ export class RecordingsService {
     const filepath = path.join(this.downloadsDir, filename);
     if (fs.existsSync(filepath)) {
       fs.unlinkSync(filepath);
+      
+      const userDownloadsDir = path.join(this.downloadsDir, user.username);
+      const dbLookupPath = path.relative(userDownloadsDir, filepath).replace(/\\/g, '/');
+      await this.prisma.recording.deleteMany({
+        where: { user_id: user.id, filename: dbLookupPath }
+      });
+
       return { status: 'success', message: '녹화 영상이 삭제되었습니다.' };
     }
     throw new NotFoundException('녹화 영상을 찾을 수 없습니다.');

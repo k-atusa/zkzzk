@@ -40,9 +40,11 @@ export class YoutubeController {
   // Allow manual upload trigger
   @UseGuards(AuthGuard('jwt'))
   @Post('upload')
-  async triggerUpload(@Body() body: { recordingId: string, filePath: string, title: string }) {
+  async triggerUpload(@Body() body: { recordingId: string, filePath: string, title: string, description?: string }) {
+    const path = require('path');
+    const absolutePath = path.join(process.cwd(), '..', 'downloads', body.filePath);
     // Start upload in background
-    this.youtubeService.uploadVideo(body.recordingId, body.filePath, body.title).catch(console.error);
+    this.youtubeService.uploadVideo(body.recordingId, absolutePath, body.title, body.description).catch(console.error);
     return { success: true, message: 'Upload started' };
   }
 }

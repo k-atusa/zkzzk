@@ -267,7 +267,7 @@ export class TasksService {
               try {
                 const user = await this.prisma.user.findUnique({ where: { id: streamer.user_id! } });
                 if (user?.youtube_client_id && user?.youtube_client_secret && user?.youtube_refresh_token && user?.youtube_auto_upload !== false) {
-                  const isDuplicate = await this.youtubeService.checkDuplicateVideo(user.id, broadcastTitle);
+                  const isDuplicate = await this.youtubeService.checkDuplicateVideo(user.id, mp4Filename);
                   if (isDuplicate) {
                     await this.prisma.recording.updateMany({
                       where: { id: recording.id },
@@ -275,12 +275,14 @@ export class TasksService {
                     });
                     this.sendDiscordWebhook(user.id, {
                       title: `⚠️ 유튜브 업로드 대기 (중복)`,
-                      description: `**${broadcastTitle}** 영상과 동일한 제목의 영상이 이미 유튜브에 존재합니다.\n웹 서비스에 접속하여 직접 업로드 여부를 결정해주세요.`,
+                      description: `**${mp4Filename}** 영상과 동일한 제목의 영상이 이미 유튜브에 존재합니다.\n웹 서비스에 접속하여 직접 업로드 여부를 결정해주세요.`,
                       color: 0xFFAA00,
                       timestamp: new Date().toISOString()
                     });
                   } else {
-                    this.youtubeService.uploadVideo(recording.id, mp4Filepath, broadcastTitle, liveCategoryValue || '20', tags).catch(e => {
+                    const pkg = JSON.parse(fs.readFileSync(path.join(process.cwd(), 'package.json'), 'utf8'));
+                    const description = `Automatically uploaded via ZKZZK version ${pkg.version}`;
+                    this.youtubeService.uploadVideo(recording.id, mp4Filepath, mp4Filename, description, liveCategoryValue || '20', tags).catch(e => {
                       this.logger.error(`YouTube upload failed: ${e.message}`);
                     });
                   }

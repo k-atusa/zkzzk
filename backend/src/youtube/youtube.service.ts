@@ -120,7 +120,7 @@ export class YoutubeService {
     }
   }
 
-  async uploadVideo(recordingId: string, filePath: string, title: string, category: string = '20', tags: string[] = []): Promise<void> {
+  async uploadVideo(recordingId: string, filePath: string, title: string, description?: string, category: string = '20', tags: string[] = []): Promise<void> {
     try {
       const recording = await this.prisma.recording.findUnique({ where: { id: recordingId } });
       if (!recording || !recording.user_id) throw new Error('Recording or user not found');
@@ -151,7 +151,7 @@ export class YoutubeService {
         requestBody: {
           snippet: {
             title,
-            description: `Auto-uploaded recording: ${title}`,
+            description: description || `Auto-uploaded recording: ${title}`,
             tags: tags,
           },
           status: {
