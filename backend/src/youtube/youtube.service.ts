@@ -120,25 +120,33 @@ export class YoutubeService {
     }
   }
 
-  async uploadVideo(recordingId: string, filePath: string, title: string, description?: string, category: string = '20', tags: string[] = []): Promise<void> {
+  async uploadVideo(recordingId: string | null, filePath: string, title: string, description?: string, category: string = '20', tags: string[] = [], userId?: string): Promise<void> {
+    let finalUserId = userId;
     try {
-      const recording = await this.prisma.recording.findUnique({ where: { id: recordingId } });
-      if (!recording || !recording.user_id) throw new Error('Recording or user not found');
-      const userId = recording.user_id;
+      if (recordingId) {
+        const recording = await this.prisma.recording.findUnique({ where: { id: recordingId } });
+        if (recording && recording.user_id) {
+          finalUserId = recording.user_id;
+        }
+      }
 
-      await this.prisma.recording.updateMany({
-        where: { id: recordingId },
-        data: { youtube_status: 'UPLOADING' }
-      });
+      if (!finalUserId) throw new Error('User ID is required for YouTube upload');
 
-      this.sendDiscordWebhook(userId, {
+      if (recordingId) {
+        await this.prisma.recording.updateMany({
+          where: { id: recordingId },
+          data: { youtube_status: 'UPLOADING' }
+        });
+      }
+
+      this.sendDiscordWebhook(finalUserId, {
         title: `📤 유튜브 업로드 시작`,
         description: `**${title}** 영상의 유튜브 업로드를 시작합니다.`,
         color: 0x9B59B6, // Purple
         timestamp: new Date().toISOString()
       });
 
-      const auth = await this.getAuthClient(userId);
+      const auth = await this.getAuthClient(finalUserId);
       const youtube = google.youtube({ version: 'v3', auth });
 
       const fileSize = fs.statSync(filePath).size;
@@ -167,15 +175,17 @@ export class YoutubeService {
       });
 
       if (res.data.id) {
-        await this.prisma.recording.updateMany({
-          where: { id: recordingId },
-          data: {
-            youtube_status: 'UPLOADED',
-            youtube_video_id: res.data.id
-          }
-        });
+        if (recordingId) {
+          await this.prisma.recording.updateMany({
+            where: { id: recordingId },
+            data: {
+              youtube_status: 'UPLOADED',
+              youtube_video_id: res.data.id
+            }
+          });
+        }
         this.logger.log(`Upload completed for ${title}`);
-        this.sendDiscordWebhook(userId, {
+        this.sendDiscordWebhook(finalUserId, {
           title: `✅ 유튜브 업로드 완료`,
           description: `**${title}** 영상이 유튜브에 성공적으로 업로드되었습니다.\n\n**비디오 링크**: [youtu.be/${res.data.id}](https://youtu.be/${res.data.id})`,
           color: 0x2ECC71, // Emerald Green
@@ -184,14 +194,14 @@ export class YoutubeService {
       }
     } catch (e: any) {
       this.logger.error(`Upload failed for ${title}: ${e.message}`);
-      await this.prisma.recording.updateMany({
-        where: { id: recordingId },
-        data: { youtube_status: 'FAILED' }
-      });
-      // We might not have userId if the recording wasn't found, so we check if we can get it
-      const recording = await this.prisma.recording.findUnique({ where: { id: recordingId } });
-      if (recording?.user_id) {
-        this.sendDiscordWebhook(recording.user_id, {
+      if (recordingId) {
+        await this.prisma.recording.updateMany({
+          where: { id: recordingId },
+          data: { youtube_status: 'FAILED' }
+        });
+      }
+      if (finalUserId) {
+        this.sendDiscordWebhook(finalUserId, {
           title: `❌ 유튜브 업로드 실패`,
           description: `**${title}** 영상의 유튜브 업로드가 실패했습니다.\n\n**오류**: ${e.message}`,
           color: 0xFF0000, // Red

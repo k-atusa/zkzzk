@@ -358,8 +358,8 @@ export const Recordings = () => {
                         {format(new Date(r.created_at), 'PPP pp', { locale: ko })}
                       </TableCell>
                       <TableCell className="text-right pr-6 py-4 flex justify-end gap-2">
-                        {r.id && r.youtube_status !== 'UPLOADING' && r.youtube_status !== 'UPLOADED' && (
-                          <Button variant="outline" size="sm" onClick={() => handleYoutubeUploadClick(r.id, r.filename)} className="h-8 w-8 p-0 bg-transparent hover:bg-red-500/10 border-border/50 hover:border-red-500/50 transition-colors" title="유튜브 업로드">
+                        {r.youtube_status !== 'UPLOADING' && r.youtube_status !== 'UPLOADED' && (
+                          <Button variant="outline" size="sm" onClick={() => handleYoutubeUploadClick(r.id || '', r.filename)} className="h-8 w-8 p-0 bg-transparent hover:bg-red-500/10 border-border/50 hover:border-red-500/50 transition-colors" title="유튜브 업로드">
                             <Youtube className="h-4 w-4 text-red-500" />
                           </Button>
                         )}
