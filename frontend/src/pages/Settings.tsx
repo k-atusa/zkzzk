@@ -620,7 +620,13 @@ export const Settings = () => {
                 저장
               </Button>
               {user.has_cookies && (
-                <Button type="button" variant="destructive" onClick={handleClearCookies} disabled={cookieSaveLoading}>
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  className="text-red-500 border-red-500/50 hover:bg-red-500/10 hover:text-red-600"
+                  onClick={handleClearCookies} 
+                  disabled={cookieSaveLoading}
+                >
                   쿠키 초기화
                 </Button>
               )}
