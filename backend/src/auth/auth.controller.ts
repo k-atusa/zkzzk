@@ -158,6 +158,6 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   @Post('system-settings')
   async updateSystemSettings(@Req() req: any, @Body() body: any) {
-    return this.authService.updateSystemSettings(req.user.id, body.discord_webhook_url || null);
+    return this.authService.updateSystemSettings(req.user.id, body.discord_webhook_url || null, body.youtube_client_id || null, body.youtube_client_secret || null);
   }
 }

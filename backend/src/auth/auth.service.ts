@@ -251,19 +251,22 @@ export class AuthService {
     const settings = await this.prisma.settings.findFirst();
     return {
       discord_webhook_url: settings?.discord_webhook_url || null,
+      youtube_client_id: settings?.youtube_client_id || null,
+      youtube_client_secret: settings?.youtube_client_secret || null,
+      youtube_connected: !!settings?.youtube_refresh_token,
     };
   }
 
-  async updateSystemSettings(requesterId: string, discord_webhook_url: string | null) {
+  async updateSystemSettings(requesterId: string, discord_webhook_url: string | null, youtube_client_id: string | null, youtube_client_secret: string | null) {
     const requester = await this.prisma.user.findUnique({ where: { id: requesterId } });
     if (!requester?.is_admin) throw new ForbiddenException('관리자 권한이 필요합니다.');
     let settings = await this.prisma.settings.findFirst();
     if (!settings) {
-      settings = await this.prisma.settings.create({ data: { initialized: true, discord_webhook_url } });
+      settings = await this.prisma.settings.create({ data: { initialized: true, discord_webhook_url, youtube_client_id, youtube_client_secret } });
     } else {
       settings = await this.prisma.settings.update({
         where: { id: settings.id },
-        data: { discord_webhook_url }
+        data: { discord_webhook_url, youtube_client_id, youtube_client_secret }
       });
     }
     return { success: true };

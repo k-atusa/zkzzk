@@ -1,0 +1,47 @@
+import { Controller, Get, Post, Body, Query, Res, UseGuards } from '@nestjs/common';
+import { YoutubeService } from './youtube.service';
+import type { Response } from 'express';
+import { AuthGuard } from '@nestjs/passport';
+
+@Controller('youtube')
+export class YoutubeController {
+  constructor(private readonly youtubeService: YoutubeService) {}
+
+  @UseGuards(AuthGuard('jwt'))
+  @Get('auth-url')
+  async getAuthUrl() {
+    try {
+      const url = await this.youtubeService.getAuthUrl();
+      return { url };
+    } catch (e: any) {
+      return { error: e.message };
+    }
+  }
+
+  @Get('callback')
+  async handleCallback(@Query('code') code: string, @Res() res: Response) {
+    if (!code) {
+      return res.redirect('http://localhost:5173/settings?youtube=error');
+    }
+
+    try {
+      const success = await this.youtubeService.setCredentials(code);
+      if (success) {
+        return res.redirect('http://localhost:5173/settings?youtube=success');
+      } else {
+        return res.redirect('http://localhost:5173/settings?youtube=error');
+      }
+    } catch (e: any) {
+      return res.redirect(`http://localhost:5173/settings?youtube=error`);
+    }
+  }
+
+  // Allow manual upload trigger
+  @UseGuards(AuthGuard('jwt'))
+  @Post('upload')
+  async triggerUpload(@Body() body: { recordingId: string, filePath: string, title: string }) {
+    // Start upload in background
+    this.youtubeService.uploadVideo(body.recordingId, body.filePath, body.title).catch(console.error);
+    return { success: true, message: 'Upload started' };
+  }
+}

@@ -4,11 +4,28 @@ import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { toast } from 'sonner';
-import { Download, Trash2, Video, Film, FileText, MonitorPlay, Play, AlertCircle } from 'lucide-react';
+import { Download, Trash2, Video, Film, FileText, MonitorPlay, Play, AlertCircle, CheckCircle2, Loader2 } from 'lucide-react';
 import api from '@/api';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import mpegts from 'mpegts.js';
+
+// Custom YouTube Icon SVG component as the old lucide-react package doesn't export it
+const Youtube = ({ className }: { className?: string }) => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    className={className}
+  >
+    <path d="M2.5 17a24.12 24.12 0 0 1 0-10 2 2 0 0 1 1.4-1.4 49.56 49.56 0 0 1 16.2 0A2 2 0 0 1 21.5 7a24.12 24.12 0 0 1 0 10 2 2 0 0 1-1.4 1.4 49.55 49.55 0 0 1-16.2 0A2 2 0 0 1 2.5 17Z" />
+    <polygon points="10 15 15 12 10 9" />
+  </svg>
+);
 
 // Self-contained Video Player for .ts and .mp4 formats
 const VideoPlayer = ({ filename }: { filename: string }) => {
@@ -182,6 +199,16 @@ export const Recordings = () => {
     window.location.href = `http://localhost:5001/api/recordings/download/${filename}`;
   };
 
+  const handleYoutubeUpload = async (id: string, filename: string, title: string) => {
+    try {
+      await api.post('/youtube/upload', { recordingId: id, filePath: filename, title });
+      toast.success('유튜브 업로드가 시작되었습니다.');
+      fetchRecordings();
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || '유튜브 업로드 요청 실패');
+    }
+  };
+
   const currentCategoryRecordings = 
     activeTab === 'live' ? liveRecordings :
     activeTab === 'vod' ? vodRecordings : otherRecordings;
@@ -274,11 +301,32 @@ export const Recordings = () => {
                   {recs.map((r, i) => (
                     <TableRow key={i} className="hover:bg-muted/10 transition-colors">
                       <TableCell className="pl-6 py-4 font-medium">
-                        <div 
-                          className="font-semibold text-foreground text-sm line-clamp-1 cursor-pointer hover:underline hover:text-primary transition-colors"
-                          onClick={() => setPlayingVideo({ filename: r.filename, title: r.title })}
-                        >
-                          {r.title}
+                        <div className="flex flex-col gap-1">
+                          <div 
+                            className="font-semibold text-foreground text-sm line-clamp-1 cursor-pointer hover:underline hover:text-primary transition-colors"
+                            onClick={() => setPlayingVideo({ filename: r.filename, title: r.title })}
+                          >
+                            {r.title}
+                          </div>
+                          {r.youtube_status && (
+                            <div className="flex items-center gap-1.5 mt-0.5">
+                              {r.youtube_status === 'DUPLICATE_PENDING' && (
+                                <span className="inline-flex items-center gap-1 text-xs px-1.5 py-0.5 rounded bg-yellow-500/10 text-yellow-600 border border-yellow-500/20">
+                                  <AlertCircle className="h-3 w-3" /> 유튜브 업로드 대기 (중복 의심)
+                                </span>
+                              )}
+                              {r.youtube_status === 'UPLOADING' && (
+                                <span className="inline-flex items-center gap-1 text-xs px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-600 border border-blue-500/20">
+                                  <Loader2 className="h-3 w-3 animate-spin" /> 유튜브 업로드 중
+                                </span>
+                              )}
+                              {r.youtube_status === 'UPLOADED' && (
+                                <span className="inline-flex items-center gap-1 text-xs px-1.5 py-0.5 rounded bg-green-500/10 text-green-600 border border-green-500/20">
+                                  <CheckCircle2 className="h-3 w-3" /> 유튜브 업로드 완료
+                                </span>
+                              )}
+                            </div>
+                          )}
                         </div>
                       </TableCell>
                       <TableCell className="text-muted-foreground text-sm font-medium">{r.size_mb} MB</TableCell>
@@ -286,6 +334,11 @@ export const Recordings = () => {
                         {format(new Date(r.created_at), 'PPP pp', { locale: ko })}
                       </TableCell>
                       <TableCell className="text-right pr-6 py-4 space-x-2">
+                        {r.id && r.youtube_status !== 'UPLOADING' && r.youtube_status !== 'UPLOADED' && activeTab === 'vod' && (
+                          <Button variant="outline" size="sm" onClick={() => handleYoutubeUpload(r.id, r.filename, r.title)} className="h-8 w-8 p-0" title="유튜브 업로드">
+                            <Youtube className="h-4 w-4 text-red-500" />
+                          </Button>
+                        )}
                         <Button variant="outline" size="sm" onClick={() => setPlayingVideo({ filename: r.filename, title: r.title })} className="h-8 w-8 p-0" title="재생">
                           <Play className="h-4 w-4" />
                         </Button>

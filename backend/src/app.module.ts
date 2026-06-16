@@ -8,6 +8,7 @@ import { StreamersModule } from './streamers/streamers.module';
 import { RecordingsModule } from './recordings/recordings.module';
 import { TasksModule } from './tasks/tasks.module';
 import { VodModule } from './vod/vod.module';
+import { YoutubeModule } from './youtube/youtube.module';
 
 @Module({
   imports: [
@@ -17,7 +18,8 @@ import { VodModule } from './vod/vod.module';
     StreamersModule,
     RecordingsModule,
     TasksModule,
-    VodModule
+    VodModule,
+    YoutubeModule
   ],
   controllers: [AppController],
   providers: [AppService],

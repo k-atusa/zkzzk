@@ -1,9 +1,12 @@
 import { Injectable, ForbiddenException, NotFoundException } from '@nestjs/common';
 import * as fs from 'fs';
 import * as path from 'path';
+import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class RecordingsService {
+  constructor(private prisma: PrismaService) {}
+
   private downloadsDir = path.join(process.cwd(), '..', 'downloads');
 
   private canAccessRecordingPath(filename: string, user: any): boolean {
@@ -17,6 +20,15 @@ export class RecordingsService {
   async getRecordings(user: any) {
     const recordings: any[] = [];
     const userDownloadsDir = path.join(this.downloadsDir, user.username);
+
+    // Fetch DB recordings to get youtube status and ID
+    const dbRecordings = await this.prisma.recording.findMany(
+      user.is_admin ? undefined : { where: { user_id: user.id } }
+    );
+    const dbRecordingMap = new Map();
+    for (const rec of dbRecordings) {
+      dbRecordingMap.set(rec.filename, rec);
+    }
 
     if (fs.existsSync(userDownloadsDir)) {
       const walkSync = (dir: string) => {
@@ -46,13 +58,18 @@ export class RecordingsService {
             const match = file.match(/^\d{6}_\d{6} (.+) \[.+\]\.(ts|mp4)$/);
             const title = match ? match[1] : file;
 
+            const dbRec = dbRecordingMap.get(relPath);
+
             recordings.push({
+              id: dbRec?.id,
               display_name: file,
               filename: relPath,
               title,
               created_at: stat.ctime,
               streamer_name: streamerName,
-              size_mb: Number((stat.size / (1024 * 1024)).toFixed(2))
+              size_mb: Number((stat.size / (1024 * 1024)).toFixed(2)),
+              youtube_status: dbRec?.youtube_status,
+              youtube_video_id: dbRec?.youtube_video_id
             });
           }
         }

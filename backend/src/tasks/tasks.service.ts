@@ -6,12 +6,16 @@ import { spawn } from 'child_process';
 import * as path from 'path';
 import * as fs from 'fs';
 import axios from 'axios';
+import { YoutubeService } from '../youtube/youtube.service';
 
 @Injectable()
 export class TasksService {
   private readonly logger = new Logger(TasksService.name);
 
-  constructor(private prisma: PrismaService) { }
+  constructor(
+    private prisma: PrismaService,
+    private youtubeService: YoutubeService
+  ) { }
 
   private async sendDiscordWebhook(embed: any) {
     try {
@@ -251,6 +255,32 @@ export class TasksService {
                 where: { id: recording.id },
                 data: { filename: path.join('live', streamerNickname, mp4Filename).replace(/\\/g, '/') }
               });
+
+              // Trigger YouTube upload
+              try {
+                const settings = await this.prisma.settings.findFirst();
+                if (settings?.youtube_client_id && settings?.youtube_client_secret && settings?.youtube_refresh_token) {
+                  const isDuplicate = await this.youtubeService.checkDuplicateVideo(broadcastTitle);
+                  if (isDuplicate) {
+                    await this.prisma.recording.updateMany({
+                      where: { id: recording.id },
+                      data: { youtube_status: 'DUPLICATE_PENDING' }
+                    });
+                    this.sendDiscordWebhook({
+                      title: `⚠️ 유튜브 업로드 대기 (중복)`,
+                      description: `**${broadcastTitle}** 영상과 동일한 제목의 영상이 이미 유튜브에 존재합니다.\n웹 서비스에 접속하여 직접 업로드 여부를 결정해주세요.`,
+                      color: 0xFFAA00,
+                      timestamp: new Date().toISOString()
+                    });
+                  } else {
+                    this.youtubeService.uploadVideo(recording.id, mp4Filepath, broadcastTitle, liveCategoryValue || '20', tags).catch(e => {
+                      this.logger.error(`YouTube upload failed: ${e.message}`);
+                    });
+                  }
+                }
+              } catch (ytErr: any) {
+                this.logger.error(`Failed to handle YouTube auto-upload: ${ytErr.message}`);
+              }
             } catch (dbErr: any) {
               this.logger.error(`Failed to update recording filename: ${dbErr.message}`);
             }
