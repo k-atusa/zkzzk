@@ -194,6 +194,24 @@ export class YoutubeService {
           color: 0x2ECC71, // Emerald Green
           timestamp: new Date().toISOString()
         });
+
+        const uploadUser = await this.prisma.user.findUnique({ where: { id: finalUserId } });
+        if (uploadUser?.delete_after_upload) {
+          try {
+            if (fs.existsSync(filePath)) {
+              fs.unlinkSync(filePath);
+              this.logger.log(`Deleted local file after upload: ${filePath}`);
+            }
+            if (recordingId) {
+              await this.prisma.recording.deleteMany({
+                where: { id: recordingId }
+              });
+              this.logger.log(`Deleted recording from database: ${recordingId}`);
+            }
+          } catch (delErr: any) {
+            this.logger.error(`Failed to delete file or record after upload: ${delErr.message}`);
+          }
+        }
       }
     } catch (e: any) {
       this.logger.error(`Upload failed for ${cleanTitle}: ${e.message}`);

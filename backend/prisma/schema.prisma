@@ -22,6 +22,7 @@ model user {
   youtube_client_secret String?
   youtube_refresh_token String?
   youtube_auto_upload   Boolean?    @default(true)
+  delete_after_upload   Boolean?    @default(false)
   live_resolution       String?     @default("1080p")
   vod_resolution        String?     @default("1080p")
   recordings     recording[]

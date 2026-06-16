@@ -244,6 +244,7 @@ export class AuthService {
       youtube_client_secret: user?.youtube_client_secret || null,
       youtube_connected: !!user?.youtube_refresh_token,
       youtube_auto_upload: user?.youtube_auto_upload ?? true,
+      delete_after_upload: user?.delete_after_upload ?? false,
       nid_aut: user?.nid_aut || null,
       nid_ses: user?.nid_ses || null,
       live_resolution: user?.live_resolution || '1080p',
@@ -251,7 +252,7 @@ export class AuthService {
     };
   }
 
-  async updateUserSettings(requesterId: string, discord_webhook_url?: string | null, youtube_client_id?: string | null, youtube_client_secret?: string | null, nid_aut?: string | null, nid_ses?: string | null, youtube_auto_upload?: boolean, live_resolution?: string, vod_resolution?: string) {
+  async updateUserSettings(requesterId: string, discord_webhook_url?: string | null, youtube_client_id?: string | null, youtube_client_secret?: string | null, nid_aut?: string | null, nid_ses?: string | null, youtube_auto_upload?: boolean, delete_after_upload?: boolean, live_resolution?: string, vod_resolution?: string) {
     const updateData: any = {};
     if (discord_webhook_url !== undefined) updateData.discord_webhook_url = discord_webhook_url;
     if (youtube_client_id !== undefined) updateData.youtube_client_id = youtube_client_id;
@@ -259,6 +260,7 @@ export class AuthService {
     if (nid_aut !== undefined) updateData.nid_aut = nid_aut;
     if (nid_ses !== undefined) updateData.nid_ses = nid_ses;
     if (youtube_auto_upload !== undefined) updateData.youtube_auto_upload = youtube_auto_upload;
+    if (delete_after_upload !== undefined) updateData.delete_after_upload = delete_after_upload;
     if (live_resolution !== undefined) updateData.live_resolution = live_resolution;
     if (vod_resolution !== undefined) updateData.vod_resolution = vod_resolution;
 

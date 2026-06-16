@@ -46,6 +46,7 @@ export const Settings = () => {
   const [showYoutubeClientSecret, setShowYoutubeClientSecret] = useState(false);
   const [youtubeConnected, setYoutubeConnected] = useState(false);
   const [youtubeAutoUpload, setYoutubeAutoUpload] = useState(true);
+  const [deleteAfterUpload, setDeleteAfterUpload] = useState(false);
   const [webhookLoading, setWebhookLoading] = useState(false);
 
   // Resolution Settings
@@ -112,6 +113,7 @@ export const Settings = () => {
       if (res.data.youtube_client_secret) setYoutubeClientSecret(res.data.youtube_client_secret);
       if (res.data.youtube_connected) setYoutubeConnected(true);
       if (res.data.youtube_auto_upload !== undefined) setYoutubeAutoUpload(res.data.youtube_auto_upload);
+      if (res.data.delete_after_upload !== undefined) setDeleteAfterUpload(res.data.delete_after_upload);
       if (res.data.nid_aut) setNidAut(res.data.nid_aut);
       if (res.data.nid_ses) setNidSes(res.data.nid_ses);
       if (res.data.live_resolution) setLiveResolution(res.data.live_resolution);
@@ -279,6 +281,7 @@ export const Settings = () => {
         youtube_client_id: youtubeClientId.trim(),
         youtube_client_secret: youtubeClientSecret.trim(),
         youtube_auto_upload: youtubeAutoUpload,
+        delete_after_upload: deleteAfterUpload,
         live_resolution: liveResolution,
         vod_resolution: vodResolution
       });
@@ -648,17 +651,29 @@ export const Settings = () => {
               </p>
             </div>
             <div className="space-y-2 mt-4 pt-4 border-t border-border">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col sm:flex-row gap-4 sm:items-center justify-between mb-2">
                 <Label htmlFor="youtubeClientId">YouTube Client ID</Label>
-                <div className="flex items-center gap-2">
-                  <Label htmlFor="youtubeAutoUpload" className="text-sm cursor-pointer text-muted-foreground font-normal">
-                    자동 업로드 활성화
-                  </Label>
-                  <Switch
-                    id="youtubeAutoUpload"
-                    checked={youtubeAutoUpload}
-                    onCheckedChange={setYoutubeAutoUpload}
-                  />
+                <div className="flex flex-wrap items-center gap-4">
+                  <div className="flex items-center gap-2">
+                    <Label htmlFor="youtubeAutoUpload" className="text-sm cursor-pointer text-muted-foreground font-normal">
+                      자동 업로드 활성화
+                    </Label>
+                    <Switch
+                      id="youtubeAutoUpload"
+                      checked={youtubeAutoUpload}
+                      onCheckedChange={setYoutubeAutoUpload}
+                    />
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Label htmlFor="deleteAfterUpload" className="text-sm cursor-pointer text-muted-foreground font-normal">
+                      업로드 후 자동 삭제
+                    </Label>
+                    <Switch
+                      id="deleteAfterUpload"
+                      checked={deleteAfterUpload}
+                      onCheckedChange={setDeleteAfterUpload}
+                    />
+                  </div>
                 </div>
               </div>
               <Input

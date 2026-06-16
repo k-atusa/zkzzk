@@ -159,6 +159,7 @@ export class AuthController {
       body.nid_aut !== undefined ? body.nid_aut : undefined,
       body.nid_ses !== undefined ? body.nid_ses : undefined,
       body.youtube_auto_upload !== undefined ? body.youtube_auto_upload : undefined,
+      body.delete_after_upload !== undefined ? body.delete_after_upload : undefined,
       body.live_resolution !== undefined ? body.live_resolution : undefined,
       body.vod_resolution !== undefined ? body.vod_resolution : undefined
     );
