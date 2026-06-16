@@ -264,7 +264,7 @@ export const Recordings = () => {
               <Table>
                 <TableHeader className="bg-muted/5">
                   <TableRow>
-                    <TableHead className="pl-6 py-3">방송 정보 / 파일명</TableHead>
+                    <TableHead className="pl-6 py-3">방송 정보</TableHead>
                     <TableHead className="w-28 py-3">파일 크기</TableHead>
                     <TableHead className="w-48 py-3">녹화 완료 일시</TableHead>
                     <TableHead className="text-right pr-6 py-3 w-40">작업</TableHead>
@@ -280,14 +280,6 @@ export const Recordings = () => {
                         >
                           {r.title}
                         </div>
-                        {r.title !== r.display_name && (
-                          <div 
-                            className="text-xs text-muted-foreground mt-1 font-mono break-all cursor-pointer hover:underline hover:text-primary transition-colors"
-                            onClick={() => setPlayingVideo({ filename: r.filename, title: r.title })}
-                          >
-                            {r.display_name}
-                          </div>
-                        )}
                       </TableCell>
                       <TableCell className="text-muted-foreground text-sm font-medium">{r.size_mb} MB</TableCell>
                       <TableCell className="text-muted-foreground text-sm">
