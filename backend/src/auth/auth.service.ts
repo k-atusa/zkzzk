@@ -125,8 +125,7 @@ export class AuthService {
       id: u.id,
       username: u.username,
       is_admin: u.is_admin,
-      created_at: u.created_at,
-      has_cookies: !!(u.nid_aut && u.nid_ses)
+      created_at: u.created_at
     }));
   }
 

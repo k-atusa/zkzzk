@@ -639,11 +639,6 @@ export const Settings = () => {
                           {u.is_admin && (
                             <span className="text-xs px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-600 border border-amber-500/20">관리자</span>
                           )}
-                          {u.has_cookies && (
-                            <span className="text-xs px-1.5 py-0.5 rounded bg-green-500/10 text-green-600 border border-green-500/20 flex items-center gap-0.5">
-                              <Cookie className="h-2.5 w-2.5" /> 쿠키 설정됨
-                            </span>
-                          )}
                           <span className="text-xs text-muted-foreground">
                             {u.created_at ? new Date(u.created_at).toLocaleDateString('ko-KR') : ''}
                           </span>
