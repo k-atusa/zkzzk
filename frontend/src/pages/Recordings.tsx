@@ -318,8 +318,13 @@ export const Recordings = () => {
                           >
                             {r.title}
                           </div>
-                          {r.youtube_status && (
-                            <div className="flex items-center gap-1.5 mt-0.5">
+                          {(r.youtube_status || r.resolution) && (
+                            <div className="flex items-center flex-wrap gap-1.5 mt-0.5">
+                              {r.resolution && (
+                                <span className="inline-flex items-center text-[10px] font-bold px-1.5 py-0.5 rounded bg-secondary text-secondary-foreground border border-border">
+                                  {r.resolution}
+                                </span>
+                              )}
                               {r.youtube_status === 'DUPLICATE_PENDING' && (
                                 <span className="inline-flex items-center gap-1 text-xs px-1.5 py-0.5 rounded bg-yellow-500/10 text-yellow-600 border border-yellow-500/20">
                                   <AlertCircle className="h-3 w-3" /> 유튜브 업로드 대기 (중복 의심)

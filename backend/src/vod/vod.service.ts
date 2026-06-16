@@ -186,6 +186,16 @@ export class VodService {
       else if (dbUser.vod_resolution === '1080p') formatString = '1080p60,1080p,best';
     }
 
+    const dbFilename = path.join('vod', streamerNickname, filename.replace('.mp4', '.ts')).replace(/\\/g, '/');
+    const recording = await this.prisma.recording.create({
+      data: {
+        user_id: user.id,
+        filename: dbFilename,
+        title: cleanTitle,
+        created_at: new Date()
+      }
+    });
+
     // Background download using streamlink
     const child = spawn(streamlinkCmd, [
       '--http-header', 'User-Agent=Mozilla/5.0',
@@ -193,6 +203,24 @@ export class VodService {
       formatString,
       '--output', filepath.replace('.mp4', '.ts')
     ]);
+
+    let resolutionCaptured = false;
+    const parseResolution = async (text: string) => {
+      if (resolutionCaptured) return;
+      const match = text.match(/Opening stream:\s*([a-zA-Z0-9_]+)/i);
+      if (match && match[1]) {
+        resolutionCaptured = true;
+        try {
+          await this.prisma.recording.update({
+            where: { id: recording.id },
+            data: { resolution: match[1] }
+          });
+        } catch (e) {}
+      }
+    };
+
+    child.stdout.on('data', (data) => parseResolution(data.toString()));
+    child.stderr.on('data', (data) => parseResolution(data.toString()));
 
     child.on('error', (err) => {
       this.logger.error(`Failed to start streamlink for VOD: ${err.message}`);
@@ -218,10 +246,16 @@ export class VodService {
           this.logger.error(`Failed to start ffmpeg for VOD: ${err.message}`);
         });
 
-        ffmpeg.on('close', () => {
+        ffmpeg.on('close', async () => {
           if (fs.existsSync(filepath.replace('.mp4', '.ts'))) {
             fs.unlinkSync(filepath.replace('.mp4', '.ts'));
           }
+          try {
+            await this.prisma.recording.update({
+              where: { id: recording.id },
+              data: { filename: path.join('vod', streamerNickname, filename).replace(/\\/g, '/') }
+            });
+          } catch(e) {}
         });
       }
     });

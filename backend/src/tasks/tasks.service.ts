@@ -149,14 +149,43 @@ export class TasksService {
         '--output', filepath
       ];
 
+      const recording = await this.prisma.recording.create({
+        data: {
+          streamer_id: streamerId,
+          user_id: streamer.user_id,
+          filename: path.join('live', streamerNickname, filename).replace(/\\/g, '/'),
+          title: broadcastTitle,
+          created_at: new Date()
+        }
+      });
+
       const child = spawn(command, args);
 
+      let resolutionCaptured = false;
+      const parseResolution = async (text: string) => {
+        if (resolutionCaptured) return;
+        const match = text.match(/Opening stream:\s*([a-zA-Z0-9_]+)/i);
+        if (match && match[1]) {
+          resolutionCaptured = true;
+          try {
+            await this.prisma.recording.update({
+              where: { id: recording.id },
+              data: { resolution: match[1] }
+            });
+          } catch (e) {}
+        }
+      };
+
       child.stdout.on('data', (data) => {
-        this.logger.log(`[Streamlink stdout] ${data.toString().trim()}`);
+        const text = data.toString();
+        this.logger.log(`[Streamlink stdout] ${text.trim()}`);
+        parseResolution(text);
       });
 
       child.stderr.on('data', (data) => {
-        this.logger.error(`[Streamlink stderr] ${data.toString().trim()}`);
+        const text = data.toString();
+        this.logger.error(`[Streamlink stderr] ${text.trim()}`);
+        parseResolution(text);
       });
 
       child.on('error', async (err) => {
@@ -182,16 +211,6 @@ export class TasksService {
           current_broadcast_category: liveCategoryValue || null,
           current_broadcast_tags: tags ? JSON.stringify(tags) : null,
           process_id: child.pid
-        }
-      });
-
-      const recording = await this.prisma.recording.create({
-        data: {
-          streamer_id: streamerId,
-          user_id: streamer.user_id,
-          filename: path.join('live', streamerNickname, filename).replace(/\\/g, '/'),
-          title: broadcastTitle,
-          created_at: new Date()
         }
       });
 

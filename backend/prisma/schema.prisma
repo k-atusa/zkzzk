@@ -63,15 +63,16 @@ model streamer {
 }
 
 model recording {
-  id          String    @id @default(uuid())
-  streamer_id String
-  user_id     String?
+  id               String    @id @default(uuid())
+  streamer_id      String?
+  user_id          String?
   filename         String
   title            String?
+  resolution       String?
   created_at       DateTime? @default(now())
   youtube_status   String?
   youtube_video_id String?
-  streamer         streamer  @relation(fields: [streamer_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  streamer         streamer? @relation(fields: [streamer_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   user             user?     @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@map("recording")
