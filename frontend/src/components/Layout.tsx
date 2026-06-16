@@ -3,6 +3,7 @@ import { LayoutDashboard, Video, Download, Settings, LogOut, Sun, Moon, Laptop }
 import { Button } from './ui/button';
 import api from '../api';
 import { useEffect, useState } from 'react';
+import pkg from '../../package.json';
 
 const navItems = [
   { path: '/', icon: LayoutDashboard, label: '라이브' },
@@ -14,13 +15,24 @@ const navItems = [
 export const Layout = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const [user, setUser] = useState<{ username: string; is_admin: boolean } | null>(null);
+  const [user, setUser] = useState<{ username: string; is_admin: boolean; version?: string } | null>(null);
   const [theme, setTheme] = useState<'light' | 'dark' | 'system'>('system');
+  const [latestVersion, setLatestVersion] = useState<string | null>(null);
 
   useEffect(() => {
     api.get('/auth/me').then(res => setUser(res.data)).catch(() => navigate('/login'));
     const savedTheme = (localStorage.getItem('theme') as 'light' | 'dark' | 'system') || 'system';
     setTheme(savedTheme);
+
+    fetch('https://api.github.com/repos/k-atusa/zkzzk/releases/latest')
+      .then(res => res.json())
+      .then(data => {
+        if (data && data.tag_name) {
+          const remoteVersion = data.tag_name.replace(/^v/, '');
+          setLatestVersion(remoteVersion);
+        }
+      })
+      .catch(() => { });
   }, [navigate]);
 
   const cycleTheme = () => {
@@ -89,6 +101,14 @@ export const Layout = () => {
           </nav>
         </div>
         <div className="border-t border-border pt-4 mt-6">
+          <div className="px-2 mb-2">
+            <p className="text-sm text-muted-foreground">v{user.version || pkg.version}</p>
+            {latestVersion && latestVersion !== (user.version || pkg.version) && (
+              <a href="https://github.com/k-atusa/zkzzk/releases" target="_blank" rel="noreferrer" className="text-[11px] font-medium text-amber-500 hover:text-amber-600 block mt-0.5">
+                🎉 최신 버전(v{latestVersion}) 이용 가능
+              </a>
+            )}
+          </div>
           <div className="px-2 mb-4 text-sm text-muted-foreground">
             접속중: <span className="text-foreground font-medium">{user.username}</span> {user.is_admin && '(관리자)'}
           </div>

@@ -21,6 +21,7 @@ model user {
   youtube_client_id     String?
   youtube_client_secret String?
   youtube_refresh_token String?
+  youtube_auto_upload   Boolean?    @default(true)
   recordings     recording[]
   streamers      streamer[]  @relation("StreamerUser")
   cookie_streamers streamer[] @relation("StreamerCookieUser")

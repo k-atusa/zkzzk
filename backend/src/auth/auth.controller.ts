@@ -3,6 +3,8 @@ import { AuthService } from './auth.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import * as qrcode from 'qrcode';
+import * as fs from 'fs';
+import * as path from 'path';
 
 @Controller('auth')
 export class AuthController {
@@ -67,11 +69,13 @@ export class AuthController {
   @Get('me')
   async getMe(@Req() req: any) {
     const user = await this.prisma.user.findUnique({ where: { id: req.user.id } });
+    const pkg = JSON.parse(fs.readFileSync(path.join(process.cwd(), 'package.json'), 'utf8'));
     return {
       username: user?.username,
       is_admin: user?.is_admin,
       totp_enabled: user?.totp_enabled,
       has_secret: !!user?.totp_secret,
+      version: pkg.version,
       has_cookies: !!(user?.nid_aut && user?.nid_ses),
     };
   }
@@ -153,7 +157,8 @@ export class AuthController {
       body.youtube_client_id !== undefined ? body.youtube_client_id : undefined,
       body.youtube_client_secret !== undefined ? body.youtube_client_secret : undefined,
       body.nid_aut !== undefined ? body.nid_aut : undefined,
-      body.nid_ses !== undefined ? body.nid_ses : undefined
+      body.nid_ses !== undefined ? body.nid_ses : undefined,
+      body.youtube_auto_upload !== undefined ? body.youtube_auto_upload : undefined
     );
   }
 }

@@ -241,20 +241,21 @@ export class AuthService {
     return {
       discord_webhook_url: user?.discord_webhook_url || null,
       youtube_client_id: user?.youtube_client_id || null,
-      youtube_client_secret: user?.youtube_client_secret || null,
       youtube_connected: !!user?.youtube_refresh_token,
+      youtube_auto_upload: user?.youtube_auto_upload ?? true,
       nid_aut: user?.nid_aut || null,
       nid_ses: user?.nid_ses || null,
     };
   }
 
-  async updateUserSettings(requesterId: string, discord_webhook_url?: string | null, youtube_client_id?: string | null, youtube_client_secret?: string | null, nid_aut?: string | null, nid_ses?: string | null) {
+  async updateUserSettings(requesterId: string, discord_webhook_url?: string | null, youtube_client_id?: string | null, youtube_client_secret?: string | null, nid_aut?: string | null, nid_ses?: string | null, youtube_auto_upload?: boolean) {
     const updateData: any = {};
     if (discord_webhook_url !== undefined) updateData.discord_webhook_url = discord_webhook_url;
     if (youtube_client_id !== undefined) updateData.youtube_client_id = youtube_client_id;
     if (youtube_client_secret !== undefined) updateData.youtube_client_secret = youtube_client_secret;
     if (nid_aut !== undefined) updateData.nid_aut = nid_aut;
     if (nid_ses !== undefined) updateData.nid_ses = nid_ses;
+    if (youtube_auto_upload !== undefined) updateData.youtube_auto_upload = youtube_auto_upload;
 
     await this.prisma.user.update({
       where: { id: requesterId },

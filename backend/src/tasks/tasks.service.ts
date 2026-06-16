@@ -266,7 +266,7 @@ export class TasksService {
               // Trigger YouTube upload
               try {
                 const user = await this.prisma.user.findUnique({ where: { id: streamer.user_id! } });
-                if (user?.youtube_client_id && user?.youtube_client_secret && user?.youtube_refresh_token) {
+                if (user?.youtube_client_id && user?.youtube_client_secret && user?.youtube_refresh_token && user?.youtube_auto_upload !== false) {
                   const isDuplicate = await this.youtubeService.checkDuplicateVideo(user.id, broadcastTitle);
                   if (isDuplicate) {
                     await this.prisma.recording.updateMany({
