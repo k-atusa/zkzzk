@@ -6,29 +6,14 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import { Trash2, Video, Film, FileText, MonitorPlay, Play, AlertCircle, CheckCircle2, Loader2 } from 'lucide-react';
+import { Trash2, Video, Film, FileText, MonitorPlay, Play, AlertCircle, CheckCircle2, Loader2, Upload } from 'lucide-react';
 import api from '@/api';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
 import mpegts from 'mpegts.js';
 import pkg from '../../package.json';
 
-// Custom YouTube Icon SVG component as the old lucide-react package doesn't export it
-const Youtube = ({ className }: { className?: string }) => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    className={className}
-  >
-    <path d="M2.5 17a24.12 24.12 0 0 1 0-10 2 2 0 0 1 1.4-1.4 49.56 49.56 0 0 1 16.2 0A2 2 0 0 1 21.5 7a24.12 24.12 0 0 1 0 10 2 2 0 0 1-1.4 1.4 49.55 49.55 0 0 1-16.2 0A2 2 0 0 1 2.5 17Z" />
-    <polygon points="10 15 15 12 10 9" />
-  </svg>
-);
+
 
 // Self-contained Video Player for .ts and .mp4 formats
 const VideoPlayer = ({ filename }: { filename: string }) => {
@@ -359,13 +344,10 @@ export const Recordings = () => {
                       </TableCell>
                       <TableCell className="text-right pr-6 py-4 flex justify-end gap-2">
                         {r.youtube_status !== 'UPLOADING' && r.youtube_status !== 'UPLOADED' && (
-                          <Button variant="outline" size="sm" onClick={() => handleYoutubeUploadClick(r.id || '', r.filename)} className="h-8 w-8 p-0 bg-transparent hover:bg-red-500/10 border-border/50 hover:border-red-500/50 transition-colors" title="유튜브 업로드">
-                            <Youtube className="h-5 w-5 text-red-500" />
+                          <Button variant="outline" size="sm" onClick={() => handleYoutubeUploadClick(r.id || '', r.filename)} className="h-8 w-8 p-0 bg-transparent hover:bg-primary/10 border-border/50 hover:border-primary/50 transition-colors" title="유튜브 업로드">
+                            <Upload className="h-5 w-5 text-foreground" />
                           </Button>
                         )}
-                        <Button variant="outline" size="sm" onClick={() => setPlayingVideo({ filename: r.filename, title: r.title })} className="h-8 w-8 p-0 bg-transparent hover:bg-primary/10 border-border/50 hover:border-primary/50 transition-colors" title="재생">
-                          <Play className="h-4 w-4 text-foreground" />
-                        </Button>
                         <Button variant="outline" size="sm" onClick={() => handleDelete(r.filename)} className="h-8 w-8 p-0 bg-transparent hover:bg-red-500/10 border-border/50 hover:border-red-500/50 transition-colors" title="삭제">
                           <Trash2 className="h-4 w-4 text-red-500" />
                         </Button>
