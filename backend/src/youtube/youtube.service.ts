@@ -3,12 +3,26 @@ import { google, youtube_v3 } from 'googleapis';
 import { PrismaService } from '../prisma/prisma.service';
 import * as fs from 'fs';
 import * as path from 'path';
+import axios from 'axios';
 
 @Injectable()
 export class YoutubeService {
   private readonly logger = new Logger(YoutubeService.name);
 
   constructor(private prisma: PrismaService) {}
+
+  private async sendDiscordWebhook(embed: any) {
+    try {
+      const settings = await this.prisma.settings.findFirst();
+      if (settings?.discord_webhook_url) {
+        await axios.post(settings.discord_webhook_url, {
+          embeds: [embed],
+        }).catch(() => {});
+      }
+    } catch (e) {
+      // Ignore webhook errors
+    }
+  }
 
   private async getAuthClient() {
     const settings = await this.prisma.settings.findFirst();
@@ -111,6 +125,13 @@ export class YoutubeService {
         data: { youtube_status: 'UPLOADING' }
       });
 
+      this.sendDiscordWebhook({
+        title: `📤 유튜브 업로드 시작`,
+        description: `**${title}** 영상의 유튜브 업로드를 시작합니다.`,
+        color: 0x9B59B6, // Purple
+        timestamp: new Date().toISOString()
+      });
+
       const auth = await this.getAuthClient();
       const youtube = google.youtube({ version: 'v3', auth });
 
@@ -148,12 +169,24 @@ export class YoutubeService {
           }
         });
         this.logger.log(`Upload completed for ${title}`);
+        this.sendDiscordWebhook({
+          title: `✅ 유튜브 업로드 완료`,
+          description: `**${title}** 영상이 유튜브에 성공적으로 업로드되었습니다.\n\n**비디오 링크**: [youtu.be/${res.data.id}](https://youtu.be/${res.data.id})`,
+          color: 0x2ECC71, // Emerald Green
+          timestamp: new Date().toISOString()
+        });
       }
     } catch (e: any) {
       this.logger.error(`Upload failed for ${title}: ${e.message}`);
       await this.prisma.recording.updateMany({
         where: { id: recordingId },
         data: { youtube_status: 'FAILED' }
+      });
+      this.sendDiscordWebhook({
+        title: `❌ 유튜브 업로드 실패`,
+        description: `**${title}** 영상의 유튜브 업로드가 실패했습니다.\n\n**오류**: ${e.message}`,
+        color: 0xFF0000, // Red
+        timestamp: new Date().toISOString()
       });
     }
   }

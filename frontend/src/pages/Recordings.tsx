@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { toast } from 'sonner';
-import { Download, Trash2, Video, Film, FileText, MonitorPlay, Play, AlertCircle, CheckCircle2, Loader2 } from 'lucide-react';
+import { Trash2, Video, Film, FileText, MonitorPlay, Play, AlertCircle, CheckCircle2, Loader2 } from 'lucide-react';
 import api from '@/api';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
@@ -195,10 +195,6 @@ export const Recordings = () => {
     });
   };
 
-  const handleDownload = (filename: string) => {
-    window.location.href = `http://localhost:5001/api/recordings/download/${filename}`;
-  };
-
   const handleYoutubeUpload = async (id: string, filename: string, title: string) => {
     try {
       await api.post('/youtube/upload', { recordingId: id, filePath: filename, title });
@@ -334,16 +330,13 @@ export const Recordings = () => {
                         {format(new Date(r.created_at), 'PPP pp', { locale: ko })}
                       </TableCell>
                       <TableCell className="text-right pr-6 py-4 flex justify-end gap-2">
-                        {r.id && r.youtube_status !== 'UPLOADING' && r.youtube_status !== 'UPLOADED' && activeTab === 'vod' && (
+                        {r.id && r.youtube_status !== 'UPLOADING' && r.youtube_status !== 'UPLOADED' && (
                           <Button variant="outline" size="sm" onClick={() => handleYoutubeUpload(r.id, r.filename, r.title)} className="h-8 w-8 p-0 bg-transparent hover:bg-red-500/10 border-border/50 hover:border-red-500/50 transition-colors" title="유튜브 업로드">
                             <Youtube className="h-4 w-4 text-red-500" />
                           </Button>
                         )}
                         <Button variant="outline" size="sm" onClick={() => setPlayingVideo({ filename: r.filename, title: r.title })} className="h-8 w-8 p-0 bg-transparent hover:bg-primary/10 border-border/50 hover:border-primary/50 transition-colors" title="재생">
                           <Play className="h-4 w-4 text-foreground" />
-                        </Button>
-                        <Button variant="outline" size="sm" onClick={() => handleDownload(r.filename)} className="h-8 w-8 p-0 bg-transparent hover:bg-primary/10 border-border/50 hover:border-primary/50 transition-colors" title="다운로드">
-                          <Download className="h-4 w-4 text-foreground" />
                         </Button>
                         <Button variant="outline" size="sm" onClick={() => handleDelete(r.filename)} className="h-8 w-8 p-0 bg-transparent hover:bg-red-500/10 border-border/50 hover:border-red-500/50 transition-colors" title="삭제">
                           <Trash2 className="h-4 w-4 text-red-500" />

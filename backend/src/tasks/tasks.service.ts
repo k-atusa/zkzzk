@@ -256,6 +256,13 @@ export class TasksService {
                 data: { filename: path.join('live', streamerNickname, mp4Filename).replace(/\\/g, '/') }
               });
 
+              this.sendDiscordWebhook({
+                title: `💽 MP4 변환 완료`,
+                description: `**${streamerNickname}**님의 영상이 MP4로 성공적으로 변환되었습니다.\n\n**방송 제목**: ${broadcastTitle}`,
+                color: 0x3498DB, // Blue
+                timestamp: new Date().toISOString()
+              });
+
               // Trigger YouTube upload
               try {
                 const settings = await this.prisma.settings.findFirst();
