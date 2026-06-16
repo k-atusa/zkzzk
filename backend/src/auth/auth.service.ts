@@ -245,30 +245,21 @@ export class AuthService {
     return { enabled: false };
   }
 
-  async getSystemSettings(requesterId: string) {
-    const requester = await this.prisma.user.findUnique({ where: { id: requesterId } });
-    if (!requester?.is_admin) throw new ForbiddenException('관리자 권한이 필요합니다.');
-    const settings = await this.prisma.settings.findFirst();
+  async getUserSettings(requesterId: string) {
+    const user = await this.prisma.user.findUnique({ where: { id: requesterId } });
     return {
-      discord_webhook_url: settings?.discord_webhook_url || null,
-      youtube_client_id: settings?.youtube_client_id || null,
-      youtube_client_secret: settings?.youtube_client_secret || null,
-      youtube_connected: !!settings?.youtube_refresh_token,
+      discord_webhook_url: user?.discord_webhook_url || null,
+      youtube_client_id: user?.youtube_client_id || null,
+      youtube_client_secret: user?.youtube_client_secret || null,
+      youtube_connected: !!user?.youtube_refresh_token,
     };
   }
 
-  async updateSystemSettings(requesterId: string, discord_webhook_url: string | null, youtube_client_id: string | null, youtube_client_secret: string | null) {
-    const requester = await this.prisma.user.findUnique({ where: { id: requesterId } });
-    if (!requester?.is_admin) throw new ForbiddenException('관리자 권한이 필요합니다.');
-    let settings = await this.prisma.settings.findFirst();
-    if (!settings) {
-      settings = await this.prisma.settings.create({ data: { initialized: true, discord_webhook_url, youtube_client_id, youtube_client_secret } });
-    } else {
-      settings = await this.prisma.settings.update({
-        where: { id: settings.id },
-        data: { discord_webhook_url, youtube_client_id, youtube_client_secret }
-      });
-    }
+  async updateUserSettings(requesterId: string, discord_webhook_url: string | null, youtube_client_id: string | null, youtube_client_secret: string | null) {
+    await this.prisma.user.update({
+      where: { id: requesterId },
+      data: { discord_webhook_url, youtube_client_id, youtube_client_secret }
+    });
     return { success: true };
   }
 }

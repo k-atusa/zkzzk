@@ -17,6 +17,10 @@ model user {
   totp_enabled   Boolean?
   nid_aut        String?
   nid_ses        String?
+  discord_webhook_url   String?
+  youtube_client_id     String?
+  youtube_client_secret String?
+  youtube_refresh_token String?
   recordings     recording[]
   streamers      streamer[]  @relation("StreamerUser")
   cookie_streamers streamer[] @relation("StreamerCookieUser")
@@ -27,10 +31,6 @@ model user {
 model settings {
   id                  String   @id @default(uuid())
   initialized           Boolean?
-  discord_webhook_url   String?
-  youtube_client_id     String?
-  youtube_client_secret String?
-  youtube_refresh_token String?
 
   @@map("settings")
 }

@@ -17,11 +17,11 @@ export class TasksService {
     private youtubeService: YoutubeService
   ) { }
 
-  private async sendDiscordWebhook(embed: any) {
+  private async sendDiscordWebhook(userId: string, embed: any) {
     try {
-      const settings = await this.prisma.settings.findFirst();
-      if (settings?.discord_webhook_url) {
-        await axios.post(settings.discord_webhook_url, {
+      const user = await this.prisma.user.findUnique({ where: { id: userId } });
+      if (user?.discord_webhook_url) {
+        await axios.post(user.discord_webhook_url, {
           embeds: [embed],
         }).catch(() => {});
       }
@@ -187,7 +187,7 @@ export class TasksService {
         }
       });
 
-      this.sendDiscordWebhook({
+      this.sendDiscordWebhook(streamer.user_id!, {
         title: `✅ 녹화 시작`,
         description: `**${streamerNickname}**님의 녹화가 시작되었습니다.\n\n**방송 제목**: ${broadcastTitle}`,
         color: 0x00FFA3, // Neon Green
@@ -209,7 +209,7 @@ export class TasksService {
               process_id: null
             }
           });
-          this.sendDiscordWebhook({
+          this.sendDiscordWebhook(streamer.user_id!, {
             title: `🛑 녹화 종료`,
             description: `**${streamerNickname}**님의 녹화가 종료되었습니다.`,
             color: 0xFF4D4D, // Red
@@ -256,7 +256,7 @@ export class TasksService {
                 data: { filename: path.join('live', streamerNickname, mp4Filename).replace(/\\/g, '/') }
               });
 
-              this.sendDiscordWebhook({
+              this.sendDiscordWebhook(streamer.user_id!, {
                 title: `💽 MP4 변환 완료`,
                 description: `**${streamerNickname}**님의 영상이 MP4로 성공적으로 변환되었습니다.\n\n**방송 제목**: ${broadcastTitle}`,
                 color: 0x3498DB, // Blue
@@ -265,15 +265,15 @@ export class TasksService {
 
               // Trigger YouTube upload
               try {
-                const settings = await this.prisma.settings.findFirst();
-                if (settings?.youtube_client_id && settings?.youtube_client_secret && settings?.youtube_refresh_token) {
-                  const isDuplicate = await this.youtubeService.checkDuplicateVideo(broadcastTitle);
+                const user = await this.prisma.user.findUnique({ where: { id: streamer.user_id! } });
+                if (user?.youtube_client_id && user?.youtube_client_secret && user?.youtube_refresh_token) {
+                  const isDuplicate = await this.youtubeService.checkDuplicateVideo(user.id, broadcastTitle);
                   if (isDuplicate) {
                     await this.prisma.recording.updateMany({
                       where: { id: recording.id },
                       data: { youtube_status: 'DUPLICATE_PENDING' }
                     });
-                    this.sendDiscordWebhook({
+                    this.sendDiscordWebhook(user.id, {
                       title: `⚠️ 유튜브 업로드 대기 (중복)`,
                       description: `**${broadcastTitle}** 영상과 동일한 제목의 영상이 이미 유튜브에 존재합니다.\n웹 서비스에 접속하여 직접 업로드 여부를 결정해주세요.`,
                       color: 0xFFAA00,

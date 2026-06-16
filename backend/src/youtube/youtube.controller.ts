@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Query, Res, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Query, Res, Req, UseGuards } from '@nestjs/common';
 import { YoutubeService } from './youtube.service';
 import type { Response } from 'express';
 import { AuthGuard } from '@nestjs/passport';
@@ -9,9 +9,9 @@ export class YoutubeController {
 
   @UseGuards(AuthGuard('jwt'))
   @Get('auth-url')
-  async getAuthUrl() {
+  async getAuthUrl(@Req() req: any) {
     try {
-      const url = await this.youtubeService.getAuthUrl();
+      const url = await this.youtubeService.getAuthUrl(req.user.id);
       return { url };
     } catch (e: any) {
       return { error: e.message };
@@ -19,13 +19,13 @@ export class YoutubeController {
   }
 
   @Get('callback')
-  async handleCallback(@Query('code') code: string, @Res() res: Response) {
-    if (!code) {
+  async handleCallback(@Query('code') code: string, @Query('state') state: string, @Res() res: Response) {
+    if (!code || !state) {
       return res.redirect('http://localhost:5173/settings?youtube=error');
     }
 
     try {
-      const channelName = await this.youtubeService.setCredentials(code);
+      const channelName = await this.youtubeService.setCredentials(code, state);
       if (channelName) {
         const encodedName = encodeURIComponent(channelName);
         return res.redirect(`http://localhost:5173/settings?youtube=success&channelName=${encodedName}`);

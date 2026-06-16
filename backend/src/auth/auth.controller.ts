@@ -150,14 +150,14 @@ export class AuthController {
   }
 
   @UseGuards(JwtAuthGuard)
-  @Get('system-settings')
-  async getSystemSettings(@Req() req: any) {
-    return this.authService.getSystemSettings(req.user.id);
+  @Get('user-settings')
+  async getUserSettings(@Req() req: any) {
+    return this.authService.getUserSettings(req.user.id);
   }
 
   @UseGuards(JwtAuthGuard)
-  @Post('system-settings')
-  async updateSystemSettings(@Req() req: any, @Body() body: any) {
-    return this.authService.updateSystemSettings(req.user.id, body.discord_webhook_url || null, body.youtube_client_id || null, body.youtube_client_secret || null);
+  @Post('user-settings')
+  async updateUserSettings(@Req() req: any, @Body() body: any) {
+    return this.authService.updateUserSettings(req.user.id, body.discord_webhook_url || null, body.youtube_client_id || null, body.youtube_client_secret || null);
   }
 }

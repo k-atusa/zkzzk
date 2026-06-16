@@ -91,8 +91,8 @@ export const Settings = () => {
       setUser(res.data);
       if (res.data.is_admin) {
         fetchUsers();
-        fetchSystemSettings();
       }
+      fetchUserSettings();
       if (res.data.has_cookies) {
         fetchCookies();
       }
@@ -101,9 +101,9 @@ export const Settings = () => {
     }
   };
 
-  const fetchSystemSettings = async () => {
+  const fetchUserSettings = async () => {
     try {
-      const res = await api.get('/auth/system-settings');
+      const res = await api.get('/auth/user-settings');
       if (res.data.discord_webhook_url) setDiscordWebhookUrl(res.data.discord_webhook_url);
       if (res.data.youtube_client_id) setYoutubeClientId(res.data.youtube_client_id);
       if (res.data.youtube_client_secret) setYoutubeClientSecret(res.data.youtube_client_secret);
@@ -271,16 +271,16 @@ export const Settings = () => {
     });
   };
 
-  const handleSaveSystemSettings = async () => {
+  const handleSaveUserSettings = async () => {
     setWebhookLoading(true);
     try {
-      await api.post('/auth/system-settings', {
+      await api.post('/auth/user-settings', {
         discord_webhook_url: discordWebhookUrl.trim(),
         youtube_client_id: youtubeClientId.trim(),
         youtube_client_secret: youtubeClientSecret.trim()
       });
-      toast.success('시스템 설정이 저장되었습니다.');
-      fetchSystemSettings();
+      toast.success('설정이 저장되었습니다.');
+      fetchUserSettings();
     } catch (error: any) {
       toast.error(error.response?.data?.message || '저장 실패');
     } finally {
@@ -680,16 +680,14 @@ export const Settings = () => {
         </Card>
       )}
 
-      {/* System Settings Card (Admin only) */}
-      {user.is_admin && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Bell className="h-5 w-5" /> 시스템 설정
-              <span className="text-xs font-normal px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-600 border border-amber-500/20">관리자 전용</span>
-            </CardTitle>
-            <CardDescription>Discord Webhook 등 시스템 전역 설정을 관리합니다.</CardDescription>
-          </CardHeader>
+      {/* User Settings Card */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Bell className="h-5 w-5" /> 외부 서비스 연동 설정
+          </CardTitle>
+          <CardDescription>개인 디스코드 Webhook 및 YouTube 자동 업로드 연동을 관리합니다.</CardDescription>
+        </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="discordWebhookUrl">Discord Webhook URL</Label>
@@ -745,7 +743,7 @@ export const Settings = () => {
               </div>
             </div>
             <div className="flex gap-2">
-              <Button onClick={handleSaveSystemSettings} disabled={webhookLoading}>
+              <Button onClick={handleSaveUserSettings} disabled={webhookLoading}>
                 {webhookLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
                 저장
               </Button>
@@ -756,8 +754,7 @@ export const Settings = () => {
               )}
             </div>
           </CardContent>
-        </Card>
-      )}
+      </Card>
 
       <Dialog open={!!confirmConfig} onOpenChange={(open) => { if (!open) setConfirmConfig(null); }}>
         <DialogContent className="sm:max-w-md">
