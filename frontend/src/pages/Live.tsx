@@ -378,12 +378,24 @@ export const Live = () => {
                         <PlayCircle className="h-4 w-4 text-green-500" />
                       </Button>
                     ) : (
-                      <Button variant={s.is_recording ? "destructive" : "outline"} size="sm" onClick={() => handleStopRecording(s.id)} title="녹화 중지">
-                        <StopCircle className="h-4 w-4" />
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleStopRecording(s.id)}
+                        className="h-8 w-8 p-0 bg-transparent hover:bg-red-500/10 border-border/50 hover:border-red-500/50 transition-colors"
+                        title="녹화 중지"
+                      >
+                        <StopCircle className="h-5 w-5 text-red-500" />
                       </Button>
                     )}
-                    <Button variant="destructive" size="sm" onClick={() => handleRemove(s)} title="스트리머 삭제">
-                      <Trash2 className="h-4 w-4" />
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleRemove(s)}
+                      className="h-8 w-8 p-0 bg-transparent hover:bg-red-500/10 border-border/50 hover:border-red-500/50 transition-colors"
+                      title="스트리머 삭제"
+                    >
+                      <Trash2 className="h-4 w-4 text-red-500" />
                     </Button>
                   </TableCell>
                 </TableRow>
