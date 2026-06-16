@@ -177,11 +177,20 @@ export class VodService {
       streamlinkCmd = '/usr/local/bin/streamlink';
     }
 
+    const dbUser = await this.prisma.user.findUnique({ where: { id: user.id } });
+    let formatString = '1080p60,1080p,best';
+    if (dbUser?.vod_resolution) {
+      if (dbUser.vod_resolution === '144p') formatString = '144p,worst';
+      else if (dbUser.vod_resolution === '360p') formatString = '360p,worst';
+      else if (dbUser.vod_resolution === '720p') formatString = '720p60,720p,best';
+      else if (dbUser.vod_resolution === '1080p') formatString = '1080p60,1080p,best';
+    }
+
     // Background download using streamlink
     const child = spawn(streamlinkCmd, [
       '--http-header', 'User-Agent=Mozilla/5.0',
       download_url,
-      'best',
+      formatString,
       '--output', filepath.replace('.mp4', '.ts')
     ]);
 

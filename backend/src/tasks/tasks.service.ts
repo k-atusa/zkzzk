@@ -131,13 +131,21 @@ export class TasksService {
         command = '/usr/local/bin/streamlink';
       }
 
+      let formatString = '1080p60,1080p,best';
+      if (cookieUser?.live_resolution) {
+        if (cookieUser.live_resolution === '144p') formatString = '144p,worst';
+        else if (cookieUser.live_resolution === '360p') formatString = '360p,worst';
+        else if (cookieUser.live_resolution === '720p') formatString = '720p60,720p,best';
+        else if (cookieUser.live_resolution === '1080p') formatString = '1080p60,1080p,best';
+      }
+
       const args = [
         '--ffmpeg-copyts',
         '--progress', 'no',
         '--http-cookie', `NID_AUT=${cookieUser?.nid_aut}`,
         '--http-cookie', `NID_SES=${cookieUser?.nid_ses}`,
         streamUrl,
-        '720p60,720p,best',
+        formatString,
         '--output', filepath
       ];
 

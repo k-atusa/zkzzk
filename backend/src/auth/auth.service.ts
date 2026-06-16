@@ -246,10 +246,12 @@ export class AuthService {
       youtube_auto_upload: user?.youtube_auto_upload ?? true,
       nid_aut: user?.nid_aut || null,
       nid_ses: user?.nid_ses || null,
+      live_resolution: user?.live_resolution || '1080p',
+      vod_resolution: user?.vod_resolution || '1080p',
     };
   }
 
-  async updateUserSettings(requesterId: string, discord_webhook_url?: string | null, youtube_client_id?: string | null, youtube_client_secret?: string | null, nid_aut?: string | null, nid_ses?: string | null, youtube_auto_upload?: boolean) {
+  async updateUserSettings(requesterId: string, discord_webhook_url?: string | null, youtube_client_id?: string | null, youtube_client_secret?: string | null, nid_aut?: string | null, nid_ses?: string | null, youtube_auto_upload?: boolean, live_resolution?: string, vod_resolution?: string) {
     const updateData: any = {};
     if (discord_webhook_url !== undefined) updateData.discord_webhook_url = discord_webhook_url;
     if (youtube_client_id !== undefined) updateData.youtube_client_id = youtube_client_id;
@@ -257,6 +259,8 @@ export class AuthService {
     if (nid_aut !== undefined) updateData.nid_aut = nid_aut;
     if (nid_ses !== undefined) updateData.nid_ses = nid_ses;
     if (youtube_auto_upload !== undefined) updateData.youtube_auto_upload = youtube_auto_upload;
+    if (live_resolution !== undefined) updateData.live_resolution = live_resolution;
+    if (vod_resolution !== undefined) updateData.vod_resolution = vod_resolution;
 
     await this.prisma.user.update({
       where: { id: requesterId },

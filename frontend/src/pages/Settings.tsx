@@ -8,7 +8,7 @@ import { toast } from 'sonner';
 import {
   ShieldCheck, ShieldAlert, KeyRound, Lock, Cookie,
   Users, Plus, Trash2, UserCheck, Loader2, CheckCircle2,
-  Eye, EyeOff, ShieldQuestion, ZoomIn, Bell, Save
+  Eye, EyeOff, ShieldQuestion, ZoomIn, Bell, Save, MonitorPlay
 } from 'lucide-react';
 import api from '@/api';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
@@ -47,6 +47,10 @@ export const Settings = () => {
   const [youtubeConnected, setYoutubeConnected] = useState(false);
   const [youtubeAutoUpload, setYoutubeAutoUpload] = useState(true);
   const [webhookLoading, setWebhookLoading] = useState(false);
+
+  // Resolution Settings
+  const [liveResolution, setLiveResolution] = useState('1080p');
+  const [vodResolution, setVodResolution] = useState('1080p');
 
   // UI Scale
   const [scale, setScale] = useState(() => {
@@ -110,6 +114,8 @@ export const Settings = () => {
       if (res.data.youtube_auto_upload !== undefined) setYoutubeAutoUpload(res.data.youtube_auto_upload);
       if (res.data.nid_aut) setNidAut(res.data.nid_aut);
       if (res.data.nid_ses) setNidSes(res.data.nid_ses);
+      if (res.data.live_resolution) setLiveResolution(res.data.live_resolution);
+      if (res.data.vod_resolution) setVodResolution(res.data.vod_resolution);
     } catch (e) { }
   };
 
@@ -272,7 +278,9 @@ export const Settings = () => {
         discord_webhook_url: discordWebhookUrl.trim(),
         youtube_client_id: youtubeClientId.trim(),
         youtube_client_secret: youtubeClientSecret.trim(),
-        youtube_auto_upload: youtubeAutoUpload
+        youtube_auto_upload: youtubeAutoUpload,
+        live_resolution: liveResolution,
+        vod_resolution: vodResolution
       });
       toast.success('설정이 저장되었습니다.');
       fetchUserSettings();
@@ -571,7 +579,52 @@ export const Settings = () => {
         </CardContent>
       </Card>
 
-
+      {/* Download Resolution Settings Card */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <MonitorPlay className="h-5 w-5" /> 다운로드 화질 설정
+          </CardTitle>
+          <CardDescription>라이브 영상과 다시보기 영상의 다운로드 화질을 선택합니다.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl border border-border p-4 rounded-lg bg-muted/10">
+            <div className="space-y-2">
+              <Label htmlFor="liveResolution">라이브 영상 화질</Label>
+              <select
+                id="liveResolution"
+                value={liveResolution}
+                onChange={(e) => setLiveResolution(e.target.value)}
+                className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+              >
+                <option value="1080p">1080p (기본)</option>
+                <option value="720p">720p</option>
+                <option value="360p">360p</option>
+                <option value="144p">144p</option>
+              </select>
+              <p className="text-xs text-muted-foreground mt-1">선택한 화질이 없을 경우 가능한 최고/최저 화질로 자동 폴백됩니다.</p>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="vodResolution">다시보기(VOD) 화질</Label>
+              <select
+                id="vodResolution"
+                value={vodResolution}
+                onChange={(e) => setVodResolution(e.target.value)}
+                className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+              >
+                <option value="1080p">1080p (기본)</option>
+                <option value="720p">720p</option>
+                <option value="360p">360p</option>
+                <option value="144p">144p</option>
+              </select>
+            </div>
+          </div>
+          <Button onClick={handleSaveUserSettings} disabled={webhookLoading}>
+            {webhookLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+            화질 설정 저장
+          </Button>
+        </CardContent>
+      </Card>
 
       {/* User Settings Card */}
       <Card>

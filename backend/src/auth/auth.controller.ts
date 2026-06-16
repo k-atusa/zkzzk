@@ -158,7 +158,9 @@ export class AuthController {
       body.youtube_client_secret !== undefined ? body.youtube_client_secret : undefined,
       body.nid_aut !== undefined ? body.nid_aut : undefined,
       body.nid_ses !== undefined ? body.nid_ses : undefined,
-      body.youtube_auto_upload !== undefined ? body.youtube_auto_upload : undefined
+      body.youtube_auto_upload !== undefined ? body.youtube_auto_upload : undefined,
+      body.live_resolution !== undefined ? body.live_resolution : undefined,
+      body.vod_resolution !== undefined ? body.vod_resolution : undefined
     );
   }
 }
