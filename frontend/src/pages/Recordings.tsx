@@ -360,7 +360,7 @@ export const Recordings = () => {
                       <TableCell className="text-right pr-6 py-4 flex justify-end gap-2">
                         {r.youtube_status !== 'UPLOADING' && r.youtube_status !== 'UPLOADED' && (
                           <Button variant="outline" size="sm" onClick={() => handleYoutubeUploadClick(r.id || '', r.filename)} className="h-8 w-8 p-0 bg-transparent hover:bg-red-500/10 border-border/50 hover:border-red-500/50 transition-colors" title="유튜브 업로드">
-                            <Youtube className="h-4 w-4 text-red-500" />
+                            <Youtube className="h-5 w-5 text-red-500" />
                           </Button>
                         )}
                         <Button variant="outline" size="sm" onClick={() => setPlayingVideo({ filename: r.filename, title: r.title })} className="h-8 w-8 p-0 bg-transparent hover:bg-primary/10 border-border/50 hover:border-primary/50 transition-colors" title="재생">
