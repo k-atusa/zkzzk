@@ -205,13 +205,29 @@ export const Recordings = () => {
     e.preventDefault();
     if (!uploadConfig) return;
     try {
-      await api.post('/youtube/upload', { 
+      const res = await api.post('/youtube/upload', { 
         recordingId: uploadConfig.id, 
         filePath: uploadConfig.filename, 
         title: uploadConfig.title,
         description: uploadConfig.description
       });
-      toast.success('유튜브 업로드가 시작되었습니다.');
+      if (res.data.already_uploaded) {
+        toast.success(
+          <div className="flex flex-col gap-1">
+            <span>이미 업로드된 영상입니다.</span>
+            <a 
+              href={`https://youtu.be/${res.data.video_id}`} 
+              target="_blank" 
+              rel="noreferrer" 
+              className="text-blue-500 underline text-sm hover:text-blue-600 transition-colors"
+            >
+              유튜브에서 보기
+            </a>
+          </div>
+        );
+      } else {
+        toast.success('유튜브 업로드가 시작되었습니다.');
+      }
       setUploadConfig(null);
       fetchRecordings();
     } catch (error: any) {

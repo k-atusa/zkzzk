@@ -231,4 +231,8 @@ export class YoutubeService {
       }
     }
   }
+
+  async getRecording(id: string) {
+    return this.prisma.recording.findUnique({ where: { id } });
+  }
 }

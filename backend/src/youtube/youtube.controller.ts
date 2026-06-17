@@ -44,6 +44,18 @@ export class YoutubeController {
     @Req() req: any,
     @Body() body: { recordingId?: string; filePath: string; title: string; description?: string }
   ) {
+    if (body.recordingId) {
+      const recording = await this.youtubeService.getRecording(body.recordingId);
+      if (recording && recording.youtube_status === 'UPLOADED' && recording.youtube_video_id) {
+        return { 
+          success: true, 
+          already_uploaded: true, 
+          video_id: recording.youtube_video_id,
+          message: 'Already uploaded' 
+        };
+      }
+    }
+
     const path = require('path');
     const absolutePath = path.join(process.cwd(), '..', 'downloads', body.filePath);
     // Start upload in background
