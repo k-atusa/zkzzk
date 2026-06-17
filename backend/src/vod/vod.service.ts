@@ -157,10 +157,12 @@ export class VodService {
     if (!download_url) throw new BadRequestException('다운로드 URL이 필요합니다.');
 
     const streamerNickname = (video_info?.author || 'Unknown').replace(/[<>:"/\\|?*]/g, '').trim();
-    let datePrefix = new Date().toISOString().replace(/[-:T]/g, '').slice(2, 14);
-    if (video_info?.raw_publish_date) {
-      datePrefix = new Date(video_info.raw_publish_date).toISOString().replace(/[-:T]/g, '').slice(2, 14);
-    }
+    const formatDate = (dateStr?: string) => {
+      const d = dateStr ? new Date(dateStr) : new Date();
+      const pad = (n: number) => String(n).padStart(2, '0');
+      return `${String(d.getFullYear()).slice(2)}${pad(d.getMonth() + 1)}${pad(d.getDate())}_${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}`;
+    };
+    const datePrefix = formatDate(video_info?.raw_publish_date);
     const cleanTitle = (video_info?.title || 'Unknown').replace(/[<>:"/\\|?*]/g, '').trim();
     const filename = `${datePrefix} ${cleanTitle} [${streamerNickname}].mp4`;
 
