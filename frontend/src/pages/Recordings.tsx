@@ -125,6 +125,7 @@ export const Recordings = () => {
     title: string;
     description: string;
   } | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
 
   const fetchRecordings = async () => {
     try {
@@ -256,7 +257,8 @@ export const Recordings = () => {
 
   const submitYoutubeUpload = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!uploadConfig) return;
+    if (!uploadConfig || isUploading) return;
+    setIsUploading(true);
     try {
       const res = await api.post('/youtube/upload', { 
         recordingId: uploadConfig.id, 
@@ -285,6 +287,8 @@ export const Recordings = () => {
       fetchRecordings();
     } catch (error: any) {
       toast.error(error.response?.data?.message || '유튜브 업로드 요청 실패');
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -489,11 +493,18 @@ export const Recordings = () => {
               </div>
             </div>
             <DialogFooter className="flex justify-end gap-2">
-              <Button type="button" variant="outline" onClick={() => setUploadConfig(null)}>
+              <Button type="button" variant="outline" onClick={() => setUploadConfig(null)} disabled={isUploading}>
                 취소
               </Button>
-              <Button type="submit">
-                업로드
+              <Button type="submit" disabled={isUploading}>
+                {isUploading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    업로드 요청 중...
+                  </>
+                ) : (
+                  '업로드'
+                )}
               </Button>
             </DialogFooter>
           </form>

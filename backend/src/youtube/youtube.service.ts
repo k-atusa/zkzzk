@@ -110,41 +110,64 @@ export class YoutubeService {
 
   async checkDuplicateVideo(userId: string, title: string, filePath?: string): Promise<boolean> {
     try {
-      const auth = await this.getAuthClient(userId);
-      const youtube = google.youtube({ version: 'v3', auth });
-
-      const cleanTitle = title.replace(/\.(mp4|ts|mkv|avi)$/i, '');
-
-      const response = await youtube.search.list({
-        part: ['snippet'],
-        forMine: true,
-        type: ['video'],
-        q: cleanTitle,
-        maxResults: 10,
-      });
-
       let fileHash: string | null = null;
       if (filePath && fs.existsSync(filePath)) {
         try {
           fileHash = await this.getFileHash(filePath);
+          
+          // 1. DB-based check (Primary, fastest)
+          const duplicateDb = await this.prisma.recording.findFirst({
+            where: {
+              user_id: userId,
+              file_hash: fileHash,
+              youtube_status: { in: ['UPLOADED', 'UPLOADING'] }
+            }
+          });
+          
+          if (duplicateDb) {
+            this.logger.log(`Duplicate found in database by hash: ${fileHash}`);
+            return true;
+          }
         } catch (e: any) {
           this.logger.error(`Failed to calculate file hash: ${e.message}`);
         }
       }
 
-      const items = response.data.items || [];
-      
-      for (const item of items) {
-        const desc = item.snippet?.description || '';
-        // 1. Hash-based check (Primary)
-        if (fileHash && desc.includes(`[FileHash: ${fileHash}]`)) {
-          this.logger.log(`Duplicate found by hash: ${fileHash}`);
+      const auth = await this.getAuthClient(userId);
+      const youtube = google.youtube({ version: 'v3', auth });
+      const cleanTitle = title.replace(/\.(mp4|ts|mkv|avi)$/i, '');
+
+      // 2. Title-based YouTube API check
+      const responseTitle = await youtube.search.list({
+        part: ['snippet'],
+        forMine: true,
+        type: ['video'],
+        q: cleanTitle,
+        maxResults: 5,
+      });
+
+      for (const item of responseTitle.data.items || []) {
+        if (item.snippet?.title === cleanTitle) {
+          this.logger.log(`Duplicate found by title on YouTube: ${cleanTitle}`);
           return true;
         }
-        // 2. Title-based check (Fallback for old videos)
-        if (item.snippet?.title === cleanTitle) {
-          this.logger.log(`Duplicate found by title: ${cleanTitle}`);
-          return true;
+      }
+
+      // 3. Hash-based YouTube API check
+      if (fileHash) {
+        const responseHash = await youtube.search.list({
+          part: ['snippet'],
+          forMine: true,
+          type: ['video'],
+          q: fileHash,
+          maxResults: 5,
+        });
+        for (const item of responseHash.data.items || []) {
+          const desc = item.snippet?.description || '';
+          if (desc.includes(`[FileHash: ${fileHash}]`)) {
+            this.logger.log(`Duplicate found by hash on YouTube: ${fileHash}`);
+            return true;
+          }
         }
       }
       return false;
@@ -167,10 +190,20 @@ export class YoutubeService {
 
       if (!finalUserId) throw new Error('User ID is required for YouTube upload');
 
+      let fileHash = '';
+      try {
+        fileHash = await this.getFileHash(filePath);
+      } catch (e: any) {
+        this.logger.error(`Could not calculate hash for upload: ${e.message}`);
+      }
+
       if (recordingId) {
         await this.prisma.recording.updateMany({
           where: { id: recordingId },
-          data: { youtube_status: 'UPLOADING' }
+          data: { 
+            youtube_status: 'UPLOADING',
+            file_hash: fileHash || undefined
+          }
         });
       }
 
@@ -189,12 +222,7 @@ export class YoutubeService {
         body: fs.createReadStream(filePath),
       };
 
-      let fileHash = '';
-      try {
-        fileHash = await this.getFileHash(filePath);
-      } catch (e: any) {
-        this.logger.error(`Could not calculate hash for upload: ${e.message}`);
-      }
+      // fileHash already calculated above
 
       let finalDescription = description || '';
       if (fileHash) {

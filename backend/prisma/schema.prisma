@@ -74,6 +74,7 @@ model recording {
   youtube_status   String?
   youtube_video_id String?
   is_recording     Boolean?  @default(false)
+  file_hash        String?
   streamer         streamer? @relation(fields: [streamer_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   user             user?     @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
