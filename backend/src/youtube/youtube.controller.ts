@@ -58,6 +58,20 @@ export class YoutubeController {
 
     const path = require('path');
     const absolutePath = path.join(process.cwd(), '..', 'downloads', body.filePath);
+
+    try {
+      const isDuplicate = await this.youtubeService.checkDuplicateVideo(req.user.id, body.title, absolutePath);
+      if (isDuplicate) {
+        return { 
+          success: true, 
+          already_uploaded: true,
+          video_id: '', // Not easily retrievable by search API instantly, but frontend will show toast
+          message: '이미 유튜브 채널에 업로드된 영상입니다.' 
+        };
+      }
+    } catch (e) {
+      // Ignore check errors and proceed
+    }
     // Start upload in background
     this.youtubeService.uploadVideo(
       body.recordingId || null,

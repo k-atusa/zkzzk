@@ -74,7 +74,10 @@ export class StreamersService {
       } catch (e) {}
     }
 
-    await this.prisma.recording.deleteMany({ where: { streamer_id: streamerId } });
+    await this.prisma.recording.updateMany({ 
+      where: { streamer_id: streamerId },
+      data: { streamer_id: null }
+    });
     await this.prisma.streamer.delete({ where: { id: streamerId } });
 
     return { status: 'success' };

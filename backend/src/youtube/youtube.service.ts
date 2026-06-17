@@ -3,6 +3,7 @@ import { google, youtube_v3 } from 'googleapis';
 import { PrismaService } from '../prisma/prisma.service';
 import * as fs from 'fs';
 import * as path from 'path';
+import * as crypto from 'crypto';
 import axios from 'axios';
 
 @Injectable()
@@ -93,7 +94,17 @@ export class YoutubeService {
     }
   }
 
-  async checkDuplicateVideo(userId: string, title: string): Promise<boolean> {
+  private getFileHash(filePath: string): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const hash = crypto.createHash('sha256');
+      const stream = fs.createReadStream(filePath);
+      stream.on('error', err => reject(err));
+      stream.on('data', chunk => hash.update(chunk));
+      stream.on('end', () => resolve(hash.digest('hex')));
+    });
+  }
+
+  async checkDuplicateVideo(userId: string, title: string, filePath?: string): Promise<boolean> {
     try {
       const auth = await this.getAuthClient(userId);
       const youtube = google.youtube({ version: 'v3', auth });
@@ -108,10 +119,27 @@ export class YoutubeService {
         maxResults: 10,
       });
 
+      let fileHash: string | null = null;
+      if (filePath && fs.existsSync(filePath)) {
+        try {
+          fileHash = await this.getFileHash(filePath);
+        } catch (e: any) {
+          this.logger.error(`Failed to calculate file hash: ${e.message}`);
+        }
+      }
+
       const items = response.data.items || [];
-      // Exact title match check
+      
       for (const item of items) {
+        const desc = item.snippet?.description || '';
+        // 1. Hash-based check (Primary)
+        if (fileHash && desc.includes(`[FileHash: ${fileHash}]`)) {
+          this.logger.log(`Duplicate found by hash: ${fileHash}`);
+          return true;
+        }
+        // 2. Title-based check (Fallback for old videos)
         if (item.snippet?.title === cleanTitle) {
+          this.logger.log(`Duplicate found by title: ${cleanTitle}`);
           return true;
         }
       }
@@ -157,16 +185,29 @@ export class YoutubeService {
         body: fs.createReadStream(filePath),
       };
 
+      let fileHash = '';
+      try {
+        fileHash = await this.getFileHash(filePath);
+      } catch (e: any) {
+        this.logger.error(`Could not calculate hash for upload: ${e.message}`);
+      }
+
+      let finalDescription = description || '';
+      if (fileHash) {
+        finalDescription += `\n\n[FileHash: ${fileHash}]`;
+      }
+
       const res = await youtube.videos.insert({
         part: ['snippet', 'status'],
         requestBody: {
           snippet: {
             title: cleanTitle,
-            description: description || `Auto-uploaded recording: ${cleanTitle}`,
+            description: finalDescription,
+            categoryId: category,
             tags: tags,
           },
           status: {
-            privacyStatus: 'unlisted', // 'private', 'public', or 'unlisted'
+            privacyStatus: 'unlisted', // Or 'public' depending on requirement
           },
         },
         media: media,
