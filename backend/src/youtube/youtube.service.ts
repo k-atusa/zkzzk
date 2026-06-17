@@ -10,6 +10,7 @@ import { EventsService } from '../events/events.service';
 @Injectable()
 export class YoutubeService {
   private readonly logger = new Logger(YoutubeService.name);
+  private uploadLocks = new Set<string>();
 
   constructor(
     private prisma: PrismaService,
@@ -108,7 +109,17 @@ export class YoutubeService {
     });
   }
 
-  async checkDuplicateVideo(userId: string, title: string, filePath?: string): Promise<boolean> {
+  acquireLock(key: string): boolean {
+    if (this.uploadLocks.has(key)) return false;
+    this.uploadLocks.add(key);
+    return true;
+  }
+
+  releaseLock(key: string): void {
+    this.uploadLocks.delete(key);
+  }
+
+  async checkDuplicateVideo(userId: string, title: string, filePath?: string): Promise<{ isDuplicate: boolean; fileHash: string | null }> {
     try {
       let fileHash: string | null = null;
       if (filePath && fs.existsSync(filePath)) {
@@ -126,7 +137,7 @@ export class YoutubeService {
           
           if (duplicateDb) {
             this.logger.log(`Duplicate found in database by hash: ${fileHash}`);
-            return true;
+            return { isDuplicate: true, fileHash };
           }
         } catch (e: any) {
           this.logger.error(`Failed to calculate file hash: ${e.message}`);
@@ -149,7 +160,7 @@ export class YoutubeService {
       for (const item of responseTitle.data.items || []) {
         if (item.snippet?.title === cleanTitle) {
           this.logger.log(`Duplicate found by title on YouTube: ${cleanTitle}`);
-          return true;
+          return { isDuplicate: true, fileHash };
         }
       }
 
@@ -166,18 +177,18 @@ export class YoutubeService {
           const desc = item.snippet?.description || '';
           if (desc.includes(`[FileHash: ${fileHash}]`)) {
             this.logger.log(`Duplicate found by hash on YouTube: ${fileHash}`);
-            return true;
+            return { isDuplicate: true, fileHash };
           }
         }
       }
-      return false;
+      return { isDuplicate: false, fileHash };
     } catch (e: any) {
       this.logger.error(`Failed to check duplicate video: ${e.message}`);
-      return false; // Fail open to allow upload attempts or handle accordingly
+      return { isDuplicate: false, fileHash: null }; // Fail open to allow upload attempts or handle accordingly
     }
   }
 
-  async uploadVideo(recordingId: string | null, filePath: string, title: string, description?: string, category: string = '20', tags: string[] = [], userId?: string): Promise<void> {
+  async uploadVideo(recordingId: string | null, filePath: string, title: string, description?: string, category: string = '20', tags: string[] = [], userId?: string, precalculatedHash?: string | null): Promise<void> {
     let finalUserId = userId;
     const cleanTitle = title.replace(/\.(mp4|ts|mkv|avi)$/i, '');
     try {
@@ -190,11 +201,13 @@ export class YoutubeService {
 
       if (!finalUserId) throw new Error('User ID is required for YouTube upload');
 
-      let fileHash = '';
-      try {
-        fileHash = await this.getFileHash(filePath);
-      } catch (e: any) {
-        this.logger.error(`Could not calculate hash for upload: ${e.message}`);
+      let fileHash = precalculatedHash || '';
+      if (!fileHash) {
+        try {
+          fileHash = await this.getFileHash(filePath);
+        } catch (e: any) {
+          this.logger.error(`Could not calculate hash for upload: ${e.message}`);
+        }
       }
 
       if (recordingId) {
@@ -325,6 +338,8 @@ export class YoutubeService {
           timestamp: new Date().toISOString()
         });
       }
+    } finally {
+      this.releaseLock(filePath);
     }
   }
 

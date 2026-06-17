@@ -299,24 +299,33 @@ export class TasksService {
               try {
                 const user = await this.prisma.user.findUnique({ where: { id: streamer.user_id! } });
                 if (user?.youtube_client_id && user?.youtube_client_secret && user?.youtube_refresh_token && user?.youtube_auto_upload !== false) {
-                  const isDuplicate = await this.youtubeService.checkDuplicateVideo(user.id, mp4Filename, mp4Filepath);
-                  if (isDuplicate) {
-                    await this.prisma.recording.updateMany({
-                      where: { id: recording.id },
-                      data: { youtube_status: 'DUPLICATE_PENDING' }
-                    });
-                    this.sendDiscordWebhook(user.id, {
-                      title: `⚠️ 유튜브 업로드 대기 (중복)`,
-                      description: `**${mp4Filename}** 영상과 동일한 제목의 영상이 이미 유튜브에 존재합니다.\n웹 서비스에 접속하여 직접 업로드 여부를 결정해주세요.`,
-                      color: 0xFFAA00,
-                      timestamp: new Date().toISOString()
-                    });
+                  if (this.youtubeService.acquireLock(mp4Filepath)) {
+                    try {
+                      const { isDuplicate, fileHash } = await this.youtubeService.checkDuplicateVideo(user.id, mp4Filename, mp4Filepath);
+                      if (isDuplicate) {
+                        this.youtubeService.releaseLock(mp4Filepath);
+                        await this.prisma.recording.updateMany({
+                          where: { id: recording.id },
+                          data: { youtube_status: 'DUPLICATE_PENDING' }
+                        });
+                        this.sendDiscordWebhook(user.id, {
+                          title: `⚠️ 유튜브 업로드 대기 (중복)`,
+                          description: `**${mp4Filename}** 영상과 동일한 제목의 영상이 이미 유튜브에 존재합니다.\n웹 서비스에 접속하여 직접 업로드 여부를 결정해주세요.`,
+                          color: 0xFFAA00,
+                          timestamp: new Date().toISOString()
+                        });
+                      } else {
+                        const pkg = JSON.parse(fs.readFileSync(path.join(process.cwd(), 'package.json'), 'utf8'));
+                        const description = `Automatically uploaded via ZKZZK version ${pkg.version}`;
+                        this.youtubeService.uploadVideo(recording.id, mp4Filepath, mp4Filename, description, liveCategoryValue || '20', tags, user.id, fileHash).catch(e => {
+                          this.logger.error(`YouTube upload failed: ${e.message}`);
+                        });
+                      }
+                    } catch (err) {
+                      this.youtubeService.releaseLock(mp4Filepath);
+                    }
                   } else {
-                    const pkg = JSON.parse(fs.readFileSync(path.join(process.cwd(), 'package.json'), 'utf8'));
-                    const description = `Automatically uploaded via ZKZZK version ${pkg.version}`;
-                    this.youtubeService.uploadVideo(recording.id, mp4Filepath, mp4Filename, description, liveCategoryValue || '20', tags).catch(e => {
-                      this.logger.error(`YouTube upload failed: ${e.message}`);
-                    });
+                    this.logger.warn(`Auto-upload skipped for ${mp4Filename} because it's already locked by another process.`);
                   }
                 }
               } catch (ytErr: any) {

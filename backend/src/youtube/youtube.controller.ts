@@ -60,8 +60,12 @@ export class YoutubeController {
     const absolutePath = path.join(process.cwd(), '..', 'downloads', body.filePath);
 
     try {
-      const isDuplicate = await this.youtubeService.checkDuplicateVideo(req.user.id, body.title, absolutePath);
+      if (!this.youtubeService.acquireLock(absolutePath)) {
+        return { success: false, message: '이 파일에 대해 이미 다른 업로드 작업이 진행 중입니다.' };
+      }
+      const { isDuplicate, fileHash } = await this.youtubeService.checkDuplicateVideo(req.user.id, body.title, absolutePath);
       if (isDuplicate) {
+        this.youtubeService.releaseLock(absolutePath);
         return { 
           success: true, 
           already_uploaded: true,
@@ -69,19 +73,23 @@ export class YoutubeController {
           message: '이미 유튜브 채널에 업로드된 영상입니다.' 
         };
       }
+      
+      // Start upload in background
+      this.youtubeService.uploadVideo(
+        body.recordingId || null,
+        absolutePath,
+        body.title,
+        body.description,
+        '20',
+        [],
+        req.user.id,
+        fileHash
+      ).catch(console.error);
+      
+      return { success: true, message: 'Upload started' };
     } catch (e) {
-      // Ignore check errors and proceed
+      this.youtubeService.releaseLock(absolutePath);
+      return { success: false, message: '업로드 검증 중 오류 발생' };
     }
-    // Start upload in background
-    this.youtubeService.uploadVideo(
-      body.recordingId || null,
-      absolutePath,
-      body.title,
-      body.description,
-      '20',
-      [],
-      req.user.id
-    ).catch(console.error);
-    return { success: true, message: 'Upload started' };
   }
 }
