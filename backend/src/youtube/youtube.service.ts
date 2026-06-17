@@ -201,13 +201,21 @@ export class YoutubeService {
         finalDescription += `\n\n[FileHash: ${fileHash}]`;
       }
 
+      let finalCategory = category;
+      if (!/^\d+$/.test(finalCategory)) {
+        if (finalCategory && finalCategory !== '20' && !tags.includes(finalCategory)) {
+          tags.push(finalCategory);
+        }
+        finalCategory = '20';
+      }
+
       const res = await youtube.videos.insert({
         part: ['snippet', 'status'],
         requestBody: {
           snippet: {
             title: cleanTitle,
             description: finalDescription,
-            categoryId: category,
+            categoryId: finalCategory,
             tags: tags,
           },
           status: {
