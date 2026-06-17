@@ -5,12 +5,16 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as crypto from 'crypto';
 import axios from 'axios';
+import { EventsService } from '../events/events.service';
 
 @Injectable()
 export class YoutubeService {
   private readonly logger = new Logger(YoutubeService.name);
 
-  constructor(private prisma: PrismaService) { }
+  constructor(
+    private prisma: PrismaService,
+    private eventsService: EventsService
+  ) { }
 
   private async sendDiscordWebhook(userId: string, embed: any) {
     try {
@@ -248,9 +252,24 @@ export class YoutubeService {
                 where: { id: recordingId }
               });
               this.logger.log(`Deleted recording from database: ${recordingId}`);
+              
+              this.eventsService.emitYoutubeUploadComplete({
+                recordingId: recordingId,
+                video_id: res.data.id,
+                isDeleted: true
+              });
             }
           } catch (delErr: any) {
             this.logger.error(`Failed to delete file or record after upload: ${delErr.message}`);
+          }
+        } else {
+          // If not deleted, still emit complete event
+          if (recordingId) {
+            this.eventsService.emitYoutubeUploadComplete({
+              recordingId: recordingId,
+              video_id: res.data.id,
+              isDeleted: false
+            });
           }
         }
       }

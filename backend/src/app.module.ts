@@ -9,6 +9,7 @@ import { RecordingsModule } from './recordings/recordings.module';
 import { TasksModule } from './tasks/tasks.module';
 import { VodModule } from './vod/vod.module';
 import { YoutubeModule } from './youtube/youtube.module';
+import { EventsModule } from './events/events.module';
 
 @Module({
   imports: [
@@ -19,7 +20,8 @@ import { YoutubeModule } from './youtube/youtube.module';
     RecordingsModule,
     TasksModule,
     VodModule,
-    YoutubeModule
+    YoutubeModule,
+    EventsModule
   ],
   controllers: [AppController],
   providers: [AppService],

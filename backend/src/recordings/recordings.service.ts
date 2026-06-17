@@ -71,7 +71,8 @@ export class RecordingsService {
               size_mb: Number((stat.size / (1024 * 1024)).toFixed(2)),
               youtube_status: dbRec?.youtube_status,
               youtube_video_id: dbRec?.youtube_video_id,
-              resolution: dbRec?.resolution
+              resolution: dbRec?.resolution,
+              is_recording: dbRec?.is_recording
             });
           }
         }

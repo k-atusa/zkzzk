@@ -137,6 +137,59 @@ export const Recordings = () => {
 
   useEffect(() => {
     fetchRecordings();
+
+    const eventSource = new EventSource('http://localhost:5001/api/events/youtube');
+
+    eventSource.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (data.type === 'YOUTUBE_UPLOAD_COMPLETE') {
+          const { recordingId, video_id, isDeleted } = data.payload;
+
+          toast.success(
+            <div className="flex flex-col gap-1">
+              <span className="font-semibold text-green-600">업로드가 완료되었습니다.</span>
+              {video_id && (
+                <a 
+                  href={`https://youtu.be/${video_id}`} 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  className="text-blue-500 underline text-sm hover:text-blue-600 transition-colors mt-1"
+                >
+                  유튜브에서 보기
+                </a>
+              )}
+            </div>
+          );
+
+          setRecordings(prev => {
+            const next = { ...prev };
+            for (const key of Object.keys(next)) {
+              if (isDeleted) {
+                next[key] = next[key].filter(r => r.id !== recordingId);
+                // Clean up empty streamer keys if needed
+                if (next[key].length === 0) {
+                  delete next[key];
+                }
+              } else {
+                next[key] = next[key].map(r => 
+                  r.id === recordingId 
+                    ? { ...r, youtube_status: 'UPLOADED', youtube_video_id: video_id }
+                    : r
+                );
+              }
+            }
+            return next;
+          });
+        }
+      } catch (e) {
+        console.error('Failed to parse SSE event', e);
+      }
+    };
+
+    return () => {
+      eventSource.close();
+    };
   }, []);
 
   // Parse and separate recordings into categories
@@ -341,6 +394,11 @@ export const Recordings = () => {
                                   {r.resolution}
                                 </span>
                               )}
+                              {r.is_recording && (
+                                <span className="inline-flex items-center gap-1 text-xs px-1.5 py-0.5 rounded bg-red-500/10 text-red-600 border border-red-500/20">
+                                  <Video className="h-3 w-3" /> 녹화중
+                                </span>
+                              )}
                               {r.youtube_status === 'DUPLICATE_PENDING' && (
                                 <span className="inline-flex items-center gap-1 text-xs px-1.5 py-0.5 rounded bg-yellow-500/10 text-yellow-600 border border-yellow-500/20">
                                   <AlertCircle className="h-3 w-3" /> 유튜브 업로드 대기 (중복 의심)
@@ -365,7 +423,7 @@ export const Recordings = () => {
                         {format(new Date(r.created_at), 'PPP pp', { locale: ko })}
                       </TableCell>
                       <TableCell className="text-right pr-6 py-4 flex justify-end gap-2">
-                        {r.youtube_status !== 'UPLOADING' && r.youtube_status !== 'UPLOADED' && (
+                        {!r.is_recording && r.youtube_status !== 'UPLOADING' && r.youtube_status !== 'UPLOADED' && (
                           <Button variant="outline" size="sm" onClick={() => handleYoutubeUploadClick(r.id || '', r.filename)} className="h-8 w-8 p-0 bg-transparent hover:bg-primary/10 border-border/50 hover:border-primary/50 transition-colors" title="유튜브 업로드">
                             <Upload className="h-5 w-5 text-foreground" />
                           </Button>

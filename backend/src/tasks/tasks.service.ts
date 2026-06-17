@@ -155,6 +155,7 @@ export class TasksService {
           user_id: streamer.user_id,
           filename: path.join('live', streamerNickname, filename).replace(/\\/g, '/'),
           title: broadcastTitle,
+          is_recording: true,
           created_at: new Date()
         }
       });
@@ -280,7 +281,10 @@ export class TasksService {
             try {
               await this.prisma.recording.updateMany({
                 where: { id: recording.id },
-                data: { filename: path.join('live', streamerNickname, mp4Filename).replace(/\\/g, '/') }
+                data: { 
+                  filename: path.join('live', streamerNickname, mp4Filename).replace(/\\/g, '/'),
+                  is_recording: false
+                }
               });
 
               this.sendDiscordWebhook(streamer.user_id!, {
