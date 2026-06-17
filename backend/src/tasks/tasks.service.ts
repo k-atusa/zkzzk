@@ -262,6 +262,7 @@ export class TasksService {
         }
 
         const ffmpegChild = spawn(ffmpegCmd, [
+          '-err_detect', 'ignore_err',
           '-i', filepath,
           '-c', 'copy',
           '-start_at_zero',
@@ -323,6 +324,16 @@ export class TasksService {
               }
             } catch (dbErr: any) {
               this.logger.error(`Failed to update recording filename: ${dbErr.message}`);
+            }
+          } else {
+            this.logger.error(`ffmpeg exited with non-zero code: ${ffmpegCode}`);
+            try {
+              await this.prisma.recording.updateMany({
+                where: { id: recording.id },
+                data: { is_recording: false } // Keep .ts filename if conversion failed
+              });
+            } catch (dbErr: any) {
+              this.logger.error(`Failed to reset recording state after ffmpeg error: ${dbErr.message}`);
             }
           }
         });
