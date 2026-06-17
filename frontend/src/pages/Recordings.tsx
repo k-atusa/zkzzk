@@ -148,7 +148,7 @@ export const Recordings = () => {
 
           toast.success(
             <div className="flex flex-col gap-1">
-              <span className="font-semibold text-green-600">업로드가 완료되었습니다.</span>
+              <span className="font-semibold text-foreground">업로드가 완료되었습니다.</span>
               {video_id && (
                 <a 
                   href={`https://youtu.be/${video_id}`} 
