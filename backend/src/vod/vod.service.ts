@@ -66,7 +66,7 @@ export class VodService {
         const streamUrls = await this.getVodStreamUrls(videoId, inKey, liveRewindPlaybackJson);
         if (!streamUrls) throw new BadRequestException('스트림 URL을 가져올 수 없습니다.');
 
-        const resolutions = Object.entries(streamUrls).map(([res, info]: any) => ({
+        let resolutions = Object.entries(streamUrls).map(([res, info]: any) => ({
           resolution: res,
           width: info.width,
           height: info.height,
@@ -77,7 +77,9 @@ export class VodService {
           estimated_size_mb: info.bandwidth ? Number(((info.bandwidth * 3600 / 8) / 1024 / 1024).toFixed(1)) : 0
         }));
 
-        const defaultResolution = Object.keys(streamUrls)[0];
+        resolutions.sort((a, b) => b.height - a.height);
+
+        const defaultResolution = resolutions.length > 0 ? resolutions[0].resolution : '1080p';
 
         return {
           video_info: { ...vodInfo, live_rewind_playback_json: undefined },
@@ -145,10 +147,9 @@ export class VodService {
               const bandwidth = rep.$.bandwidth;
               const baseUrl = rep.BaseURL?.[0];
               if (width && height && baseUrl && baseUrl.includes('pstatic.net')) {
-                const resolution = `${width}x${height}`;
-                const quality = parseInt(height) >= 1080 ? '1080p' : parseInt(height) >= 720 ? '720p' : '480p';
+                const quality = `${height}p`;
                 const manifestUrl = `https://apis.naver.com/neonplayer/vodplay/v2/playback/${videoId}?key=${inKey}&quality=${quality}`;
-                streamUrls[resolution] = {
+                streamUrls[quality] = {
                   download_url: manifestUrl,
                   width: parseInt(width),
                   height: parseInt(height),
