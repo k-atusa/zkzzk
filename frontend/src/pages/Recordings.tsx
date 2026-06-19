@@ -317,7 +317,7 @@ export const Recordings = () => {
           <Video className="h-4 w-4" />
           라이브 영상
           {liveCount > 0 && (
-            <span className="px-2 py-0.5 text-xs font-bold rounded-full bg-primary/10 text-primary">
+            <span className="px-2 py-0.5 text-xs font-bold rounded-md bg-primary/10 text-primary">
               {liveCount}
             </span>
           )}
@@ -333,7 +333,7 @@ export const Recordings = () => {
           <Film className="h-4 w-4" />
           다시보기 (VOD)
           {vodCount > 0 && (
-            <span className="px-2 py-0.5 text-xs font-bold rounded-full bg-primary/10 text-primary">
+            <span className="px-2 py-0.5 text-xs font-bold rounded-md bg-primary/10 text-primary">
               {vodCount}
             </span>
           )}
@@ -349,7 +349,7 @@ export const Recordings = () => {
           >
             <FileText className="h-4 w-4" />
             기타 파일
-            <span className="px-2 py-0.5 text-xs font-bold rounded-full bg-primary/10 text-primary">
+            <span className="px-2 py-0.5 text-xs font-bold rounded-md bg-primary/10 text-primary">
               {otherCount}
             </span>
           </button>

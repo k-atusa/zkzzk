@@ -558,7 +558,7 @@ export const Settings = () => {
             <Cookie className="h-5 w-5" />
             치지직 계정 연동
             {user.has_cookies && (
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-green-500/10 text-green-500 border border-green-500/20">
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-medium bg-green-500/10 text-green-500 border border-green-500/20">
                 <CheckCircle2 className="h-3 w-3" /> 연동됨
               </span>
             )}
@@ -750,7 +750,7 @@ export const Settings = () => {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Users className="h-5 w-5" /> 사용자 관리
-              <span className="text-xs font-normal px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-600 border border-amber-500/20">관리자 전용</span>
+              <span className="text-xs font-normal px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-600 border border-amber-500/20">관리자 전용</span>
             </CardTitle>
             <CardDescription>사용자를 추가하고 관리합니다.</CardDescription>
           </CardHeader>
@@ -814,7 +814,7 @@ export const Settings = () => {
                         <p className="font-medium text-sm">{u.username}</p>
                         <div className="flex items-center gap-1.5 mt-0.5">
                           {u.is_admin && (
-                            <span className="text-xs px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-600 border border-amber-500/20">관리자</span>
+                            <span className="text-xs px-1.5 py-0.5 rounded-md bg-amber-500/10 text-amber-600 border border-amber-500/20">관리자</span>
                           )}
                           <span className="text-xs text-muted-foreground">
                             {u.created_at ? new Date(u.created_at).toLocaleDateString('ko-KR') : ''}
