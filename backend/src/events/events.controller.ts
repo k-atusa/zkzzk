@@ -17,4 +17,15 @@ export class EventsController {
       }),
     );
   }
+
+  @Sse('vod')
+  vodEvents(): Observable<MessageEvent> {
+    return this.eventsService.getVodProgressStream().pipe(
+      map((event) => {
+        return {
+          data: event,
+        } as MessageEvent;
+      }),
+    );
+  }
 }

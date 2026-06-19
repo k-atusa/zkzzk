@@ -5,12 +5,16 @@ import * as path from 'path';
 import * as fs from 'fs';
 import { spawn } from 'child_process';
 import { parseStringPromise } from 'xml2js';
+import { EventsService } from '../events/events.service';
 
 @Injectable()
 export class VodService {
   private readonly logger = new Logger(VodService.name);
 
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private eventsService: EventsService
+  ) {}
 
   async getVodInfo(vodUrl: string, user: any) {
     const match = vodUrl.match(/https?:\/\/chzzk\.naver\.com\/video\/(\d+)/);
@@ -209,6 +213,7 @@ export class VodService {
         user_id: user.id,
         filename: dbFilename,
         title: cleanTitle,
+        is_recording: true,
         created_at: new Date()
       }
     });
@@ -222,7 +227,13 @@ export class VodService {
     ]);
 
     let resolutionCaptured = false;
-    const parseResolution = async (text: string) => {
+    const parseStreamlinkOutput = async (text: string) => {
+      // 진행률 파싱 예: [download] Written 123 MB (10s @ 1.2 MB/s)
+      const dlMatch = text.match(/\[download\]\s+(Written.+)/i);
+      if (dlMatch) {
+        this.eventsService.emitVodProgress({ recordingId: recording.id, progress: `다운로드 중: ${dlMatch[1]}` });
+      }
+
       if (resolutionCaptured) return;
       const match = text.match(/Opening stream:\s*([a-zA-Z0-9_]+)/i);
       if (match && match[1]) {
@@ -250,8 +261,8 @@ export class VodService {
       }
     };
 
-    child.stdout.on('data', (data) => parseResolution(data.toString()));
-    child.stderr.on('data', (data) => parseResolution(data.toString()));
+    child.stdout.on('data', (data) => parseStreamlinkOutput(data.toString()));
+    child.stderr.on('data', (data) => parseStreamlinkOutput(data.toString()));
 
     child.on('error', (err) => {
       this.logger.error(`Failed to start streamlink for VOD: ${err.message}`);
@@ -273,8 +284,11 @@ export class VodService {
           filepath
         ]);
 
+        this.eventsService.emitVodProgress({ recordingId: recording.id, progress: 'MP4 포맷으로 변환 중...' });
+
         ffmpeg.on('error', (err) => {
           this.logger.error(`Failed to start ffmpeg for VOD: ${err.message}`);
+          this.eventsService.emitVodProgress({ recordingId: recording.id, progress: '변환 실패' });
         });
 
         ffmpeg.on('close', async () => {
@@ -284,8 +298,12 @@ export class VodService {
           try {
             await this.prisma.recording.update({
               where: { id: recording.id },
-              data: { filename: path.join('vod', streamerNickname, filename).replace(/\\/g, '/') }
+              data: { 
+                filename: path.join('vod', streamerNickname, filename).replace(/\\/g, '/'),
+                is_recording: false
+              }
             });
+            this.eventsService.emitVodProgress({ recordingId: recording.id, progress: '완료' });
           } catch(e) {}
         });
       }

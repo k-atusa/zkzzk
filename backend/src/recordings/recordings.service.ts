@@ -5,7 +5,7 @@ import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class RecordingsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(private prisma: PrismaService) { }
 
   private downloadsDir = path.join(process.cwd(), '..', 'downloads');
 
@@ -101,7 +101,7 @@ export class RecordingsService {
     const filepath = path.join(this.downloadsDir, filename);
     if (fs.existsSync(filepath)) {
       fs.unlinkSync(filepath);
-      
+
       const userDownloadsDir = path.join(this.downloadsDir, user.username);
       const dbLookupPath = path.relative(userDownloadsDir, filepath).replace(/\\/g, '/');
       await this.prisma.recording.deleteMany({

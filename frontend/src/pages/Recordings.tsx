@@ -126,6 +126,7 @@ export const Recordings = () => {
     description: string;
   } | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [vodProgress, setVodProgress] = useState<Record<string, string>>({});
 
   const fetchRecordings = async () => {
     try {
@@ -139,9 +140,10 @@ export const Recordings = () => {
   useEffect(() => {
     fetchRecordings();
 
-    const eventSource = new EventSource('http://localhost:5001/api/events/youtube');
+    const youtubeEventSource = new EventSource('http://localhost:5001/api/events/youtube');
+    const vodEventSource = new EventSource('http://localhost:5001/api/events/vod');
 
-    eventSource.onmessage = (event) => {
+    youtubeEventSource.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data);
         if (data.type === 'YOUTUBE_UPLOAD_COMPLETE') {
@@ -188,8 +190,37 @@ export const Recordings = () => {
       }
     };
 
+    vodEventSource.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (data.type === 'VOD_DOWNLOAD_PROGRESS') {
+          const { recordingId, progress } = data.payload;
+          if (progress === '완료') {
+            setVodProgress(prev => {
+              const next = { ...prev };
+              delete next[recordingId];
+              return next;
+            });
+            setRecordings(prev => {
+              const next = { ...prev };
+              for (const key of Object.keys(next)) {
+                next[key] = next[key].map(r => r.id === recordingId ? { ...r, is_recording: false } : r);
+              }
+              return next;
+            });
+            fetchRecordings();
+          } else {
+            setVodProgress(prev => ({ ...prev, [recordingId]: progress }));
+          }
+        }
+      } catch (e) {
+        console.error('Failed to parse VOD SSE event', e);
+      }
+    };
+
     return () => {
-      eventSource.close();
+      youtubeEventSource.close();
+      vodEventSource.close();
     };
   }, []);
 
@@ -398,9 +429,14 @@ export const Recordings = () => {
                                   {r.resolution}
                                 </span>
                               )}
-                              {r.is_recording && (
+                              {r.is_recording && !vodProgress[r.id] && (
                                 <span className="inline-flex items-center gap-1 text-xs px-1.5 py-0.5 rounded bg-red-500/10 text-red-600 border border-red-500/20">
                                   <Video className="h-3 w-3" /> 녹화중
+                                </span>
+                              )}
+                              {r.is_recording && vodProgress[r.id] && (
+                                <span className="inline-flex items-center gap-1 text-xs px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-600 border border-blue-500/20">
+                                  <Loader2 className="h-3 w-3 animate-spin" /> {vodProgress[r.id]}
                                 </span>
                               )}
                               {r.youtube_status === 'DUPLICATE_PENDING' && (
