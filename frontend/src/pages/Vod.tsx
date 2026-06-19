@@ -26,6 +26,33 @@ export const Vod = () => {
     fetchMe();
   }, []);
 
+  const executeDownload = async (resInfo: any, videoInfo: any, overwrite: boolean = false) => {
+    try {
+      await api.post('/vod/download_vod', {
+        download_url: resInfo.download_url,
+        video_info: videoInfo,
+        resolution: resInfo,
+        overwrite
+      });
+      toast.success(`[${resInfo.quality}] 다운로드가 시작되었습니다. 녹화본 페이지에서 확인하세요.`);
+      setUrl('');
+      setVodInfo(null);
+    } catch (error: any) {
+      if (error.response?.data?.message === 'FILE_EXISTS') {
+        toast.warning('이미 동일한 파일이 존재합니다.', {
+          description: '기존 파일을 삭제하고 처음부터 다시 다운로드하시겠습니까?',
+          action: {
+            label: '덮어쓰기',
+            onClick: () => executeDownload(resInfo, videoInfo, true)
+          },
+          duration: 10000,
+        });
+      } else {
+        toast.error(error.response?.data?.message || '다운로드 요청 실패');
+      }
+    }
+  };
+
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!hasCookies) {
@@ -47,18 +74,7 @@ export const Vod = () => {
         }
 
         if (targetRes) {
-          try {
-            await api.post('/vod/download_vod', {
-              download_url: targetRes.download_url,
-              video_info: fetchedVodInfo.video_info,
-              resolution: targetRes
-            });
-            toast.success(`[${targetRes.quality}] 자동 다운로드가 시작되었습니다. 녹화본 페이지에서 확인하세요.`);
-            setUrl('');
-            setVodInfo(null);
-          } catch (error: any) {
-            toast.error(error.response?.data?.message || '다운로드 요청 실패');
-          }
+          await executeDownload(targetRes, fetchedVodInfo.video_info);
         }
       } else {
         setVodInfo(fetchedVodInfo);
@@ -74,17 +90,7 @@ export const Vod = () => {
   const handleDownload = async (resolution: string) => {
     const resInfo = vodInfo.resolutions.find((r: any) => r.resolution === resolution);
     if (!resInfo) return;
-
-    try {
-      await api.post('/vod/download_vod', {
-        download_url: resInfo.download_url,
-        video_info: vodInfo.video_info,
-        resolution: resInfo
-      });
-      toast.success('다운로드가 시작되었습니다. 녹화본 페이지에서 확인하세요.');
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || '다운로드 요청 실패');
-    }
+    await executeDownload(resInfo, vodInfo.video_info);
   };
 
   return (

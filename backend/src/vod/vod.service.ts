@@ -171,7 +171,7 @@ export class VodService {
   }
 
   async downloadVod(body: any, user: any) {
-    const { download_url, video_info, resolution } = body;
+    const { download_url, video_info, resolution, overwrite } = body;
     const downloadType = resolution?.download_type || 'direct';
 
     if (!download_url) throw new BadRequestException('다운로드 URL이 필요합니다.');
@@ -190,7 +190,16 @@ export class VodService {
     if (!fs.existsSync(vodDir)) fs.mkdirSync(vodDir, { recursive: true });
 
     const filepath = path.join(vodDir, filename);
-    if (fs.existsSync(filepath)) throw new BadRequestException('이미 동일한 파일이 존재합니다.');
+    if (fs.existsSync(filepath)) {
+      if (!overwrite) {
+        throw new BadRequestException('FILE_EXISTS');
+      } else {
+        fs.unlinkSync(filepath);
+        if (fs.existsSync(filepath.replace('.mp4', '.ts'))) {
+          fs.unlinkSync(filepath.replace('.mp4', '.ts'));
+        }
+      }
+    }
 
     let streamlinkCmd = 'streamlink';
     if (fs.existsSync('/opt/homebrew/bin/streamlink')) {
