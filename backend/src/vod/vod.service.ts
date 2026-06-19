@@ -212,10 +212,24 @@ export class VodService {
       const match = text.match(/Opening stream:\s*([a-zA-Z0-9_]+)/i);
       if (match && match[1]) {
         resolutionCaptured = true;
+        let resStr = match[1];
+        const dimMatch = resStr.match(/^(\d+)[xX](\d+)$/);
+        if (dimMatch) {
+          const minDim = Math.min(parseInt(dimMatch[1], 10), parseInt(dimMatch[2], 10));
+          resStr = `${minDim}p`;
+        } else {
+          const numMatch = resStr.match(/^(\d+)p?(60|30)?$/i);
+          if (numMatch) {
+            let num = parseInt(numMatch[1], 10);
+            if (num === 1920) num = 1080;
+            else if (num === 1280) num = 720;
+            resStr = `${num}p`;
+          }
+        }
         try {
           await this.prisma.recording.update({
             where: { id: recording.id },
-            data: { resolution: match[1] }
+            data: { resolution: resStr }
           });
         } catch (e) {}
       }
