@@ -21,9 +21,16 @@ export class TasksService {
     try {
       const user = await this.prisma.user.findUnique({ where: { id: userId } });
       if (user?.discord_webhook_url) {
-        await axios.post(user.discord_webhook_url, {
-          embeds: [embed],
-        }).catch(() => {});
+        if (user.discord_webhook_use_embed !== false) {
+          await axios.post(user.discord_webhook_url, {
+            embeds: [embed],
+          }).catch(() => {});
+        } else {
+          const textContent = `**${embed.title || '알림'}**\n${embed.description || ''}`;
+          await axios.post(user.discord_webhook_url, {
+            content: textContent,
+          }).catch(() => {});
+        }
       }
     } catch (e) {
       // Ignore webhook errors

@@ -240,6 +240,7 @@ export class AuthService {
     const user = await this.prisma.user.findUnique({ where: { id: requesterId } });
     return {
       discord_webhook_url: user?.discord_webhook_url || null,
+      discord_webhook_use_embed: user?.discord_webhook_use_embed ?? true,
       youtube_client_id: user?.youtube_client_id || null,
       youtube_client_secret: user?.youtube_client_secret || null,
       youtube_connected: !!user?.youtube_refresh_token,
@@ -252,9 +253,10 @@ export class AuthService {
     };
   }
 
-  async updateUserSettings(requesterId: string, discord_webhook_url?: string | null, youtube_client_id?: string | null, youtube_client_secret?: string | null, nid_aut?: string | null, nid_ses?: string | null, youtube_auto_upload?: boolean, delete_after_upload?: boolean, live_resolution?: string, vod_resolution?: string) {
+  async updateUserSettings(requesterId: string, discord_webhook_url?: string | null, youtube_client_id?: string | null, youtube_client_secret?: string | null, nid_aut?: string | null, nid_ses?: string | null, youtube_auto_upload?: boolean, delete_after_upload?: boolean, live_resolution?: string, vod_resolution?: string, discord_webhook_use_embed?: boolean) {
     const updateData: any = {};
     if (discord_webhook_url !== undefined) updateData.discord_webhook_url = discord_webhook_url;
+    if (discord_webhook_use_embed !== undefined) updateData.discord_webhook_use_embed = discord_webhook_use_embed;
     if (youtube_client_id !== undefined) updateData.youtube_client_id = youtube_client_id;
     if (youtube_client_secret !== undefined) updateData.youtube_client_secret = youtube_client_secret;
     if (nid_aut !== undefined) updateData.nid_aut = nid_aut;

@@ -41,6 +41,7 @@ export const Settings = () => {
 
   // System Settings
   const [discordWebhookUrl, setDiscordWebhookUrl] = useState('');
+  const [discordWebhookUseEmbed, setDiscordWebhookUseEmbed] = useState(true);
   const [youtubeClientId, setYoutubeClientId] = useState('');
   const [youtubeClientSecret, setYoutubeClientSecret] = useState('');
   const [showYoutubeClientSecret, setShowYoutubeClientSecret] = useState(false);
@@ -109,6 +110,7 @@ export const Settings = () => {
     try {
       const res = await api.get('/auth/user-settings');
       if (res.data.discord_webhook_url) setDiscordWebhookUrl(res.data.discord_webhook_url);
+      if (res.data.discord_webhook_use_embed !== undefined) setDiscordWebhookUseEmbed(res.data.discord_webhook_use_embed);
       if (res.data.youtube_client_id) setYoutubeClientId(res.data.youtube_client_id);
       if (res.data.youtube_client_secret) setYoutubeClientSecret(res.data.youtube_client_secret);
       if (res.data.youtube_connected) setYoutubeConnected(true);
@@ -278,6 +280,7 @@ export const Settings = () => {
     try {
       await api.post('/auth/user-settings', {
         discord_webhook_url: discordWebhookUrl.trim(),
+        discord_webhook_use_embed: discordWebhookUseEmbed,
         youtube_client_id: youtubeClientId.trim(),
         youtube_client_secret: youtubeClientSecret.trim(),
         youtube_auto_upload: youtubeAutoUpload,
@@ -644,17 +647,32 @@ export const Settings = () => {
           <CardDescription>개인 디스코드 Webhook 및 YouTube 자동 업로드 연동을 관리합니다.</CardDescription>
         </CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="discordWebhookUrl">Discord Webhook URL</Label>
-              <Input
-                id="discordWebhookUrl"
-                value={discordWebhookUrl}
-                onChange={e => setDiscordWebhookUrl(e.target.value)}
-                placeholder="https://discord.com/api/webhooks/..."
-              />
-              <p className="text-xs text-muted-foreground">
-                디스코드 웹훅을 등록하면 녹화 시작/종료 시 알림을 받을 수 있습니다.
-              </p>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="discordWebhookUrl">Discord Webhook URL</Label>
+                <Input
+                  id="discordWebhookUrl"
+                  value={discordWebhookUrl}
+                  onChange={e => setDiscordWebhookUrl(e.target.value)}
+                  placeholder="https://discord.com/api/webhooks/..."
+                />
+                <p className="text-xs text-muted-foreground">
+                  디스코드 웹훅을 등록하면 녹화 시작/종료 시 알림을 받을 수 있습니다.
+                </p>
+              </div>
+              <div className="space-y-2">
+                <Label>알림 메시지 형태</Label>
+                <div className="flex gap-4">
+                  <label className={`flex items-center justify-center px-4 py-2 border rounded-md cursor-pointer transition-colors ${discordWebhookUseEmbed ? 'bg-primary/10 border-primary text-primary' : 'border-input hover:bg-accent'}`}>
+                    <input type="radio" className="hidden" checked={discordWebhookUseEmbed} onChange={() => setDiscordWebhookUseEmbed(true)} />
+                    <span className="text-sm font-medium">카드 형태 (Embed)</span>
+                  </label>
+                  <label className={`flex items-center justify-center px-4 py-2 border rounded-md cursor-pointer transition-colors ${!discordWebhookUseEmbed ? 'bg-primary/10 border-primary text-primary' : 'border-input hover:bg-accent'}`}>
+                    <input type="radio" className="hidden" checked={!discordWebhookUseEmbed} onChange={() => setDiscordWebhookUseEmbed(false)} />
+                    <span className="text-sm font-medium">단순 텍스트 형태</span>
+                  </label>
+                </div>
+              </div>
             </div>
             <div className="space-y-2 mt-4 pt-4 border-t border-border">
               <div className="flex flex-col sm:flex-row gap-4 sm:items-center justify-between mb-2">

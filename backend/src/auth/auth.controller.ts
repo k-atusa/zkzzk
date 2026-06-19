@@ -161,7 +161,8 @@ export class AuthController {
       body.youtube_auto_upload !== undefined ? body.youtube_auto_upload : undefined,
       body.delete_after_upload !== undefined ? body.delete_after_upload : undefined,
       body.live_resolution !== undefined ? body.live_resolution : undefined,
-      body.vod_resolution !== undefined ? body.vod_resolution : undefined
+      body.vod_resolution !== undefined ? body.vod_resolution : undefined,
+      body.discord_webhook_use_embed !== undefined ? body.discord_webhook_use_embed : undefined
     );
   }
 }

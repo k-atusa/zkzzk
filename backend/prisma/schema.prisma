@@ -18,6 +18,7 @@ model user {
   nid_aut        String?
   nid_ses        String?
   discord_webhook_url   String?
+  discord_webhook_use_embed Boolean? @default(true)
   youtube_client_id     String?
   youtube_client_secret String?
   youtube_refresh_token String?
