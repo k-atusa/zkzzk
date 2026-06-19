@@ -279,8 +279,8 @@ export const Live = () => {
                             </div>
                             <div className="flex items-center gap-1.5 flex-shrink-0">
                               {ch.openLive && (
-                                <span className={`inline-flex items-center gap-1 text-xs font-medium ${ch.concurrentUserCount > 0 ? 'text-red-500' : 'text-muted-foreground'}`}>
-                                  {ch.concurrentUserCount > 0 && <Radio className="h-3 w-3" />}
+                                <span className="inline-flex items-center gap-1 text-xs font-medium text-red-500">
+                                  <Radio className="h-3 w-3" />
                                   {(ch.concurrentUserCount ?? 0).toLocaleString()}
                                 </span>
                               )}
@@ -288,9 +288,7 @@ export const Live = () => {
                                 <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
                               ) : isAdded ? (
                                 <span className="text-xs text-muted-foreground">추가됨</span>
-                              ) : (
-                                <Plus className="h-4 w-4 text-muted-foreground" />
-                              )}
+                              ) : null}
                             </div>
                           </button>
                         );
