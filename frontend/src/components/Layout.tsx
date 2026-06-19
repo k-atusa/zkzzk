@@ -24,15 +24,27 @@ export const Layout = () => {
     const savedTheme = (localStorage.getItem('theme') as 'light' | 'dark' | 'system') || 'system';
     setTheme(savedTheme);
 
-    fetch('https://api.github.com/repos/k-atusa/zkzzk/releases/latest')
-      .then(res => res.json())
-      .then(data => {
-        if (data && data.tag_name) {
-          const remoteVersion = data.tag_name.replace(/^v/, '');
-          setLatestVersion(remoteVersion);
-        }
-      })
-      .catch(() => { });
+    const CACHE_KEY = 'zkzzk_latest_version';
+    const CACHE_TIME_KEY = 'zkzzk_latest_version_time';
+    const cachedVersion = localStorage.getItem(CACHE_KEY);
+    const cachedTime = localStorage.getItem(CACHE_TIME_KEY);
+    const cacheDuration = 1000 * 60 * 60 * 6; // 6 hours
+
+    if (cachedVersion && cachedTime && Date.now() - parseInt(cachedTime) < cacheDuration) {
+      setLatestVersion(cachedVersion);
+    } else {
+      fetch('https://api.github.com/repos/k-atusa/zkzzk/releases/latest')
+        .then(res => res.json())
+        .then(data => {
+          if (data && data.tag_name) {
+            const remoteVersion = data.tag_name.replace(/^v/, '');
+            setLatestVersion(remoteVersion);
+            localStorage.setItem(CACHE_KEY, remoteVersion);
+            localStorage.setItem(CACHE_TIME_KEY, Date.now().toString());
+          }
+        })
+        .catch(() => { });
+    }
   }, [navigate]);
 
   const cycleTheme = () => {
