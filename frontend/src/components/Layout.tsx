@@ -109,8 +109,13 @@ export const Layout = () => {
               </a>
             )}
           </div>
-          <div className="px-2 mb-4 text-sm text-muted-foreground">
-            접속중: <span className="text-foreground font-medium">{user.username}</span> {user.is_admin && '(관리자)'}
+          <div className="px-2 mb-4 text-sm text-muted-foreground flex items-center gap-1.5">
+            접속중: <span className="text-foreground font-medium">{user.username}</span>
+            {user.is_admin && (
+              <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-amber-500/10 text-amber-600 border border-amber-500/20 font-medium">
+                관리자
+              </span>
+            )}
           </div>
           <Button variant="ghost" className="w-full justify-start text-red-600 dark:text-red-500 hover:text-red-700 dark:hover:text-red-400 hover:bg-red-500/10 dark:hover:bg-red-500/10 gap-3" onClick={handleLogout}>
             <LogOut className="h-5 w-5" />
