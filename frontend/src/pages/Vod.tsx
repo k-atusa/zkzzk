@@ -11,12 +11,16 @@ export const Vod = () => {
   const [vodInfo, setVodInfo] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [hasCookies, setHasCookies] = useState(false);
+  const [userResolution, setUserResolution] = useState<string>('ask');
 
   useEffect(() => {
     const fetchMe = async () => {
       try {
         const res = await api.get('/auth/me');
         setHasCookies(res.data.has_cookies);
+        if (res.data.vod_resolution) {
+          setUserResolution(res.data.vod_resolution);
+        }
       } catch (e) {}
     };
     fetchMe();
@@ -31,7 +35,34 @@ export const Vod = () => {
     setLoading(true);
     try {
       const res = await api.post('/vod/get_vod_info', { vod_url: url });
-      setVodInfo(res.data);
+      const fetchedVodInfo = res.data;
+
+      if (userResolution && userResolution !== 'ask') {
+        const targetQuality = userResolution;
+        let targetRes = fetchedVodInfo.resolutions.find((r: any) => r.quality === targetQuality);
+        
+        if (!targetRes && fetchedVodInfo.resolutions.length > 0) {
+          targetRes = fetchedVodInfo.resolutions[0];
+          toast.info(`요청하신 ${targetQuality} 화질이 없어 ${targetRes.quality} 화질로 다운로드합니다.`);
+        }
+
+        if (targetRes) {
+          try {
+            await api.post('/vod/download_vod', {
+              download_url: targetRes.download_url,
+              video_info: fetchedVodInfo.video_info,
+              resolution: targetRes
+            });
+            toast.success(`[${targetRes.quality}] 자동 다운로드가 시작되었습니다. 녹화본 페이지에서 확인하세요.`);
+            setUrl('');
+            setVodInfo(null);
+          } catch (error: any) {
+            toast.error(error.response?.data?.message || '다운로드 요청 실패');
+          }
+        }
+      } else {
+        setVodInfo(fetchedVodInfo);
+      }
     } catch (error: any) {
       toast.error(error.response?.data?.message || '정보를 가져올 수 없습니다.');
       setVodInfo(null);

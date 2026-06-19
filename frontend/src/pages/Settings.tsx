@@ -540,6 +540,7 @@ export const Settings = () => {
                 onChange={(e) => setVodResolution(e.target.value)}
                 className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
               >
+                <option value="ask">다운로드 시에 묻기</option>
                 <option value="1080p">1080p (기본)</option>
                 <option value="720p">720p</option>
                 <option value="360p">360p</option>
