@@ -35,6 +35,10 @@ export class VodService {
       let inKey = content.inKey;
       let liveRewindPlaybackJson = content.liveRewindPlaybackJson;
 
+      if (content.videoType === 'UPLOAD') {
+        throw new BadRequestException('직접 업로드된 영상 다운로드 기능은 준비중입니다.');
+      }
+
       if (!videoId || (!inKey && !liveRewindPlaybackJson)) {
         const dbUser = await this.prisma.user.findUnique({ where: { id: user.id } });
         if (dbUser && dbUser.nid_aut && dbUser.nid_ses) {
@@ -88,8 +92,11 @@ export class VodService {
         };
       }
       throw new BadRequestException('인증 실패 혹은 정보 부족');
-    } catch (e) {
+    } catch (e: any) {
       this.logger.error('Error fetching VOD info:', e);
+      if (e instanceof BadRequestException) {
+        throw e;
+      }
       throw new BadRequestException('VOD 정보 가져오기 중 오류가 발생했습니다.');
     }
   }
@@ -162,38 +169,7 @@ export class VodService {
           }
         }
       } catch (e) {
-        // Fallback: UPLOAD 비디오 등 DASH XML 포맷이 아닌 경우 JSON으로 재요청하여 MP4 추출
-        try {
-          const jsonResponse = await axios.get(vodUrl, {
-            headers: {
-              'Accept': 'application/json',
-              'User-Agent': 'Mozilla/5.0'
-            }
-          });
-          const trackList = jsonResponse.data?.period?.[0]?.trackList || [];
-          for (const track of trackList) {
-            // videoType: "UPLOAD"인 경우 video/mp4 타입으로 단일 파일이 떨어짐
-            if (track.type === 'video/mp4' || track.type === 'video/mpeg') {
-              const quality = track.resolution || `${track.videoHeight}p`;
-              const width = track.videoWidth;
-              const height = track.videoHeight;
-              const bandwidth = track.bitrate || 0;
-              const url = track.url;
-              if (quality && url && !streamUrls[quality]) {
-                streamUrls[quality] = {
-                  download_url: url,
-                  width: parseInt(width),
-                  height: parseInt(height),
-                  bandwidth: parseInt(bandwidth) || 0,
-                  quality,
-                  download_type: 'direct' // axios 직접 다운로드
-                };
-              }
-            }
-          }
-        } catch (fallbackErr: any) {
-          this.logger.error(`Failed to parse JSON VOD info: ${fallbackErr.message}`);
-        }
+        // Fallback or JSON handling can be added here
       }
       return streamUrls;
     } catch (e) {
@@ -259,173 +235,112 @@ export class VodService {
       }
     });
 
-    const isDirectMp4 = downloadType === 'direct' || download_url.includes('.mp4');
-    if (isDirectMp4) {
-      const writer = fs.createWriteStream(filepath);
-      axios({
-        method: 'get',
-        url: download_url,
-        responseType: 'stream',
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-          'Referer': 'https://chzzk.naver.com/'
-        }
-      }).then(response => {
-        const totalLength = parseInt((response.headers['content-length'] as string) || '0', 10);
-        let downloadedLength = 0;
-        let lastReportTime = 0;
-        
-        response.data.on('data', (chunk: Buffer) => {
-          downloadedLength += chunk.length;
-          const now = Date.now();
-          if (now - lastReportTime > 500) { // Report every 500ms
-            if (totalLength > 0) {
-              const percent = ((downloadedLength / totalLength) * 100).toFixed(1);
-              this.eventsService.emitVodProgress({ recordingId: recording.id, progress: `다운로드 중: ${percent}%` });
-            } else {
-              const mb = (downloadedLength / 1024 / 1024).toFixed(1);
-              this.eventsService.emitVodProgress({ recordingId: recording.id, progress: `다운로드 중: ${mb}MB` });
-            }
-            lastReportTime = now;
-          }
-        });
-        
-        response.data.pipe(writer);
-        
-        writer.on('finish', async () => {
-          try {
-            await this.prisma.recording.update({
-              where: { id: recording.id },
-              data: { 
-                filename: path.join('vod', streamerNickname, filename).replace(/\\/g, '/'),
-                is_recording: false
-              }
-            });
-            this.eventsService.emitVodProgress({ recordingId: recording.id, progress: '완료' });
-          } catch(e) {}
-        });
-        
-        writer.on('error', (err) => {
-          this.logger.error(`Direct MP4 download failed: ${err.message}`);
-          this.eventsService.emitVodProgress({ recordingId: recording.id, progress: '다운로드 실패' });
-          this.prisma.recording.update({ where: { id: recording.id }, data: { is_recording: false } }).catch(() => {});
-        });
-      }).catch(err => {
-        this.logger.error(`Direct MP4 request failed: ${err.message}`);
-        this.eventsService.emitVodProgress({ recordingId: recording.id, progress: '다운로드 요청 실패' });
-        this.prisma.recording.update({ where: { id: recording.id }, data: { is_recording: false } }).catch(() => {});
-      });
+    // Background download using streamlink
+    const child = spawn(streamlinkCmd, [
+      '--http-header', 'User-Agent=Mozilla/5.0',
+      download_url,
+      formatString,
+      '--output', filepath.replace('.mp4', '.ts')
+    ]);
 
-      return { status: 'success', message: '서버 다운로드가 시작되었습니다.', filename };
+    let resolutionCaptured = false;
+    const parseStreamlinkOutput = async (text: string) => {
+      // streamlink 진행률 파싱 예: [download] Written 123 MB (10s @ 1.2 MB/s)
+      const dlMatch = text.match(/\[download\]\s+(Written.+)/i);
+      if (dlMatch) {
+        this.eventsService.emitVodProgress({ recordingId: recording.id, progress: `다운로드 중: ${dlMatch[1]}` });
+      }
 
-    } else {
-      // Background download using streamlink
-      const child = spawn(streamlinkCmd, [
-        '--http-header', 'User-Agent=Mozilla/5.0',
-        download_url,
-        formatString,
-        '--output', filepath.replace('.mp4', '.ts')
-      ]);
-
-      let resolutionCaptured = false;
-      const parseStreamlinkOutput = async (text: string) => {
-        // streamlink 진행률 파싱 예: [download] Written 123 MB (10s @ 1.2 MB/s)
-        const dlMatch = text.match(/\[download\]\s+(Written.+)/i);
-        if (dlMatch) {
-          this.eventsService.emitVodProgress({ recordingId: recording.id, progress: `다운로드 중: ${dlMatch[1]}` });
-        }
-
-        if (resolutionCaptured) return;
-        const match = text.match(/Opening stream:\s*([a-zA-Z0-9_]+)/i);
-        if (match && match[1]) {
-          resolutionCaptured = true;
-          let resStr = match[1];
-          const dimMatch = resStr.match(/^(\d+)[xX](\d+)$/);
-          if (dimMatch) {
-            const minDim = Math.min(parseInt(dimMatch[1], 10), parseInt(dimMatch[2], 10));
-            resStr = `${minDim}p`;
-          } else {
-            const numMatch = resStr.match(/^(\d+)p?(60|30)?$/i);
-            if (numMatch) {
-              let num = parseInt(numMatch[1], 10);
-              if (num === 1920) num = 1080;
-              else if (num === 1280) num = 720;
-              resStr = `${num}p`;
-            }
-          }
-          try {
-            await this.prisma.recording.update({
-              where: { id: recording.id },
-              data: { resolution: resStr }
-            });
-          } catch (e) {}
-        }
-      };
-
-      child.stdout.on('data', (data) => parseStreamlinkOutput(data.toString()));
-      child.stderr.on('data', (data) => parseStreamlinkOutput(data.toString()));
-
-      child.on('error', (err) => {
-        this.logger.error(`Failed to start download process for VOD: ${err.message}`);
-        this.eventsService.emitVodProgress({ recordingId: recording.id, progress: '다운로드 실패' });
-      });
-
-      child.on('close', async (code) => {
-        if (code === 0) {
-          // 기존 streamlink 다운로드 후 ffmpeg 변환 로직
-          let ffmpegCmd = 'ffmpeg';
-          if (fs.existsSync('/opt/homebrew/bin/ffmpeg')) {
-            ffmpegCmd = '/opt/homebrew/bin/ffmpeg';
-          } else if (fs.existsSync('/usr/local/bin/ffmpeg')) {
-            ffmpegCmd = '/usr/local/bin/ffmpeg';
-          }
-
-          const ffmpeg = spawn(ffmpegCmd, [
-            '-i', filepath.replace('.mp4', '.ts'),
-            '-c', 'copy',
-            '-y',
-            filepath
-          ]);
-
-          this.eventsService.emitVodProgress({ recordingId: recording.id, progress: 'MP4 포맷으로 변환 중...' });
-
-          ffmpeg.on('error', (err) => {
-            this.logger.error(`Failed to start ffmpeg for VOD: ${err.message}`);
-            this.eventsService.emitVodProgress({ recordingId: recording.id, progress: '변환 실패' });
-          });
-
-          ffmpeg.on('close', async (ffCode) => {
-            if (fs.existsSync(filepath.replace('.mp4', '.ts'))) {
-              fs.unlinkSync(filepath.replace('.mp4', '.ts'));
-            }
-            if (ffCode === 0) {
-              try {
-                await this.prisma.recording.update({
-                  where: { id: recording.id },
-                  data: { 
-                    filename: path.join('vod', streamerNickname, filename).replace(/\\/g, '/'),
-                    is_recording: false
-                  }
-                });
-                this.eventsService.emitVodProgress({ recordingId: recording.id, progress: '완료' });
-              } catch(e) {}
-            } else {
-              this.logger.error(`ffmpeg exited with code ${ffCode}`);
-              this.eventsService.emitVodProgress({ recordingId: recording.id, progress: '변환 실패' });
-              this.prisma.recording.update({ where: { id: recording.id }, data: { is_recording: false } }).catch(() => {});
-            }
-          });
+      if (resolutionCaptured) return;
+      const match = text.match(/Opening stream:\s*([a-zA-Z0-9_]+)/i);
+      if (match && match[1]) {
+        resolutionCaptured = true;
+        let resStr = match[1];
+        const dimMatch = resStr.match(/^(\d+)[xX](\d+)$/);
+        if (dimMatch) {
+          const minDim = Math.min(parseInt(dimMatch[1], 10), parseInt(dimMatch[2], 10));
+          resStr = `${minDim}p`;
         } else {
-          // 비정상 종료 (에러)
-          this.logger.error(`Download process exited with code ${code}`);
-          this.eventsService.emitVodProgress({ recordingId: recording.id, progress: '다운로드 실패 (오류 발생)' });
-          this.prisma.recording.update({
-            where: { id: recording.id },
-            data: { is_recording: false }
-          }).catch(() => {});
+          const numMatch = resStr.match(/^(\d+)p?(60|30)?$/i);
+          if (numMatch) {
+            let num = parseInt(numMatch[1], 10);
+            if (num === 1920) num = 1080;
+            else if (num === 1280) num = 720;
+            resStr = `${num}p`;
+          }
         }
-      });
-    }
+        try {
+          await this.prisma.recording.update({
+            where: { id: recording.id },
+            data: { resolution: resStr }
+          });
+        } catch (e) {}
+      }
+    };
+
+    child.stdout.on('data', (data) => parseStreamlinkOutput(data.toString()));
+    child.stderr.on('data', (data) => parseStreamlinkOutput(data.toString()));
+
+    child.on('error', (err) => {
+      this.logger.error(`Failed to start download process for VOD: ${err.message}`);
+      this.eventsService.emitVodProgress({ recordingId: recording.id, progress: '다운로드 실패' });
+    });
+
+    child.on('close', async (code) => {
+      if (code === 0) {
+        // 기존 streamlink 다운로드 후 ffmpeg 변환 로직
+        let ffmpegCmd = 'ffmpeg';
+        if (fs.existsSync('/opt/homebrew/bin/ffmpeg')) {
+          ffmpegCmd = '/opt/homebrew/bin/ffmpeg';
+        } else if (fs.existsSync('/usr/local/bin/ffmpeg')) {
+          ffmpegCmd = '/usr/local/bin/ffmpeg';
+        }
+
+        const ffmpeg = spawn(ffmpegCmd, [
+          '-i', filepath.replace('.mp4', '.ts'),
+          '-c', 'copy',
+          '-y',
+          filepath
+        ]);
+
+        this.eventsService.emitVodProgress({ recordingId: recording.id, progress: 'MP4 포맷으로 변환 중...' });
+
+        ffmpeg.on('error', (err) => {
+          this.logger.error(`Failed to start ffmpeg for VOD: ${err.message}`);
+          this.eventsService.emitVodProgress({ recordingId: recording.id, progress: '변환 실패' });
+        });
+
+        ffmpeg.on('close', async (ffCode) => {
+          if (fs.existsSync(filepath.replace('.mp4', '.ts'))) {
+            fs.unlinkSync(filepath.replace('.mp4', '.ts'));
+          }
+          if (ffCode === 0) {
+            try {
+              await this.prisma.recording.update({
+                where: { id: recording.id },
+                data: { 
+                  filename: path.join('vod', streamerNickname, filename).replace(/\\/g, '/'),
+                  is_recording: false
+                }
+              });
+              this.eventsService.emitVodProgress({ recordingId: recording.id, progress: '완료' });
+            } catch(e) {}
+          } else {
+            this.logger.error(`ffmpeg exited with code ${ffCode}`);
+            this.eventsService.emitVodProgress({ recordingId: recording.id, progress: '변환 실패' });
+            this.prisma.recording.update({ where: { id: recording.id }, data: { is_recording: false } }).catch(() => {});
+          }
+        });
+      } else {
+        // 비정상 종료 (에러)
+        this.logger.error(`Download process exited with code ${code}`);
+        this.eventsService.emitVodProgress({ recordingId: recording.id, progress: '다운로드 실패 (오류 발생)' });
+        this.prisma.recording.update({
+          where: { id: recording.id },
+          data: { is_recording: false }
+        }).catch(() => {});
+      }
+    });
 
     return { status: 'success', message: '서버 다운로드가 시작되었습니다.', filename };
   }
