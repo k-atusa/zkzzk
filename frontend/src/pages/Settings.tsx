@@ -239,11 +239,13 @@ export const Settings = () => {
     }
   };
 
-  const handleSaveCookies = async () => {
+  const handleSaveCookies = async (aut?: string, ses?: string) => {
     setCookieSaveLoading(true);
     try {
-      await api.post('/auth/user-settings', { nid_aut: nidAut.trim() || null, nid_ses: nidSes.trim() || null });
-      toast.success('쿠키가 저장되었습니다.');
+      await api.post('/auth/user-settings', {
+        nid_aut: (aut ?? nidAut)?.trim() || null,
+        nid_ses: (ses ?? nidSes)?.trim() || null
+      });
       fetchMe();
     } catch (error: any) {
       toast.error(error.response?.data?.message || '쿠키 저장 실패');
@@ -275,7 +277,7 @@ export const Settings = () => {
     });
   };
 
-  const handleSaveUserSettings = async () => {
+  const handleSaveUserSettings = async (overrides: any = {}) => {
     setWebhookLoading(true);
     try {
       await api.post('/auth/user-settings', {
@@ -286,12 +288,12 @@ export const Settings = () => {
         youtube_auto_upload: youtubeAutoUpload,
         delete_after_upload: deleteAfterUpload,
         live_resolution: liveResolution,
-        vod_resolution: vodResolution
+        vod_resolution: vodResolution,
+        ...overrides
       });
-      toast.success('설정이 저장되었습니다.');
       fetchUserSettings();
     } catch (error: any) {
-      toast.error(error.response?.data?.message || '저장 실패');
+      toast.error(error.response?.data?.message || '설정 저장 실패');
     } finally {
       setWebhookLoading(false);
     }
@@ -522,7 +524,7 @@ export const Settings = () => {
               <select
                 id="liveResolution"
                 value={liveResolution}
-                onChange={(e) => setLiveResolution(e.target.value)}
+                onChange={(e) => { setLiveResolution(e.target.value); handleSaveUserSettings({ live_resolution: e.target.value }); }}
                 className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
               >
                 <option value="1080p">1080p (기본)</option>
@@ -537,7 +539,7 @@ export const Settings = () => {
               <select
                 id="vodResolution"
                 value={vodResolution}
-                onChange={(e) => setVodResolution(e.target.value)}
+                onChange={(e) => { setVodResolution(e.target.value); handleSaveUserSettings({ vod_resolution: e.target.value }); }}
                 className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
               >
                 <option value="ask">다운로드 시에 묻기</option>
@@ -548,10 +550,6 @@ export const Settings = () => {
               </select>
             </div>
           </div>
-          <Button onClick={handleSaveUserSettings} disabled={webhookLoading}>
-            {webhookLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-            화질 설정 저장
-          </Button>
         </CardContent>
       </Card>
 
@@ -579,6 +577,7 @@ export const Settings = () => {
                 id="nidAut"
                 value={nidAut}
                 onChange={e => { setNidAut(e.target.value); setCookieVerified(null); }}
+                onBlur={e => handleSaveCookies(e.target.value, nidSes)}
                 placeholder="NID_AUT 쿠키 값"
                 className="font-mono text-sm"
               />
@@ -589,6 +588,7 @@ export const Settings = () => {
                 id="nidSes"
                 value={nidSes}
                 onChange={e => { setNidSes(e.target.value); setCookieVerified(null); }}
+                onBlur={e => handleSaveCookies(nidAut, e.target.value)}
                 placeholder="NID_SES 쿠키 값"
                 className="font-mono text-sm"
               />
@@ -618,10 +618,6 @@ export const Settings = () => {
               <Button type="button" variant="outline" onClick={handleVerifyCookies} disabled={cookieLoading}>
                 {cookieLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ShieldCheck className="mr-2 h-4 w-4" />}
                 쿠키 인증 확인
-              </Button>
-              <Button type="button" onClick={handleSaveCookies} disabled={cookieSaveLoading}>
-                {cookieSaveLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                저장
               </Button>
               {user.has_cookies && (
                 <Button
@@ -655,6 +651,7 @@ export const Settings = () => {
                 id="discordWebhookUrl"
                 value={discordWebhookUrl}
                 onChange={e => setDiscordWebhookUrl(e.target.value)}
+                onBlur={e => handleSaveUserSettings({ discord_webhook_url: e.target.value })}
                 placeholder="https://discord.com/api/webhooks/..."
               />
               <p className="text-xs text-muted-foreground">
@@ -665,11 +662,11 @@ export const Settings = () => {
               <Label>알림 메시지 형태</Label>
               <div className="flex gap-4">
                 <label className={`flex items-center justify-center px-4 py-2 border rounded-md cursor-pointer transition-colors ${discordWebhookUseEmbed ? 'bg-primary/10 border-primary text-primary' : 'border-input hover:bg-accent'}`}>
-                  <input type="radio" className="hidden" checked={discordWebhookUseEmbed} onChange={() => setDiscordWebhookUseEmbed(true)} />
+                  <input type="radio" className="hidden" checked={discordWebhookUseEmbed} onChange={() => { setDiscordWebhookUseEmbed(true); handleSaveUserSettings({ discord_webhook_use_embed: true }); }} />
                   <span className="text-sm font-medium">카드 형태 (Embed)</span>
                 </label>
                 <label className={`flex items-center justify-center px-4 py-2 border rounded-md cursor-pointer transition-colors ${!discordWebhookUseEmbed ? 'bg-primary/10 border-primary text-primary' : 'border-input hover:bg-accent'}`}>
-                  <input type="radio" className="hidden" checked={!discordWebhookUseEmbed} onChange={() => setDiscordWebhookUseEmbed(false)} />
+                  <input type="radio" className="hidden" checked={!discordWebhookUseEmbed} onChange={() => { setDiscordWebhookUseEmbed(false); handleSaveUserSettings({ discord_webhook_use_embed: false }); }} />
                   <span className="text-sm font-medium">단순 텍스트 형태</span>
                 </label>
               </div>
@@ -721,7 +718,7 @@ export const Settings = () => {
                   <Switch
                     id="youtubeAutoUpload"
                     checked={youtubeAutoUpload}
-                    onCheckedChange={setYoutubeAutoUpload}
+                    onCheckedChange={(val) => { setYoutubeAutoUpload(val); handleSaveUserSettings({ youtube_auto_upload: val }); }}
                   />
                 </div>
                 <div className="flex items-center gap-2">
@@ -731,7 +728,7 @@ export const Settings = () => {
                   <Switch
                     id="deleteAfterUpload"
                     checked={deleteAfterUpload}
-                    onCheckedChange={setDeleteAfterUpload}
+                    onCheckedChange={(val) => { setDeleteAfterUpload(val); handleSaveUserSettings({ delete_after_upload: val }); }}
                   />
                 </div>
               </div>
@@ -740,6 +737,7 @@ export const Settings = () => {
               id="youtubeClientId"
               value={youtubeClientId}
               onChange={e => setYoutubeClientId(e.target.value)}
+              onBlur={e => handleSaveUserSettings({ youtube_client_id: e.target.value })}
               placeholder="Google Cloud Console에서 발급받은 Client ID"
             />
           </div>
@@ -750,6 +748,7 @@ export const Settings = () => {
                 id="youtubeClientSecret"
                 value={youtubeClientSecret}
                 onChange={e => setYoutubeClientSecret(e.target.value)}
+                onBlur={e => handleSaveUserSettings({ youtube_client_secret: e.target.value })}
                 placeholder="Google Cloud Console에서 발급받은 Client Secret"
                 type={showYoutubeClientSecret ? 'text' : 'password'}
               />
@@ -785,10 +784,6 @@ export const Settings = () => {
             </div>
           </div>
           <div className="flex gap-2">
-            <Button onClick={handleSaveUserSettings} disabled={webhookLoading}>
-              {webhookLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-              저장
-            </Button>
             {youtubeClientId && youtubeClientSecret && (
               <Button variant={youtubeConnected ? "secondary" : "default"} onClick={handleYouTubeAuth}>
                 {youtubeConnected ? 'YouTube 재인증' : 'YouTube 인증하기'}
