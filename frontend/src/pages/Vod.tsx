@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
-import { Search, Download } from 'lucide-react';
+import { Search, Download, AlertTriangle } from 'lucide-react';
 import api from '@/api';
 
 export const Vod = () => {
@@ -39,14 +39,30 @@ export const Vod = () => {
       setVodInfo(null);
     } catch (error: any) {
       if (error.response?.data?.message === 'FILE_EXISTS') {
-        toast.warning('이미 동일한 파일이 존재합니다.', {
-          description: '기존 파일을 삭제하고 처음부터 다시 다운로드하시겠습니까?',
-          action: {
-            label: '덮어쓰기',
-            onClick: () => executeDownload(resInfo, videoInfo, true)
-          },
-          duration: 10000,
-        });
+        toast.custom((t) => (
+          <div className="flex flex-col gap-3 w-full bg-background border border-border p-4 rounded-lg shadow-lg">
+            <div className="flex items-start gap-3">
+              <AlertTriangle className="h-5 w-5 text-yellow-500 mt-0.5 shrink-0" />
+              <div className="flex flex-col gap-1">
+                <span className="font-semibold text-foreground text-sm">이미 동일한 파일이 존재합니다.</span>
+                <span className="text-xs text-muted-foreground leading-relaxed">
+                  기존 파일을 삭제하고 처음부터 다시 다운로드하시겠습니까?
+                </span>
+              </div>
+            </div>
+            <div className="flex justify-end gap-2 mt-1">
+              <Button size="sm" variant="outline" onClick={() => toast.dismiss(t)}>
+                취소
+              </Button>
+              <Button size="sm" onClick={() => {
+                toast.dismiss(t);
+                executeDownload(resInfo, videoInfo, true);
+              }}>
+                덮어쓰기
+              </Button>
+            </div>
+          </div>
+        ), { duration: 10000 });
       } else {
         toast.error(error.response?.data?.message || '다운로드 요청 실패');
       }
