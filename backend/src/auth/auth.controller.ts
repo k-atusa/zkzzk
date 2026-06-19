@@ -77,6 +77,7 @@ export class AuthController {
       has_secret: !!user?.totp_secret,
       version: pkg.version,
       has_cookies: !!(user?.nid_aut && user?.nid_ses),
+      vod_resolution: user?.vod_resolution,
     };
   }
 
