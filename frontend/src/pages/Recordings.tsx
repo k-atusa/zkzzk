@@ -282,7 +282,7 @@ export const Recordings = () => {
           </Button>
         </div>
       </div>
-    ), { duration: Number.POSITIVE_INFINITY });
+    ), { duration: Number.POSITIVE_INFINITY, id: 'confirm-toast' });
   };
 
   const handleYoutubeUploadClick = (id: string, filename: string) => {
