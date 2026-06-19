@@ -162,7 +162,38 @@ export class VodService {
           }
         }
       } catch (e) {
-        // Fallback or JSON handling can be added here
+        // Fallback: UPLOAD 비디오 등 DASH XML 포맷이 아닌 경우 JSON으로 재요청하여 MP4 추출
+        try {
+          const jsonResponse = await axios.get(vodUrl, {
+            headers: {
+              'Accept': 'application/json',
+              'User-Agent': 'Mozilla/5.0'
+            }
+          });
+          const trackList = jsonResponse.data?.period?.[0]?.trackList || [];
+          for (const track of trackList) {
+            // videoType: "UPLOAD"인 경우 video/mp4 타입으로 단일 파일이 떨어짐
+            if (track.type === 'video/mp4' || track.type === 'video/mpeg') {
+              const quality = track.resolution || `${track.videoHeight}p`;
+              const width = track.videoWidth;
+              const height = track.videoHeight;
+              const bandwidth = track.bitrate || 0;
+              const url = track.url;
+              if (quality && url && !streamUrls[quality]) {
+                streamUrls[quality] = {
+                  download_url: url,
+                  width: parseInt(width),
+                  height: parseInt(height),
+                  bandwidth: parseInt(bandwidth) || 0,
+                  quality,
+                  download_type: 'direct' // axios 직접 다운로드
+                };
+              }
+            }
+          }
+        } catch (fallbackErr: any) {
+          this.logger.error(`Failed to parse JSON VOD info: ${fallbackErr.message}`);
+        }
       }
       return streamUrls;
     } catch (e) {
