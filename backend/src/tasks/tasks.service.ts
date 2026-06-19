@@ -224,13 +224,9 @@ export class TasksService {
 
       this.sendDiscordWebhook(streamer.user_id!, {
         title: `✅ 녹화 시작`,
-        description: `**${streamerNickname}**님의 녹화가 시작되었습니다.\n\n**방송 제목**: ${broadcastTitle}`,
+        description: `**${streamerNickname}**님의 녹화가 시작되었습니다.\n\n**방송 제목:** ${broadcastTitle}\n**채널 링크:** https://chzzk.naver.com/${channelId}`,
         color: 0x00FFA3, // Neon Green
-        timestamp: new Date().toISOString(),
-        author: {
-          name: streamerNickname,
-          url: `https://chzzk.naver.com/${channelId}`,
-        }
+        timestamp: new Date().toISOString()
       });
 
       child.on('close', async (code) => {
@@ -246,13 +242,9 @@ export class TasksService {
           });
           this.sendDiscordWebhook(streamer.user_id!, {
             title: `🛑 녹화 종료`,
-            description: `**${streamerNickname}**님의 녹화가 종료되었습니다.`,
+            description: `**${streamerNickname}**님의 녹화가 성공적으로 종료되었습니다.`,
             color: 0xFF4D4D, // Red
-            timestamp: new Date().toISOString(),
-            author: {
-              name: streamerNickname,
-              url: `https://chzzk.naver.com/${channelId}`,
-            }
+            timestamp: new Date().toISOString()
           });
         } catch (dbErr: any) {
           this.logger.error(`Database update failed on streamlink close: ${dbErr.message}`);
@@ -297,7 +289,7 @@ export class TasksService {
 
               this.sendDiscordWebhook(streamer.user_id!, {
                 title: `💽 MP4 변환 완료`,
-                description: `**${streamerNickname}**님의 영상이 MP4로 성공적으로 변환되었습니다.\n\n**방송 제목**: ${broadcastTitle}`,
+                description: `**${streamerNickname}**님의 영상이 MP4로 성공적으로 변환되었습니다.\n\n**방송 제목:** ${broadcastTitle}`,
                 color: 0x3498DB, // Blue
                 timestamp: new Date().toISOString()
               });
@@ -317,8 +309,8 @@ export class TasksService {
                         });
                         this.sendDiscordWebhook(user.id, {
                           title: `⚠️ 유튜브 업로드 대기 (중복)`,
-                          description: `**${mp4Filename}** 영상과 동일한 제목의 영상이 이미 유튜브에 존재합니다.\n웹 서비스에 접속하여 직접 업로드 여부를 결정해주세요.`,
-                          color: 0xFFAA00,
+                          description: `**${streamerNickname}**님의 영상과 동일한 제목의 영상이 이미 유튜브에 존재합니다.\n\n**파일명:** ${mp4Filename}\n\n웹 서비스에 접속하여 직접 업로드 여부를 결정해주세요.`,
+                          color: 0xF39C12, // Orange/Yellow
                           timestamp: new Date().toISOString()
                         });
                       } else {

@@ -691,15 +691,15 @@ export const Settings = () => {
                     <div className="bg-[#2b2d31] border-l-4 border-blue-500 rounded p-3 mt-1.5 inline-block min-w-[250px]">
                       <p className="font-bold text-white text-base mb-1.5">🎥 업로드 완료</p>
                       <div className="text-[13px] space-y-1">
-                        <p><strong>스트리머:</strong> XXX</p>
-                        <p><strong>제목:</strong> 테스트 영상</p>
+                        <p><strong>XXX</strong>님의 영상이 성공적으로 업로드되었습니다.</p>
+                        <p className="pt-1.5"><strong>제목:</strong> 테스트 영상</p>
                         <p><strong>URL:</strong> <span className="text-[#00a8fc] cursor-pointer hover:underline">https://youtu.be/test</span></p>
                       </div>
                     </div>
                   ) : (
                     <div className="whitespace-pre-wrap text-[15px] leading-relaxed mt-0.5">
                       <span className="font-bold">🎥 업로드 완료</span>{'\n'}
-                      스트리머: XXX{'\n'}
+                      **XXX**님의 영상이 성공적으로 업로드되었습니다.{'\n\n'}
                       제목: 테스트 영상{'\n'}
                       URL: <span className="text-[#00a8fc] cursor-pointer hover:underline">https://youtu.be/test</span>
                     </div>

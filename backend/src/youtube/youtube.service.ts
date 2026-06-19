@@ -229,7 +229,7 @@ export class YoutubeService {
 
       this.sendDiscordWebhook(finalUserId, {
         title: `📤 유튜브 업로드 시작`,
-        description: `**${cleanTitle}** 영상의 유튜브 업로드를 시작합니다.`,
+        description: `**제목:** ${cleanTitle}\n영상의 유튜브 업로드를 시작합니다.`,
         color: 0x9B59B6, // Purple
         timestamp: new Date().toISOString()
       });
@@ -291,7 +291,7 @@ export class YoutubeService {
         this.logger.log(`Upload completed for ${cleanTitle}`);
         this.sendDiscordWebhook(finalUserId, {
           title: `✅ 유튜브 업로드 완료`,
-          description: `**${cleanTitle}** 영상이 유튜브에 성공적으로 업로드되었습니다.\n\n**비디오 링크**: [youtu.be/${res.data.id}](https://youtu.be/${res.data.id})`,
+          description: `**제목:** ${cleanTitle}\n영상이 유튜브에 성공적으로 업로드되었습니다.\n\n**비디오 링크**: [youtu.be/${res.data.id}](https://youtu.be/${res.data.id})`,
           color: 0x2ECC71, // Emerald Green
           timestamp: new Date().toISOString()
         });
@@ -340,7 +340,7 @@ export class YoutubeService {
       if (finalUserId) {
         this.sendDiscordWebhook(finalUserId, {
           title: `❌ 유튜브 업로드 실패`,
-          description: `**${cleanTitle}** 영상의 유튜브 업로드가 실패했습니다.\n\n**오류**: ${e.message}`,
+          description: `**제목:** ${cleanTitle}\n영상의 유튜브 업로드가 실패했습니다.\n\n**오류**: ${e.message}`,
           color: 0xFF0000, // Red
           timestamp: new Date().toISOString()
         });
