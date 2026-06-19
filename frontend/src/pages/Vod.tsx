@@ -62,7 +62,7 @@ export const Vod = () => {
               </Button>
             </div>
           </div>
-        ), { duration: 10000 });
+        ), { duration: Number.POSITIVE_INFINITY });
       } else {
         toast.error(error.response?.data?.message || '다운로드 요청 실패');
       }

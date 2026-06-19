@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import { Trash2, Video, Film, FileText, MonitorPlay, Play, AlertCircle, CheckCircle2, Loader2, Upload } from 'lucide-react';
+import { Trash2, Video, Film, FileText, MonitorPlay, Play, AlertCircle, CheckCircle2, Loader2, Upload, AlertTriangle } from 'lucide-react';
 import api from '@/api';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
@@ -112,12 +112,6 @@ export const Recordings = () => {
   const [recordings, setRecordings] = useState<Record<string, any[]>>({});
   const [activeTab, setActiveTab] = useState<'live' | 'vod' | 'other'>('live');
   const [playingVideo, setPlayingVideo] = useState<{ filename: string; title: string } | null>(null);
-  const [confirmConfig, setConfirmConfig] = useState<{
-    title: string;
-    description: string | React.ReactNode;
-    onConfirm: () => void;
-    isDestructive?: boolean;
-  } | null>(null);
   
   const [uploadConfig, setUploadConfig] = useState<{
     id: string;
@@ -259,20 +253,36 @@ export const Recordings = () => {
   }, [recordings, otherCount]);
 
   const handleDelete = (filename: string) => {
-    setConfirmConfig({
-      title: '녹화본 삭제',
-      description: '정말 이 녹화본 파일을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.',
-      isDestructive: true,
-      onConfirm: async () => {
-        try {
-          await api.post('/recordings/delete', { filename });
-          toast.success('삭제되었습니다.');
-          fetchRecordings();
-        } catch (error: any) {
-          toast.error(error.response?.data?.message || '삭제 실패');
-        }
-      }
-    });
+    toast.custom((t) => (
+      <div className="flex flex-col gap-3 w-full bg-background border border-border p-4 rounded-lg shadow-lg">
+        <div className="flex items-start gap-3">
+          <AlertTriangle className="h-5 w-5 text-red-500 mt-0.5 shrink-0" />
+          <div className="flex flex-col gap-1">
+            <span className="font-semibold text-foreground text-sm">녹화본 삭제</span>
+            <span className="text-xs text-muted-foreground leading-relaxed">
+              정말 이 녹화본 파일을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.
+            </span>
+          </div>
+        </div>
+        <div className="flex justify-end gap-2 mt-1">
+          <Button size="sm" variant="outline" onClick={() => toast.dismiss(t)}>
+            취소
+          </Button>
+          <Button size="sm" variant="destructive" onClick={async () => {
+            toast.dismiss(t);
+            try {
+              await api.post('/recordings/delete', { filename });
+              toast.success('삭제되었습니다.');
+              fetchRecordings();
+            } catch (error: any) {
+              toast.error(error.response?.data?.message || '삭제 실패');
+            }
+          }}>
+            삭제
+          </Button>
+        </div>
+      </div>
+    ), { duration: Number.POSITIVE_INFINITY });
   };
 
   const handleYoutubeUploadClick = (id: string, filename: string) => {
@@ -544,28 +554,6 @@ export const Recordings = () => {
               </Button>
             </DialogFooter>
           </form>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={!!confirmConfig} onOpenChange={(open) => { if (!open) setConfirmConfig(null); }}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>{confirmConfig?.title}</DialogTitle>
-            <DialogDescription>
-              {confirmConfig?.description}
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter className="flex justify-end gap-2 mt-4">
-            <Button variant="outline" onClick={() => setConfirmConfig(null)}>
-              취소
-            </Button>
-            <Button variant={confirmConfig?.isDestructive ? "destructive" : "default"} onClick={() => {
-              confirmConfig?.onConfirm();
-              setConfirmConfig(null);
-            }}>
-              확인
-            </Button>
-          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
