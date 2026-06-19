@@ -102,7 +102,7 @@ export const Vod = () => {
                     <span className="font-bold text-base">{res.resolution}</span>
                   </div>
                   <div className="flex items-center gap-3 text-muted-foreground group-hover:text-primary">
-                    <span className="text-xs">{res.quality}</span>
+                    <span className="text-xs font-medium">{res.width && res.height ? `${res.width}x${res.height}` : res.quality}</span>
                     <Download className="h-4 w-4" />
                   </div>
                 </Button>
