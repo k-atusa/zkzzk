@@ -138,8 +138,8 @@ export const Settings = () => {
     const searchParams = new URLSearchParams(window.location.search);
     if (searchParams.get('youtube') === 'success') {
       const channelName = searchParams.get('channelName');
-      toast.success(channelName 
-        ? `YouTube 인증이 완료되었습니다. (채널: ${channelName})` 
+      toast.success(channelName
+        ? `YouTube 인증이 완료되었습니다. (채널: ${channelName})`
         : 'YouTube 인증이 완료되었습니다.'
       );
       window.history.replaceState({}, document.title, window.location.pathname);
@@ -596,8 +596,8 @@ export const Settings = () => {
             {/* Verification status */}
             {cookieVerified !== null && (
               <div className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium ${cookieVerified.valid
-                  ? 'bg-green-500/10 text-green-600 border border-green-500/20'
-                  : 'bg-red-500/10 text-red-500 border border-red-500/20'
+                ? 'bg-green-500/10 text-green-600 border border-green-500/20'
+                : 'bg-red-500/10 text-red-500 border border-red-500/20'
                 }`}>
                 {cookieVerified.valid ? (
                   <>
@@ -623,11 +623,11 @@ export const Settings = () => {
                 저장
               </Button>
               {user.has_cookies && (
-                <Button 
-                  type="button" 
-                  variant="outline" 
+                <Button
+                  type="button"
+                  variant="outline"
                   className="text-red-500 border-red-500/50 hover:bg-red-500/10 hover:text-red-600"
-                  onClick={handleClearCookies} 
+                  onClick={handleClearCookies}
                   disabled={cookieSaveLoading}
                 >
                   쿠키 초기화
@@ -646,120 +646,155 @@ export const Settings = () => {
           </CardTitle>
           <CardDescription>개인 디스코드 Webhook 및 YouTube 자동 업로드 연동을 관리합니다.</CardDescription>
         </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="discordWebhookUrl">Discord Webhook URL</Label>
-                <Input
-                  id="discordWebhookUrl"
-                  value={discordWebhookUrl}
-                  onChange={e => setDiscordWebhookUrl(e.target.value)}
-                  placeholder="https://discord.com/api/webhooks/..."
-                />
-                <p className="text-xs text-muted-foreground">
-                  디스코드 웹훅을 등록하면 녹화 시작/종료 시 알림을 받을 수 있습니다.
-                </p>
-              </div>
-              <div className="space-y-2">
-                <Label>알림 메시지 형태</Label>
-                <div className="flex gap-4">
-                  <label className={`flex items-center justify-center px-4 py-2 border rounded-md cursor-pointer transition-colors ${discordWebhookUseEmbed ? 'bg-primary/10 border-primary text-primary' : 'border-input hover:bg-accent'}`}>
-                    <input type="radio" className="hidden" checked={discordWebhookUseEmbed} onChange={() => setDiscordWebhookUseEmbed(true)} />
-                    <span className="text-sm font-medium">카드 형태 (Embed)</span>
-                  </label>
-                  <label className={`flex items-center justify-center px-4 py-2 border rounded-md cursor-pointer transition-colors ${!discordWebhookUseEmbed ? 'bg-primary/10 border-primary text-primary' : 'border-input hover:bg-accent'}`}>
-                    <input type="radio" className="hidden" checked={!discordWebhookUseEmbed} onChange={() => setDiscordWebhookUseEmbed(false)} />
-                    <span className="text-sm font-medium">단순 텍스트 형태</span>
-                  </label>
-                </div>
-              </div>
-            </div>
-            <div className="space-y-2 mt-4 pt-4 border-t border-border">
-              <div className="flex flex-col sm:flex-row gap-4 sm:items-center justify-between mb-2">
-                <Label htmlFor="youtubeClientId">YouTube Client ID</Label>
-                <div className="flex flex-wrap items-center gap-4">
-                  <div className="flex items-center gap-2">
-                    <Label htmlFor="youtubeAutoUpload" className="text-sm cursor-pointer text-muted-foreground font-normal">
-                      자동 업로드 활성화
-                    </Label>
-                    <Switch
-                      id="youtubeAutoUpload"
-                      checked={youtubeAutoUpload}
-                      onCheckedChange={setYoutubeAutoUpload}
-                    />
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Label htmlFor="deleteAfterUpload" className="text-sm cursor-pointer text-muted-foreground font-normal">
-                      업로드 후 자동 삭제
-                    </Label>
-                    <Switch
-                      id="deleteAfterUpload"
-                      checked={deleteAfterUpload}
-                      onCheckedChange={setDeleteAfterUpload}
-                    />
-                  </div>
-                </div>
-              </div>
+        <CardContent className="space-y-4">
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="discordWebhookUrl">Discord Webhook URL</Label>
               <Input
-                id="youtubeClientId"
-                value={youtubeClientId}
-                onChange={e => setYoutubeClientId(e.target.value)}
-                placeholder="Google Cloud Console에서 발급받은 Client ID"
+                id="discordWebhookUrl"
+                value={discordWebhookUrl}
+                onChange={e => setDiscordWebhookUrl(e.target.value)}
+                placeholder="https://discord.com/api/webhooks/..."
               />
+              <p className="text-xs text-muted-foreground">
+                디스코드 웹훅을 등록하면 녹화 시작/종료 시 알림을 받을 수 있습니다.
+              </p>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="youtubeClientSecret">YouTube Client Secret</Label>
-              <div className="relative">
-                <Input
-                  id="youtubeClientSecret"
-                  value={youtubeClientSecret}
-                  onChange={e => setYoutubeClientSecret(e.target.value)}
-                  placeholder="Google Cloud Console에서 발급받은 Client Secret"
-                  type={showYoutubeClientSecret ? 'text' : 'password'}
-                />
-                <button
-                  type="button"
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                  onClick={() => setShowYoutubeClientSecret(v => !v)}
-                >
-                  {showYoutubeClientSecret ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </button>
+              <Label>알림 메시지 형태</Label>
+              <div className="flex gap-4">
+                <label className={`flex items-center justify-center px-4 py-2 border rounded-md cursor-pointer transition-colors ${discordWebhookUseEmbed ? 'bg-primary/10 border-primary text-primary' : 'border-input hover:bg-accent'}`}>
+                  <input type="radio" className="hidden" checked={discordWebhookUseEmbed} onChange={() => setDiscordWebhookUseEmbed(true)} />
+                  <span className="text-sm font-medium">카드 형태 (Embed)</span>
+                </label>
+                <label className={`flex items-center justify-center px-4 py-2 border rounded-md cursor-pointer transition-colors ${!discordWebhookUseEmbed ? 'bg-primary/10 border-primary text-primary' : 'border-input hover:bg-accent'}`}>
+                  <input type="radio" className="hidden" checked={!discordWebhookUseEmbed} onChange={() => setDiscordWebhookUseEmbed(false)} />
+                  <span className="text-sm font-medium">단순 텍스트 형태</span>
+                </label>
               </div>
-              <div className="text-xs text-muted-foreground mt-2 mb-2 p-3 bg-muted rounded-md space-y-3">
-                <div>
-                  <p className="font-semibold mb-1 text-foreground">💡 자동 업로드 설정 방법:</p>
-                  <ol className="list-decimal pl-4 space-y-1">
-                    <li><a href="https://console.cloud.google.com/" target="_blank" rel="noreferrer" className="text-primary hover:underline">Google Cloud Console</a>에서 프로젝트를 생성합니다.</li>
-                    <li><strong>YouTube Data API v3</strong>를 활성화합니다.</li>
-                    <li>OAuth 동의 화면을 설정하고, <strong>웹 애플리케이션</strong> 유형의 사용자 인증 정보를 만듭니다.</li>
-                    <li>승인된 리디렉션 URI에 <code className="select-all font-mono bg-muted px-1.5 py-0.5 rounded text-xs font-semibold text-primary border border-primary/10">{getCallbackUrl()}</code> 를 추가합니다.</li>
-                    <li>발급받은 Client ID와 Client Secret을 위에 입력하고 <strong>저장</strong>을 누릅니다.</li>
-                    <li><strong>YouTube 인증하기</strong> 버튼을 눌러 계정을 연동합니다.</li>
-                  </ol>
+            </div>
+
+            {/* 디스코드 알림 미리보기 */}
+            <div className="mt-4 p-4 bg-[#313338] text-[#dbdee1] rounded-md font-sans max-w-md shadow-inner text-sm border border-[#1e1f22]">
+              <p className="text-xs text-[#949ba4] mb-3 uppercase font-bold tracking-wider">미리보기</p>
+              <div className="flex gap-4">
+                <div className="w-10 h-10 rounded-full bg-[#5865F2] flex-shrink-0 flex items-center justify-center text-white font-bold text-lg">
+                  Z
                 </div>
-                <div className="border-t border-border/60 pt-2.5">
-                  <p className="font-semibold mb-1 text-amber-600 dark:text-amber-500">⚠️ '403 access_denied' (인증 절차 미완료) 오류 해결 방법:</p>
-                  <ul className="list-disc pl-4 space-y-1">
-                    <li>Google Cloud Console의 <strong>Google 인증 플랫폼 &gt; 대상 &gt; OAuth 사용자 한도 &gt; 테스트 사용자</strong> 화면으로 이동합니다.</li>
-                    <li>해당 화면에서 <strong>ADD USERS</strong>를 클릭하고, 인증하려는 Google 계정(이메일 주소)을 등록한 뒤 다시 시도해 주세요.</li>
-                    <li>발급받은 <strong>API Key(OAuth 클라이언트)의 소유자 계정</strong>과 <strong>유튜브 인증을 진행하는 로그인 계정</strong>이 일치하는지 확인해 주세요. (서로 다른 계정일 경우 테스트 사용자 목록에 추가해야 합니다.)</li>
-                    <li>또는 앱 게시 상태가 '테스트 중'이기 때문이므로 <strong>앱 게시 (Publish App)</strong>를 눌러 프로덕션으로 전환하셔도 무방합니다. (보안 경고 발생 시 '고급 &gt; 이동' 클릭)</li>
-                  </ul>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="font-medium text-white text-[15px]">ZKZZK Bot</span>
+                    <span className="text-[10px] bg-[#5865F2] text-white px-1 py-[1px] rounded leading-none flex items-center justify-center uppercase font-bold">Bot</span>
+                    <span className="text-xs text-[#949ba4] font-medium ml-1">오늘 오후 3:00</span>
+                  </div>
+                  {discordWebhookUseEmbed ? (
+                    <div className="bg-[#2b2d31] border-l-4 border-blue-500 rounded p-3 mt-1.5 inline-block min-w-[250px]">
+                      <p className="font-bold text-white text-base mb-1.5">🎥 업로드 완료</p>
+                      <div className="text-[13px] space-y-1">
+                        <p><strong>스트리머:</strong> XXX</p>
+                        <p><strong>제목:</strong> 테스트 영상</p>
+                        <p><strong>URL:</strong> <span className="text-[#00a8fc] cursor-pointer hover:underline">https://youtu.be/test</span></p>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="whitespace-pre-wrap text-[15px] leading-relaxed mt-0.5">
+                      <span className="font-bold">🎥 업로드 완료</span>{'\n'}
+                      스트리머: XXX{'\n'}
+                      제목: 테스트 영상{'\n'}
+                      URL: <span className="text-[#00a8fc] cursor-pointer hover:underline">https://youtu.be/test</span>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
-            <div className="flex gap-2">
-              <Button onClick={handleSaveUserSettings} disabled={webhookLoading}>
-                {webhookLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                저장
+
+          </div>
+          <div className="space-y-2 mt-4 pt-4 border-t border-border">
+            <div className="flex flex-col sm:flex-row gap-4 sm:items-center justify-between mb-2">
+              <Label htmlFor="youtubeClientId">YouTube Client ID</Label>
+              <div className="flex flex-wrap items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <Label htmlFor="youtubeAutoUpload" className="text-sm cursor-pointer text-muted-foreground font-normal">
+                    자동 업로드 활성화
+                  </Label>
+                  <Switch
+                    id="youtubeAutoUpload"
+                    checked={youtubeAutoUpload}
+                    onCheckedChange={setYoutubeAutoUpload}
+                  />
+                </div>
+                <div className="flex items-center gap-2">
+                  <Label htmlFor="deleteAfterUpload" className="text-sm cursor-pointer text-muted-foreground font-normal">
+                    업로드 후 자동 삭제
+                  </Label>
+                  <Switch
+                    id="deleteAfterUpload"
+                    checked={deleteAfterUpload}
+                    onCheckedChange={setDeleteAfterUpload}
+                  />
+                </div>
+              </div>
+            </div>
+            <Input
+              id="youtubeClientId"
+              value={youtubeClientId}
+              onChange={e => setYoutubeClientId(e.target.value)}
+              placeholder="Google Cloud Console에서 발급받은 Client ID"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="youtubeClientSecret">YouTube Client Secret</Label>
+            <div className="relative">
+              <Input
+                id="youtubeClientSecret"
+                value={youtubeClientSecret}
+                onChange={e => setYoutubeClientSecret(e.target.value)}
+                placeholder="Google Cloud Console에서 발급받은 Client Secret"
+                type={showYoutubeClientSecret ? 'text' : 'password'}
+              />
+              <button
+                type="button"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                onClick={() => setShowYoutubeClientSecret(v => !v)}
+              >
+                {showYoutubeClientSecret ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
+            </div>
+            <div className="text-xs text-muted-foreground mt-2 mb-2 p-3 bg-muted rounded-md space-y-3">
+              <div>
+                <p className="font-semibold mb-1 text-foreground">💡 자동 업로드 설정 방법:</p>
+                <ol className="list-decimal pl-4 space-y-1">
+                  <li><a href="https://console.cloud.google.com/" target="_blank" rel="noreferrer" className="text-primary hover:underline">Google Cloud Console</a>에서 프로젝트를 생성합니다.</li>
+                  <li><strong>YouTube Data API v3</strong>를 활성화합니다.</li>
+                  <li>OAuth 동의 화면을 설정하고, <strong>웹 애플리케이션</strong> 유형의 사용자 인증 정보를 만듭니다.</li>
+                  <li>승인된 리디렉션 URI에 <code className="select-all font-mono bg-muted px-1.5 py-0.5 rounded text-xs font-semibold text-primary border border-primary/10">{getCallbackUrl()}</code> 를 추가합니다.</li>
+                  <li>발급받은 Client ID와 Client Secret을 위에 입력하고 <strong>저장</strong>을 누릅니다.</li>
+                  <li><strong>YouTube 인증하기</strong> 버튼을 눌러 계정을 연동합니다.</li>
+                </ol>
+              </div>
+              <div className="border-t border-border/60 pt-2.5">
+                <p className="font-semibold mb-1 text-amber-600 dark:text-amber-500">⚠️ '403 access_denied' (인증 절차 미완료) 오류 해결 방법:</p>
+                <ul className="list-disc pl-4 space-y-1">
+                  <li>Google Cloud Console의 <strong>Google 인증 플랫폼 &gt; 대상 &gt; OAuth 사용자 한도 &gt; 테스트 사용자</strong> 화면으로 이동합니다.</li>
+                  <li>해당 화면에서 <strong>ADD USERS</strong>를 클릭하고, 인증하려는 Google 계정(이메일 주소)을 등록한 뒤 다시 시도해 주세요.</li>
+                  <li>발급받은 <strong>API Key(OAuth 클라이언트)의 소유자 계정</strong>과 <strong>유튜브 인증을 진행하는 로그인 계정</strong>이 일치하는지 확인해 주세요. (서로 다른 계정일 경우 테스트 사용자 목록에 추가해야 합니다.)</li>
+                  <li>또는 앱 게시 상태가 '테스트 중'이기 때문이므로 <strong>앱 게시 (Publish App)</strong>를 눌러 프로덕션으로 전환하셔도 무방합니다. (보안 경고 발생 시 '고급 &gt; 이동' 클릭)</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <Button onClick={handleSaveUserSettings} disabled={webhookLoading}>
+              {webhookLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+              저장
+            </Button>
+            {youtubeClientId && youtubeClientSecret && (
+              <Button variant={youtubeConnected ? "secondary" : "default"} onClick={handleYouTubeAuth}>
+                {youtubeConnected ? 'YouTube 재인증' : 'YouTube 인증하기'}
               </Button>
-              {youtubeClientId && youtubeClientSecret && (
-                <Button variant={youtubeConnected ? "secondary" : "default"} onClick={handleYouTubeAuth}>
-                  {youtubeConnected ? 'YouTube 재인증' : 'YouTube 인증하기'}
-                </Button>
-              )}
-            </div>
-          </CardContent>
+            )}
+          </div>
+        </CardContent>
       </Card>
 
       {/* User Management Card (Admin only) */}
