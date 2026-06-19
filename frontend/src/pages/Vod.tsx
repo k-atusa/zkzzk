@@ -89,22 +89,23 @@ export const Vod = () => {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="flex flex-col gap-3 max-w-sm">
+              <h3 className="text-sm font-medium text-muted-foreground mb-1">다운로드 화질 선택</h3>
               {vodInfo.resolutions.map((res: any) => (
-                <Card key={res.resolution} className="flex flex-col justify-between bg-muted/40">
-                  <CardContent className="pt-6">
-                    <div className="flex justify-between items-center mb-4">
-                      <span className="text-xl font-bold">{res.resolution}</span>
-                      <span className="text-sm text-muted-foreground">{res.quality}</span>
-                    </div>
-                    <div className="text-sm text-muted-foreground mb-6">
-                      예상 크기: {res.estimated_size_mb ? `${res.estimated_size_mb} MB` : '알 수 없음'}
-                    </div>
-                    <Button className="w-full" onClick={() => handleDownload(res.resolution)}>
-                      <Download className="mr-2 h-4 w-4" /> 다운로드
-                    </Button>
-                  </CardContent>
-                </Card>
+                <Button 
+                  key={res.resolution} 
+                  variant="outline" 
+                  className="w-full flex justify-between items-center h-12 px-4 hover:border-primary/50 hover:bg-primary/5 transition-colors" 
+                  onClick={() => handleDownload(res.resolution)}
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold text-base">{res.resolution}</span>
+                  </div>
+                  <div className="flex items-center gap-3 text-muted-foreground group-hover:text-primary">
+                    <span className="text-xs">{res.quality}</span>
+                    <Download className="h-4 w-4" />
+                  </div>
+                </Button>
               ))}
             </div>
           </CardContent>

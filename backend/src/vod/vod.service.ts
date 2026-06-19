@@ -95,10 +95,25 @@ export class VodService {
         const media = playbackJson.media || [];
         if (!media.length) return null;
 
-        const masterM3u8Url = media[0].path;
         const streamUrls: any = {};
-        streamUrls['1080p'] = { download_url: masterM3u8Url, width: 1920, height: 1080, bandwidth: 0, quality: '1080p', download_type: 'm3u8' };
-        return streamUrls;
+        for (const m of media) {
+          if (m.encodingTrack && Array.isArray(m.encodingTrack)) {
+            for (const track of m.encodingTrack) {
+              const quality = track.encodingTrackId || `${track.videoHeight}p`;
+              streamUrls[quality] = {
+                download_url: track.path || m.path,
+                width: track.videoWidth || 0,
+                height: track.videoHeight || 0,
+                bandwidth: track.videoBitRate || 0,
+                quality: quality,
+                download_type: m.protocol === 'HLS' ? 'm3u8' : 'dash'
+              };
+            }
+          } else {
+            streamUrls['1080p'] = { download_url: m.path, width: 1920, height: 1080, bandwidth: 0, quality: '1080p', download_type: 'm3u8' };
+          }
+        }
+        if (Object.keys(streamUrls).length > 0) return streamUrls;
       } catch (e) { return null; }
     }
 
