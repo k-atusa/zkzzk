@@ -349,10 +349,19 @@ export const Settings = () => {
   if (!user) return null;
 
   return (
-    <div className="space-y-6">
-      <h2 className="text-3xl font-bold tracking-tight">설정</h2>
+    <div className="space-y-10 pb-10">
+      <div>
+        <h2 className="text-3xl font-bold tracking-tight mb-2">설정</h2>
+        <p className="text-muted-foreground">계정 정보, 화면 출력 및 서비스 연동을 관리합니다.</p>
+      </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      {/* 1. 계정 및 보안 */}
+      <section className="space-y-4">
+        <div className="flex items-center gap-2 pb-2 border-b border-border">
+          <Lock className="h-5 w-5 text-primary" />
+          <h3 className="text-xl font-semibold">계정 및 보안</h3>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
         {/* Password Change Card */}
         <Card>
           <CardHeader>
@@ -483,8 +492,16 @@ export const Settings = () => {
             )}
           </CardContent>
         </Card>
-      </div>
+        </div>
+      </section>
 
+      {/* 2. 화면 및 시스템 설정 */}
+      <section className="space-y-4">
+        <div className="flex items-center gap-2 pb-2 border-b border-border">
+          <MonitorPlay className="h-5 w-5 text-primary" />
+          <h3 className="text-xl font-semibold">화면 및 시스템 설정</h3>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
       {/* 화면 배율 설정 Card */}
       <Card>
         <CardHeader>
@@ -554,6 +571,17 @@ export const Settings = () => {
           </div>
         </CardContent>
       </Card>
+      </div>
+      </section>
+
+      {/* 3. 외부 서비스 연동 */}
+      <section className="space-y-4">
+        <div className="flex items-center gap-2 pb-2 border-b border-border">
+          <Bell className="h-5 w-5 text-primary" />
+          <h3 className="text-xl font-semibold">외부 서비스 연동</h3>
+        </div>
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 pt-2 items-start">
+          <div className="space-y-6">
 
       {/* Chzzk Cookie Card */}
       <Card>
@@ -637,13 +665,13 @@ export const Settings = () => {
         </CardContent>
       </Card>
 
-      {/* User Settings Card */}
+      {/* Discord Card */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Bell className="h-5 w-5" /> 외부 서비스 연동 설정
+            <Bell className="h-5 w-5" /> 디스코드 연동
           </CardTitle>
-          <CardDescription>개인 디스코드 Webhook 및 YouTube 자동 업로드 연동을 관리합니다.</CardDescription>
+          <CardDescription>개인 디스코드 Webhook을 등록하여 알림을 받습니다.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-4">
@@ -709,7 +737,21 @@ export const Settings = () => {
             </div>
 
           </div>
-          <div className="space-y-2 mt-4 pt-4 border-t border-border">
+        </CardContent>
+      </Card>
+      </div>
+
+      <div className="space-y-6">
+      {/* YouTube Auto Upload Card */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <MonitorPlay className="h-5 w-5" /> YouTube 자동 업로드
+          </CardTitle>
+          <CardDescription>녹화된 영상을 YouTube에 자동으로 업로드하도록 설정합니다.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
             <div className="flex flex-col sm:flex-row gap-4 sm:items-center justify-between mb-2">
               <Label htmlFor="youtubeClientId">YouTube Client ID</Label>
               <div className="flex flex-wrap items-center gap-4">
@@ -794,9 +836,20 @@ export const Settings = () => {
           </div>
         </CardContent>
       </Card>
+      </div>
+      </div>
+      </section>
+
+      {/* 4. 관리자 메뉴 */}
+      {user.is_admin && (
+        <section className="space-y-4">
+          <div className="flex items-center gap-2 pb-2 border-b border-border">
+            <Users className="h-5 w-5 text-primary" />
+            <h3 className="text-xl font-semibold">관리자 메뉴</h3>
+          </div>
+          <div className="grid grid-cols-1 gap-6 pt-2">
 
       {/* User Management Card (Admin only) */}
-      {user.is_admin && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -892,6 +945,8 @@ export const Settings = () => {
             </div>
           </CardContent>
         </Card>
+        </div>
+        </section>
       )}
 
       <Dialog open={!!confirmConfig} onOpenChange={(open) => { if (!open) setConfirmConfig(null); }}>
