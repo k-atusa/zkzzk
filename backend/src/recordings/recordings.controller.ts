@@ -6,7 +6,7 @@ import * as path from 'path';
 @Controller('recordings')
 @UseGuards(JwtAuthGuard)
 export class RecordingsController {
-  constructor(private readonly recordingsService: RecordingsService) {}
+  constructor(private readonly recordingsService: RecordingsService) { }
 
   @Get()
   async getRecordings(@Req() req: any) {
@@ -23,7 +23,7 @@ export class RecordingsController {
   @Get('download/*')
   serveRecording(@Req() req: any, @Res() res: any) {
     let filename = req.params[0] || req.params['0'];
-    
+
     if (!filename) {
       // Try extracting from req.path
       const pathParts = req.path.split('/download/');
@@ -47,7 +47,7 @@ export class RecordingsController {
     }
 
     if (!filename) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         message: 'Filename is required',
         debug: {
           originalUrl: req.originalUrl,
@@ -57,7 +57,7 @@ export class RecordingsController {
         }
       });
     }
-    
+
     const normalized = path.normalize(filename).replace(/\\/g, '/');
     if (normalized.startsWith('../') || normalized.startsWith('/')) {
       return res.status(403).json({ message: 'Forbidden' });
@@ -65,13 +65,13 @@ export class RecordingsController {
     if (!req.user.is_admin && !normalized.startsWith(`${req.user.username}/`)) {
       return res.status(403).json({ message: 'Forbidden' });
     }
-    
+
     const filepath = path.join(process.cwd(), '..', 'downloads', filename);
     const fs = require('fs');
     if (!fs.existsSync(filepath)) {
       return res.status(404).json({ message: 'File not found', filepath });
     }
-    
+
     return res.sendFile(filepath);
   }
 }
