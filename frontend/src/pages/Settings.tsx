@@ -431,36 +431,37 @@ export const Settings = () => {
             <CardDescription>보안을 위해 2차 인증을 설정하세요.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex items-center justify-between p-4 border border-border rounded-lg">
-              <div className="flex items-center space-x-4">
-                {user.totp_enabled ? <ShieldCheck className="h-6 w-6 text-green-500" /> : <ShieldAlert className="h-6 w-6 text-yellow-500" />}
-                <div>
-                  <p className="font-medium">{user.totp_enabled ? '2차 인증 사용 중' : '2차 인증 미사용'}</p>
-                  <p className="text-sm text-muted-foreground">
-                    {user.totp_enabled ? '계정이 안전하게 보호되고 있습니다.' : '인증기 앱을 사용하여 OTP를 등록하세요.'}
-                  </p>
+            {!showSetup && (
+              <div className="flex items-center justify-between p-4 border border-border rounded-lg">
+                <div className="flex items-center space-x-4">
+                  {user.totp_enabled ? <ShieldCheck className="h-6 w-6 text-green-500" /> : <ShieldAlert className="h-6 w-6 text-yellow-500" />}
+                  <div>
+                    <p className="font-medium">{user.totp_enabled ? '2차 인증 사용 중' : '2차 인증 미사용'}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {user.totp_enabled ? '계정이 안전하게 보호되고 있습니다.' : '인증기 앱을 사용하여 OTP를 등록하세요.'}
+                    </p>
+                  </div>
                 </div>
+                <Switch
+                  checked={user.totp_enabled}
+                  onCheckedChange={(checked) => checked ? handleSetup2FA() : handleDisable2FA()}
+                />
               </div>
-              <Switch
-                checked={user.totp_enabled}
-                onCheckedChange={(checked) => checked ? handleSetup2FA() : handleDisable2FA()}
-              />
-            </div>
+            )}
 
             {showSetup && (
-              <div className="mt-6 p-6 border border-border rounded-lg bg-muted/40">
-                <h3 className="text-lg font-medium mb-4">OTP 설정</h3>
-                <div className="flex flex-col xl:flex-row gap-6 items-start">
-                  <div className="bg-white p-2 rounded-lg shrink-0 mx-auto xl:mx-0">
-                    <img src={qrCode} alt="QR Code" className="w-40 h-40" />
+              <div className="mt-0 p-4 border border-border rounded-lg bg-muted/40">
+                <div className="flex flex-col xl:flex-row gap-4 items-center xl:items-start">
+                  <div className="bg-white p-1.5 rounded-lg shrink-0">
+                    <img src={qrCode} alt="QR Code" className="w-32 h-32" />
                   </div>
-                  <div className="flex-1 w-full">
-                    <p className="text-xs text-muted-foreground mb-4">
-                      Google Authenticator 앱 등으로 QR 코드를 스캔한 후 코드를 입력하세요.
+                  <div className="flex-1 w-full space-y-3">
+                    <p className="text-xs text-muted-foreground leading-snug">
+                      Google Authenticator 등 앱으로 좌측 QR 코드를 스캔한 후 인증 코드를 입력하세요.
                     </p>
-                    <form onSubmit={handleVerify2FA} className="space-y-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="otp">인증 코드</Label>
+                    <form onSubmit={handleVerify2FA} className="space-y-3">
+                      <div className="space-y-1.5">
+                        <Label htmlFor="otp" className="text-xs">인증 코드</Label>
                         <Input
                           id="otp"
                           value={otp}
@@ -468,11 +469,12 @@ export const Settings = () => {
                           placeholder="000000"
                           required
                           maxLength={6}
+                          className="h-9"
                         />
                       </div>
                       <div className="flex space-x-2">
-                        <Button type="submit">확인</Button>
-                        <Button type="button" variant="outline" onClick={() => setShowSetup(false)}>취소</Button>
+                        <Button type="submit" className="h-9 text-sm">확인</Button>
+                        <Button type="button" variant="outline" className="h-9 text-sm" onClick={() => setShowSetup(false)}>취소</Button>
                       </div>
                     </form>
                   </div>
