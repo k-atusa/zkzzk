@@ -249,5 +249,6 @@
   [data-sonner-toaster] [data-sonner-toast] {
     padding: 1rem !important;
     border-radius: var(--radius) !important;
+    font-family: var(--font-sans) !important;
   }
 }
