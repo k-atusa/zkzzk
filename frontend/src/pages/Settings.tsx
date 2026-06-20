@@ -751,32 +751,33 @@ export const Settings = () => {
           <CardDescription>녹화된 영상을 YouTube에 자동으로 업로드하도록 설정합니다.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <div className="flex flex-col sm:flex-row gap-4 sm:items-center justify-between mb-2">
-              <Label htmlFor="youtubeClientId">YouTube Client ID</Label>
-              <div className="flex flex-wrap items-center gap-4">
-                <div className="flex items-center gap-2">
-                  <Label htmlFor="youtubeAutoUpload" className="text-sm cursor-pointer text-muted-foreground font-normal">
-                    자동 업로드 활성화
-                  </Label>
-                  <Switch
-                    id="youtubeAutoUpload"
-                    checked={youtubeAutoUpload}
-                    onCheckedChange={(val) => { setYoutubeAutoUpload(val); handleSaveUserSettings({ youtube_auto_upload: val }); }}
-                  />
-                </div>
-                <div className="flex items-center gap-2">
-                  <Label htmlFor="deleteAfterUpload" className="text-sm cursor-pointer text-muted-foreground font-normal">
-                    업로드 후 자동 삭제
-                  </Label>
-                  <Switch
-                    id="deleteAfterUpload"
-                    checked={deleteAfterUpload}
-                    onCheckedChange={(val) => { setDeleteAfterUpload(val); handleSaveUserSettings({ delete_after_upload: val }); }}
-                  />
-                </div>
+          <div className="grid grid-cols-1 gap-6 mb-4">
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5 pr-4">
+                <Label htmlFor="youtubeAutoUpload" className="text-sm font-medium cursor-pointer">자동 업로드 활성화</Label>
+                <p className="text-xs text-muted-foreground">녹화가 완료되면 설정된 YouTube 계정으로 영상을 자동 업로드합니다.</p>
               </div>
+              <Switch
+                id="youtubeAutoUpload"
+                checked={youtubeAutoUpload}
+                onCheckedChange={(val) => { setYoutubeAutoUpload(val); handleSaveUserSettings({ youtube_auto_upload: val }); }}
+              />
             </div>
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5 pr-4">
+                <Label htmlFor="deleteAfterUpload" className="text-sm font-medium cursor-pointer">업로드 성공 시 자동 삭제</Label>
+                <p className="text-xs text-muted-foreground">YouTube 업로드가 성공적으로 완료되면 서버 용량 확보를 위해 원본 영상을 삭제합니다.</p>
+              </div>
+              <Switch
+                id="deleteAfterUpload"
+                checked={deleteAfterUpload}
+                onCheckedChange={(val) => { setDeleteAfterUpload(val); handleSaveUserSettings({ delete_after_upload: val }); }}
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="youtubeClientId">YouTube Client ID</Label>
             <Input
               id="youtubeClientId"
               value={youtubeClientId}
