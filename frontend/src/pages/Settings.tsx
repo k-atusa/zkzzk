@@ -519,8 +519,8 @@ export const Settings = () => {
           </CardTitle>
           <CardDescription>라이브 영상과 다시보기 영상의 다운로드 화질을 선택합니다.</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl border border-border p-4 rounded-lg bg-muted/10">
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-2xl">
             <div className="space-y-2">
               <Label htmlFor="liveResolution">라이브 영상 화질</Label>
               <select
