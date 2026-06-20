@@ -90,7 +90,7 @@ export class StreamersService {
     } else {
       streamers = await this.prisma.streamer.findMany({ where: { user_id: user.id } });
     }
-    return streamers.map(s => ({
+    return streamers.map((s: any) => ({
       ...s,
       current_broadcast_tags: s.current_broadcast_tags ? JSON.parse(s.current_broadcast_tags) : []
     }));

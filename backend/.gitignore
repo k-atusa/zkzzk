@@ -1,5 +1,5 @@
 *.db
-
+generated/
 # Logs
 logs
 *.log

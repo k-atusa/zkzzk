@@ -121,7 +121,7 @@ export class AuthService {
     const users = await this.prisma.user.findMany({
       select: { id: true, username: true, is_admin: true, created_at: true, nid_aut: true, nid_ses: true }
     });
-    return users.map(u => ({
+    return users.map((u: any) => ({
       id: u.id,
       username: u.username,
       is_admin: u.is_admin,
