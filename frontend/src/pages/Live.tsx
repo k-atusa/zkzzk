@@ -47,7 +47,7 @@ export const Live = () => {
     try {
       const res = await api.get('/auth/me');
       setHasCookies(res.data.has_cookies);
-    } catch (e) {}
+    } catch (e) { }
   };
 
   useEffect(() => {
@@ -232,11 +232,10 @@ export const Live = () => {
                             type="button"
                             disabled={isAdded || isAdding}
                             onClick={() => !isAdded && handleAddFromFollowing(ch)}
-                            className={`w-full flex items-center gap-3 px-3 py-2.5 text-left transition-colors ${
-                              isAdded
-                                ? 'opacity-50 cursor-not-allowed'
-                                : 'hover:bg-accent hover:text-accent-foreground cursor-pointer'
-                            }`}
+                            className={`w-full flex items-center gap-3 px-3 py-2.5 text-left transition-colors ${isAdded
+                              ? 'opacity-50 cursor-not-allowed'
+                              : 'hover:bg-accent hover:text-accent-foreground cursor-pointer'
+                              }`}
                           >
                             {ch.channelImageUrl ? (
                               <img

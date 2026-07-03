@@ -112,7 +112,7 @@ export const Recordings = () => {
   const [recordings, setRecordings] = useState<Record<string, any[]>>({});
   const [activeTab, setActiveTab] = useState<'live' | 'vod' | 'other'>('live');
   const [playingVideo, setPlayingVideo] = useState<{ filename: string; title: string } | null>(null);
-  
+
   const [uploadConfig, setUploadConfig] = useState<{
     id: string;
     filename: string;
@@ -148,10 +148,10 @@ export const Recordings = () => {
             <div className="flex flex-col gap-1">
               <span className="font-semibold text-foreground">{t('recordings.uploadComplete')}</span>
               {video_id && (
-                <a 
-                  href={`https://youtu.be/${video_id}`} 
-                  target="_blank" 
-                  rel="noopener noreferrer" 
+                <a
+                  href={`https://youtu.be/${video_id}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="text-blue-500 underline text-sm hover:text-blue-600 transition-colors mt-1"
                 >
                   {t('recordings.viewOnYoutube')}
@@ -170,8 +170,8 @@ export const Recordings = () => {
                   delete next[key];
                 }
               } else {
-                next[key] = next[key].map(r => 
-                  r.id === recordingId 
+                next[key] = next[key].map(r =>
+                  r.id === recordingId
                     ? { ...r, youtube_status: 'UPLOADED', youtube_video_id: video_id }
                     : r
                 );
@@ -226,13 +226,13 @@ export const Recordings = () => {
     if (!searchQuery.trim()) return recsMap;
     const query = searchQuery.toLowerCase().trim();
     const filtered: Record<string, any[]> = {};
-    
+
     Object.entries(recsMap).forEach(([streamerName, recs]) => {
       const isStreamerMatch = streamerName.toLowerCase().includes(query);
       if (isStreamerMatch) {
         filtered[streamerName] = recs;
       } else {
-        const matchingRecs = recs.filter(r => 
+        const matchingRecs = recs.filter(r =>
           (r.title && r.title.toLowerCase().includes(query)) ||
           (r.filename && r.filename.toLowerCase().includes(query))
         );
@@ -332,9 +332,9 @@ export const Recordings = () => {
     if (!uploadConfig || isUploading) return;
     setIsUploading(true);
     try {
-      const res = await api.post('/youtube/upload', { 
-        recordingId: uploadConfig.id, 
-        filePath: uploadConfig.filename, 
+      const res = await api.post('/youtube/upload', {
+        recordingId: uploadConfig.id,
+        filePath: uploadConfig.filename,
         title: uploadConfig.title,
         description: uploadConfig.description
       });
@@ -342,10 +342,10 @@ export const Recordings = () => {
         toast.success(
           <div className="flex flex-col gap-1">
             <span>{t('recordings.alreadyUploaded')}</span>
-            <a 
-              href={`https://youtu.be/${res.data.video_id}`} 
-              target="_blank" 
-              rel="noreferrer" 
+            <a
+              href={`https://youtu.be/${res.data.video_id}`}
+              target="_blank"
+              rel="noreferrer"
               className="text-blue-500 underline text-sm hover:text-blue-600 transition-colors"
             >
               {t('recordings.viewOnYoutube')}
@@ -364,9 +364,9 @@ export const Recordings = () => {
     }
   };
 
-  const currentCategoryRecordings = 
+  const currentCategoryRecordings =
     activeTab === 'live' ? filteredLiveRecordings :
-    activeTab === 'vod' ? filteredVodRecordings : filteredOtherRecordings;
+      activeTab === 'vod' ? filteredVodRecordings : filteredOtherRecordings;
 
   const hasRecordingsInActiveTab = Object.keys(currentCategoryRecordings).length > 0;
 
@@ -381,11 +381,10 @@ export const Recordings = () => {
         <div className="flex space-x-6 overflow-x-auto">
           <button
             onClick={() => setActiveTab('live')}
-            className={`pb-3 text-sm font-semibold border-b-2 transition-all flex items-center gap-2 relative ${
-              activeTab === 'live'
-                ? 'border-primary text-primary'
-                : 'border-transparent text-muted-foreground hover:text-foreground'
-            }`}
+            className={`pb-3 text-sm font-semibold border-b-2 transition-all flex items-center gap-2 relative ${activeTab === 'live'
+              ? 'border-primary text-primary'
+              : 'border-transparent text-muted-foreground hover:text-foreground'
+              }`}
           >
             <Video className="h-4 w-4" />
             {t('recordings.liveTab')}
@@ -397,11 +396,10 @@ export const Recordings = () => {
           </button>
           <button
             onClick={() => setActiveTab('vod')}
-            className={`pb-3 text-sm font-semibold border-b-2 transition-all flex items-center gap-2 relative ${
-              activeTab === 'vod'
-                ? 'border-primary text-primary'
-                : 'border-transparent text-muted-foreground hover:text-foreground'
-            }`}
+            className={`pb-3 text-sm font-semibold border-b-2 transition-all flex items-center gap-2 relative ${activeTab === 'vod'
+              ? 'border-primary text-primary'
+              : 'border-transparent text-muted-foreground hover:text-foreground'
+              }`}
           >
             <Film className="h-4 w-4" />
             {t('recordings.vodTab')}
@@ -414,11 +412,10 @@ export const Recordings = () => {
           {otherCount > 0 && (
             <button
               onClick={() => setActiveTab('other')}
-              className={`pb-3 text-sm font-semibold border-b-2 transition-all flex items-center gap-2 relative ${
-                activeTab === 'other'
-                  ? 'border-primary text-primary'
-                  : 'border-transparent text-muted-foreground hover:text-foreground'
-              }`}
+              className={`pb-3 text-sm font-semibold border-b-2 transition-all flex items-center gap-2 relative ${activeTab === 'other'
+                ? 'border-primary text-primary'
+                : 'border-transparent text-muted-foreground hover:text-foreground'
+                }`}
             >
               <FileText className="h-4 w-4" />
               {t('recordings.otherTab')}
@@ -484,7 +481,7 @@ export const Recordings = () => {
                     <TableRow key={i} className="hover:bg-muted/10 transition-colors">
                       <TableCell className="pl-6 py-4 font-medium">
                         <div className="flex flex-col gap-1">
-                          <div 
+                          <div
                             className="font-semibold text-foreground text-sm line-clamp-1 cursor-pointer hover:underline hover:text-primary transition-colors"
                             onClick={() => setPlayingVideo({ filename: r.filename, title: r.title })}
                           >

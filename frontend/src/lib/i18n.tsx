@@ -500,7 +500,7 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const t = (key: string, variables?: Record<string, string | number>): string => {
     const keys = key.split('.');
     let value: any = dictionary[language];
-    
+
     for (const k of keys) {
       if (value && typeof value === 'object' && k in value) {
         value = value[k];

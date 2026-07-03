@@ -23,7 +23,7 @@ export const Vod = () => {
         if (res.data.vod_resolution) {
           setUserResolution(res.data.vod_resolution);
         }
-      } catch (e) {}
+      } catch (e) { }
     };
     fetchSettings();
   }, []);
@@ -85,7 +85,7 @@ export const Vod = () => {
       if (userResolution && userResolution !== 'ask') {
         const targetQuality = userResolution;
         let targetRes = fetchedVodInfo.resolutions.find((r: any) => r.quality === targetQuality);
-        
+
         if (!targetRes && fetchedVodInfo.resolutions.length > 0) {
           targetRes = fetchedVodInfo.resolutions[0];
           toast.info(t('vod.qualityFallbackInfo', { quality: targetQuality, fallbackQuality: targetRes.quality }));
@@ -147,11 +147,11 @@ export const Vod = () => {
             <div className="flex flex-col gap-3 max-w-sm">
               <h3 className="text-sm font-medium text-muted-foreground mb-1">{t('vod.selectQuality')}</h3>
               {vodInfo.resolutions.map((res: any) => (
-                <Button 
-                   key={res.resolution} 
-                   variant="outline" 
-                   className="w-full flex justify-between items-center h-12 px-4 hover:border-primary/50 hover:bg-primary/5 transition-colors" 
-                   onClick={() => handleDownload(res.resolution)}
+                <Button
+                  key={res.resolution}
+                  variant="outline"
+                  className="w-full flex justify-between items-center h-12 px-4 hover:border-primary/50 hover:bg-primary/5 transition-colors"
+                  onClick={() => handleDownload(res.resolution)}
                 >
                   <div className="flex items-center gap-2">
                     <span className="font-bold text-base">{res.resolution}</span>
