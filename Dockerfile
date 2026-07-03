@@ -36,7 +36,7 @@ RUN apt-get update && apt-get install -y \
 
 # Set default environment variables
 ENV TZ=Asia/Seoul
-ENV DATABASE_URL="file:/app/backend/database.db"
+ENV DATABASE_URL="file:/app/backend/data/database.db"
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
 # Copy node_modules and built code from backend builder
