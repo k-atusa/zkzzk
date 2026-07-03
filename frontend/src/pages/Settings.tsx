@@ -716,11 +716,11 @@ export const Settings = () => {
             <div className="space-y-2">
               <Label>{language === 'ko' ? '알림 메시지 형태' : 'Notification Format'}</Label>
               <div className="flex gap-4">
-                <label className={`flex items-center justify-center px-4 py-2 border rounded-md cursor-pointer transition-colors ${discordWebhookUseEmbed ? 'bg-primary/10 border-primary text-primary' : 'border-input hover:bg-accent'}`}>
+                <label className={`flex items-center justify-center px-4 py-2 border rounded-lg cursor-pointer transition-colors ${discordWebhookUseEmbed ? 'bg-primary/10 border-primary text-primary' : 'border-input hover:bg-accent'}`}>
                   <input type="radio" className="hidden" checked={discordWebhookUseEmbed} onChange={() => { setDiscordWebhookUseEmbed(true); handleSaveUserSettings({ discord_webhook_use_embed: true }); }} />
                   <span className="text-sm font-medium">{language === 'ko' ? '카드 형태 (Embed)' : 'Rich Card (Embed)'}</span>
                 </label>
-                <label className={`flex items-center justify-center px-4 py-2 border rounded-md cursor-pointer transition-colors ${!discordWebhookUseEmbed ? 'bg-primary/10 border-primary text-primary' : 'border-input hover:bg-accent'}`}>
+                <label className={`flex items-center justify-center px-4 py-2 border rounded-lg cursor-pointer transition-colors ${!discordWebhookUseEmbed ? 'bg-primary/10 border-primary text-primary' : 'border-input hover:bg-accent'}`}>
                   <input type="radio" className="hidden" checked={!discordWebhookUseEmbed} onChange={() => { setDiscordWebhookUseEmbed(false); handleSaveUserSettings({ discord_webhook_use_embed: false }); }} />
                   <span className="text-sm font-medium">{language === 'ko' ? '단순 텍스트 형태' : 'Simple Text'}</span>
                 </label>
@@ -728,7 +728,7 @@ export const Settings = () => {
             </div>
 
             {/* 디스코드 알림 미리보기 */}
-            <div className="mt-4 p-4 bg-[#313338] text-[#dbdee1] rounded-md font-sans max-w-md shadow-inner text-sm border border-[#1e1f22]">
+            <div className="mt-4 p-4 bg-[#313338] text-[#dbdee1] rounded-lg font-sans max-w-md shadow-inner text-sm border border-[#1e1f22]">
               <p className="text-xs text-[#949ba4] mb-3 uppercase font-bold tracking-wider">{language === 'ko' ? '미리보기' : 'Preview'}</p>
               <div className="flex gap-4">
                 <div className="w-10 h-10 rounded-full bg-[#5865F2] flex-shrink-0 flex items-center justify-center text-white font-bold text-lg">
