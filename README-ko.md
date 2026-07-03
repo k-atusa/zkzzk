@@ -43,7 +43,8 @@ docker run -d \
   --restart unless-stopped \
   -p 5001:5001 \
   -e TZ=Asia/Seoul \
-  -v $(pwd)/database.db:/app/backend/database.db \
+  -e DATABASE_URL=file:/app/backend/data/database.db \
+  -v $(pwd)/data:/app/backend/data \
   -v $(pwd)/downloads:/app/downloads \
   d3vle0/zkzzk:latest
 ```
@@ -61,8 +62,9 @@ services:
       - "5001:5001"
     environment:
       - TZ=Asia/Seoul
+      - DATABASE_URL=file:/app/backend/data/database.db
     volumes:
-      - ./database.db:/app/backend/database.db
+      - ./data:/app/backend/data
       - ./downloads:/app/downloads
 ```
 
