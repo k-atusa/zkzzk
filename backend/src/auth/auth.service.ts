@@ -244,7 +244,7 @@ export class AuthService {
       youtube_client_id: user?.youtube_client_id || null,
       youtube_client_secret: user?.youtube_client_secret || null,
       youtube_connected: !!user?.youtube_refresh_token,
-      youtube_auto_upload: user?.youtube_auto_upload ?? true,
+      youtube_auto_upload: user?.youtube_auto_upload ?? false,
       delete_after_upload: user?.delete_after_upload ?? false,
       nid_aut: user?.nid_aut || null,
       nid_ses: user?.nid_ses || null,
