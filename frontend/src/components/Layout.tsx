@@ -1,5 +1,5 @@
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Video, Download, Settings, LogOut, Sun, Moon, Laptop } from 'lucide-react';
+import { LayoutDashboard, Video, Download, Settings, LogOut, Sun, Moon, Monitor } from 'lucide-react';
 import { Button } from './ui/button';
 import api from '../api';
 import { useEffect, useState } from 'react';
@@ -91,7 +91,7 @@ export const Layout = () => {
               className="text-muted-foreground hover:text-foreground"
               title={theme === 'system' ? '시스템 설정 따름' : theme === 'light' ? '라이트 모드' : '다크 모드'}
             >
-              {theme === 'system' ? <Laptop className="h-5 w-5" /> : theme === 'light' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+              {theme === 'system' ? <Monitor className="h-5 w-5" /> : theme === 'light' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
             </Button>
           </div>
           <nav className="space-y-2">
