@@ -19,7 +19,7 @@ RUN apt-get update && apt-get install -y make g++ && rm -rf /var/lib/apt/lists/*
 RUN npm ci
 COPY backend/ .
 # Generate Prisma client
-RUN npx prisma generate
+RUN npm run prisma:generate
 RUN npm run build
 
 # Stage 4: Production Runtime
