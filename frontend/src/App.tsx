@@ -7,6 +7,7 @@ import { Vod } from './pages/Vod';
 import { Settings } from './pages/Settings';
 import { Toaster } from '@/components/ui/sonner';
 import { useEffect } from 'react';
+import { LanguageProvider } from './lib/i18n';
 
 const App = () => {
   useEffect(() => {
@@ -41,18 +42,20 @@ const App = () => {
   }, []);
 
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/login" element={<Login />} />
-        <Route element={<Layout />}>
-          <Route path="/" element={<Live />} />
-          <Route path="/recordings" element={<Recordings />} />
-          <Route path="/vod" element={<Vod />} />
-          <Route path="/settings" element={<Settings />} />
-        </Route>
-      </Routes>
-      <Toaster theme="dark" />
-    </BrowserRouter>
+    <LanguageProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route element={<Layout />}>
+            <Route path="/" element={<Live />} />
+            <Route path="/recordings" element={<Recordings />} />
+            <Route path="/vod" element={<Vod />} />
+            <Route path="/settings" element={<Settings />} />
+          </Route>
+        </Routes>
+        <Toaster theme="dark" />
+      </BrowserRouter>
+    </LanguageProvider>
   );
 }
 

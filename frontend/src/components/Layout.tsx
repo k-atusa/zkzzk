@@ -4,12 +4,13 @@ import { Button } from './ui/button';
 import api from '../api';
 import { useEffect, useState } from 'react';
 import pkg from '../../package.json';
+import { useLanguage } from '../lib/i18n';
 
 const navItems = [
-  { path: '/', icon: LayoutDashboard, label: '라이브' },
-  { path: '/vod', icon: Download, label: 'VOD 다운로더' },
-  { path: '/recordings', icon: Video, label: '녹화본' },
-  { path: '/settings', icon: Settings, label: '설정' },
+  { path: '/', icon: LayoutDashboard, key: 'layout.live' },
+  { path: '/vod', icon: Download, key: 'layout.vod' },
+  { path: '/recordings', icon: Video, key: 'layout.recordings' },
+  { path: '/settings', icon: Settings, key: 'layout.settings' },
 ];
 
 export const Layout = () => {
@@ -18,6 +19,7 @@ export const Layout = () => {
   const [user, setUser] = useState<{ username: string; is_admin: boolean; version?: string } | null>(null);
   const [theme, setTheme] = useState<'light' | 'dark' | 'system'>('system');
   const [latestVersion, setLatestVersion] = useState<string | null>(null);
+  const { t } = useLanguage();
 
   useEffect(() => {
     api.get('/auth/me').then(res => setUser(res.data)).catch(() => navigate('/login'));
@@ -89,7 +91,7 @@ export const Layout = () => {
               size="icon"
               onClick={cycleTheme}
               className="text-muted-foreground hover:text-foreground"
-              title={theme === 'system' ? '시스템 설정 따름' : theme === 'light' ? '라이트 모드' : '다크 모드'}
+              title={theme === 'system' ? t('layout.systemTheme') : theme === 'light' ? t('layout.lightMode') : t('layout.darkMode')}
             >
               {theme === 'system' ? <Monitor className="h-5 w-5" /> : theme === 'light' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
             </Button>
@@ -105,7 +107,7 @@ export const Layout = () => {
                     className="w-full justify-start gap-3"
                   >
                     <Icon className="h-5 w-5" />
-                    {item.label}
+                    {t(item.key)}
                   </Button>
                 </Link>
               );
@@ -117,21 +119,21 @@ export const Layout = () => {
             <p className="text-sm text-muted-foreground">v{user.version || pkg.version}</p>
             {latestVersion && latestVersion !== (user.version || pkg.version) && (
               <a href="https://github.com/k-atusa/zkzzk/releases" target="_blank" rel="noreferrer" className="text-[11px] font-medium text-amber-500 hover:text-amber-600 block mt-0.5">
-                🎉 최신 버전(v{latestVersion}) 이용 가능
+                {t('layout.newVersionAvailable', { version: latestVersion })}
               </a>
             )}
           </div>
-          <div className="px-2 mb-4 text-sm text-muted-foreground flex items-center gap-1.5">
-            접속중: <span className="text-foreground font-medium">{user.username}</span>
+          <div className="px-2 mb-4 text-sm text-muted-foreground flex items-center gap-1.5 flex-wrap">
+            {t('layout.loggedInAs')} <span className="text-foreground font-medium truncate max-w-[80px]">{user.username}</span>
             {user.is_admin && (
               <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-amber-500/10 text-amber-600 border border-amber-500/20 font-medium">
-                관리자
+                {t('layout.admin')}
               </span>
             )}
           </div>
           <Button variant="ghost" className="w-full justify-start text-red-600 dark:text-red-500 hover:text-red-700 dark:hover:text-red-400 hover:bg-red-500/10 dark:hover:bg-red-500/10 gap-3" onClick={handleLogout}>
             <LogOut className="h-5 w-5" />
-            로그아웃
+            {t('layout.logout')}
           </Button>
         </div>
       </aside>

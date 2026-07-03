@@ -8,13 +8,15 @@ import { toast } from 'sonner';
 import {
   ShieldCheck, ShieldAlert, KeyRound, Lock, Cookie,
   Users, Plus, Trash2, UserCheck, Loader2, CheckCircle2,
-  Eye, EyeOff, ShieldQuestion, ZoomIn, Bell, Save, MonitorPlay
+  Eye, EyeOff, ShieldQuestion, ZoomIn, Bell, MonitorPlay, Globe
 } from 'lucide-react';
 import api from '@/api';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { useLanguage } from '../lib/i18n';
 
 export const Settings = () => {
   const [user, setUser] = useState<any>(null);
+  const { t, language, setLanguage } = useLanguage();
 
   const getCallbackUrl = () => {
     const apiBase = api.defaults.baseURL || 'http://localhost:5001/api';
@@ -48,7 +50,6 @@ export const Settings = () => {
   const [youtubeConnected, setYoutubeConnected] = useState(false);
   const [youtubeAutoUpload, setYoutubeAutoUpload] = useState(true);
   const [deleteAfterUpload, setDeleteAfterUpload] = useState(false);
-  const [webhookLoading, setWebhookLoading] = useState(false);
 
   // Resolution Settings
   const [liveResolution, setLiveResolution] = useState('1080p');
@@ -63,7 +64,7 @@ export const Settings = () => {
     setScale(newScale);
     localStorage.setItem('ui_scale', String(newScale));
     document.documentElement.style.fontSize = `${newScale}%`;
-    toast.success(`화면 배율이 ${newScale}%로 설정되었습니다.`);
+    toast.success(t('settings.scaleSuccess', { scale: newScale }));
   };
 
   // 2FA
@@ -102,7 +103,7 @@ export const Settings = () => {
       }
       fetchUserSettings();
     } catch (e) {
-      toast.error('설정을 불러오는데 실패했습니다.');
+      toast.error(t('settings.loadFailed'));
     }
   };
 
@@ -139,15 +140,15 @@ export const Settings = () => {
     if (searchParams.get('youtube') === 'success') {
       const channelName = searchParams.get('channelName');
       toast.success(channelName
-        ? `YouTube 인증이 완료되었습니다. (채널: ${channelName})`
-        : 'YouTube 인증이 완료되었습니다.'
+        ? t('settings.oauthSuccess', { name: channelName })
+        : t('settings.oauthSuccessNoName')
       );
       window.history.replaceState({}, document.title, window.location.pathname);
     } else if (searchParams.get('youtube') === 'error') {
-      toast.error('YouTube 인증 중 오류가 발생했습니다.');
+      toast.error(t('settings.oauthError'));
       window.history.replaceState({}, document.title, window.location.pathname);
     }
-  }, []);
+  }, [t]);
 
   // 2FA handlers
   const handleSetup2FA = async () => {
@@ -156,7 +157,7 @@ export const Settings = () => {
       setQrCode(res.data.qrcode_data_url);
       setShowSetup(true);
     } catch (error: any) {
-      toast.error(error.response?.data?.message || '2FA 설정 요청 실패');
+      toast.error(error.response?.data?.message || t('settings.otpSetupFailed'));
     }
   };
 
@@ -164,27 +165,27 @@ export const Settings = () => {
     e.preventDefault();
     try {
       await api.post('/auth/2fa/verify', { otp });
-      toast.success('2차 인증이 활성화되었습니다.');
+      toast.success(t('settings.otpEnabledSuccess'));
       setShowSetup(false);
       setOtp('');
       fetchMe();
     } catch (error: any) {
-      toast.error(error.response?.data?.message || '인증 실패');
+      toast.error(error.response?.data?.message || t('settings.otpVerifyFailed'));
     }
   };
 
   const handleDisable2FA = () => {
     setConfirmConfig({
-      title: '2차 인증 비활성화',
-      description: '2차 인증을 비활성화하시겠습니까?',
+      title: t('settings.otpDisableConfirmTitle'),
+      description: t('settings.otpDisableConfirmDesc'),
       isDestructive: true,
       onConfirm: async () => {
         try {
           await api.post('/auth/2fa/disable');
-          toast.success('2차 인증이 비활성화되었습니다.');
+          toast.success(t('settings.otpDisabledSuccess'));
           fetchMe();
         } catch (error: any) {
-          toast.error(error.response?.data?.message || '비활성화 실패');
+          toast.error(error.response?.data?.message || t('settings.otpDisableFailed'));
         }
       }
     });
@@ -194,22 +195,22 @@ export const Settings = () => {
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault();
     if (newPassword !== confirmPassword) {
-      toast.error('새 비밀번호가 일치하지 않습니다.');
+      toast.error(t('settings.passwordNotMatch'));
       return;
     }
     if (newPassword.length < 6) {
-      toast.error('새 비밀번호는 6자 이상이어야 합니다.');
+      toast.error(t('settings.passwordTooShort'));
       return;
     }
     setPwLoading(true);
     try {
       await api.post('/auth/change-password', { currentPassword, newPassword });
-      toast.success('비밀번호가 변경되었습니다.');
+      toast.success(t('settings.passwordChanged'));
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
     } catch (error: any) {
-      toast.error(error.response?.data?.message || '비밀번호 변경 실패');
+      toast.error(error.response?.data?.message || t('settings.passwordChangeFailed'));
     } finally {
       setPwLoading(false);
     }
@@ -218,7 +219,7 @@ export const Settings = () => {
   // Cookie handlers
   const handleVerifyCookies = async () => {
     if (!nidAut.trim() || !nidSes.trim()) {
-      toast.error('NID_AUT와 NID_SES 값을 모두 입력해주세요.');
+      toast.error(t('settings.cookiesRequired'));
       return;
     }
     setCookieLoading(true);
@@ -227,12 +228,12 @@ export const Settings = () => {
       const res = await api.post('/auth/verify-cookies', { nid_aut: nidAut.trim(), nid_ses: nidSes.trim() });
       setCookieVerified(res.data);
       if (res.data.valid) {
-        toast.success(`인증 성공: ${res.data.nickname}`);
+        toast.success(t('settings.cookiesVerifiedSuccess', { name: res.data.nickname }));
       } else {
-        toast.error('유효하지 않은 쿠키입니다. 다시 확인해주세요.');
+        toast.error(t('settings.cookiesVerifiedFailed'));
       }
     } catch (error: any) {
-      toast.error('쿠키 인증 중 오류가 발생했습니다.');
+      toast.error(t('settings.cookiesVerifyError'));
       setCookieVerified({ valid: false });
     } finally {
       setCookieLoading(false);
@@ -248,7 +249,7 @@ export const Settings = () => {
       });
       fetchMe();
     } catch (error: any) {
-      toast.error(error.response?.data?.message || '쿠키 저장 실패');
+      toast.error(error.response?.data?.message || t('settings.cookiesSaveFailed'));
     } finally {
       setCookieSaveLoading(false);
     }
@@ -256,8 +257,8 @@ export const Settings = () => {
 
   const handleClearCookies = () => {
     setConfirmConfig({
-      title: '쿠키 초기화',
-      description: '쿠키를 초기화하시겠습니까?',
+      title: t('settings.cookiesClearConfirmTitle'),
+      description: t('settings.cookiesClearConfirmDesc'),
       isDestructive: true,
       onConfirm: async () => {
         setCookieSaveLoading(true);
@@ -266,10 +267,10 @@ export const Settings = () => {
           setNidAut('');
           setNidSes('');
           setCookieVerified(null);
-          toast.success('쿠키가 초기화되었습니다.');
+          toast.success(t('settings.cookiesCleared'));
           fetchMe();
         } catch (error: any) {
-          toast.error('쿠키 초기화 실패');
+          toast.error(t('settings.cookiesClearFailed'));
         } finally {
           setCookieSaveLoading(false);
         }
@@ -278,7 +279,6 @@ export const Settings = () => {
   };
 
   const handleSaveUserSettings = async (overrides: any = {}) => {
-    setWebhookLoading(true);
     try {
       await api.post('/auth/user-settings', {
         discord_webhook_url: discordWebhookUrl.trim(),
@@ -293,9 +293,7 @@ export const Settings = () => {
       });
       fetchUserSettings();
     } catch (error: any) {
-      toast.error(error.response?.data?.message || '설정 저장 실패');
-    } finally {
-      setWebhookLoading(false);
+      toast.error(error.response?.data?.message || t('settings.webhookSaveFailed'));
     }
   };
 
@@ -306,7 +304,7 @@ export const Settings = () => {
         window.location.href = res.data.url;
       }
     } catch (e: any) {
-      toast.error('인증 URL을 가져오는데 실패했습니다.');
+      toast.error(t('settings.getAuthUrlFailed'));
     }
   };
 
@@ -317,13 +315,13 @@ export const Settings = () => {
     setUserLoading(true);
     try {
       await api.post('/auth/users', { username: newUsername.trim(), password: newUserPass, is_admin: newUserIsAdmin });
-      toast.success(`사용자 '${newUsername}'가 추가되었습니다.`);
+      toast.success(t('settings.userAdded', { name: newUsername }));
       setNewUsername('');
       setNewUserPass('');
       setNewUserIsAdmin(false);
       fetchUsers();
     } catch (error: any) {
-      toast.error(error.response?.data?.message || '사용자 추가 실패');
+      toast.error(error.response?.data?.message || t('settings.userAddFailed'));
     } finally {
       setUserLoading(false);
     }
@@ -331,16 +329,16 @@ export const Settings = () => {
 
   const handleDeleteUser = (userId: string, username: string) => {
     setConfirmConfig({
-      title: '사용자 삭제',
-      description: `'${username}' 사용자를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.`,
+      title: t('settings.userDeleteConfirmTitle'),
+      description: t('settings.userDeleteConfirmDesc', { name: username }),
       isDestructive: true,
       onConfirm: async () => {
         try {
           await api.delete(`/auth/users/${userId}`);
-          toast.success(`'${username}' 사용자가 삭제되었습니다.`);
+          toast.success(t('settings.userDeleted', { name: username }));
           fetchUsers();
         } catch (error: any) {
-          toast.error(error.response?.data?.message || '사용자 삭제 실패');
+          toast.error(error.response?.data?.message || t('settings.userDeleteFailed'));
         }
       }
     });
@@ -351,36 +349,36 @@ export const Settings = () => {
   return (
     <div className="space-y-10 pb-10">
       <div>
-        <h2 className="text-3xl font-bold tracking-tight mb-2">설정</h2>
-        <p className="text-muted-foreground">계정 정보, 화면 출력 및 서비스 연동을 관리합니다.</p>
+        <h2 className="text-3xl font-bold tracking-tight mb-2">{t('settings.title')}</h2>
+        <p className="text-muted-foreground">{t('settings.subtitle')}</p>
       </div>
 
       {/* 1. 계정 및 보안 */}
       <section className="space-y-4">
         <div className="flex items-center gap-2 pb-2 border-b border-border">
           <Lock className="h-5 w-5 text-primary" />
-          <h3 className="text-xl font-semibold">계정 및 보안</h3>
+          <h3 className="text-xl font-semibold">{t('settings.secAccount')}</h3>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
         {/* Password Change Card */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center">
-              <Lock className="mr-2 h-5 w-5" /> 비밀번호 변경
+              <Lock className="mr-2 h-5 w-5" /> {t('settings.changePassword')}
             </CardTitle>
-            <CardDescription>현재 비밀번호를 입력한 후 새 비밀번호로 변경하세요.</CardDescription>
+            <CardDescription>{t('settings.changePasswordDesc')}</CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleChangePassword} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="currentPassword">현재 비밀번호</Label>
+                <Label htmlFor="currentPassword">{t('settings.currentPassword')}</Label>
                 <div className="relative">
                   <Input
                     id="currentPassword"
                     type={showCurrentPw ? 'text' : 'password'}
                     value={currentPassword}
                     onChange={e => setCurrentPassword(e.target.value)}
-                    placeholder="현재 비밀번호"
+                    placeholder={t('settings.currentPasswordPlaceholder')}
                     required
                   />
                   <button
@@ -393,14 +391,14 @@ export const Settings = () => {
                 </div>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="newPassword">새 비밀번호</Label>
+                <Label htmlFor="newPassword">{t('settings.newPassword')}</Label>
                 <div className="relative">
                   <Input
                     id="newPassword"
                     type={showNewPw ? 'text' : 'password'}
                     value={newPassword}
                     onChange={e => setNewPassword(e.target.value)}
-                    placeholder="새 비밀번호 (6자 이상)"
+                    placeholder={t('settings.newPasswordPlaceholder')}
                     required
                   />
                   <button
@@ -413,19 +411,19 @@ export const Settings = () => {
                 </div>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="confirmPassword">새 비밀번호 확인</Label>
+                <Label htmlFor="confirmPassword">{t('settings.newPasswordConfirm')}</Label>
                 <Input
                   id="confirmPassword"
                   type="password"
                   value={confirmPassword}
                   onChange={e => setConfirmPassword(e.target.value)}
-                  placeholder="새 비밀번호 재입력"
+                  placeholder={t('settings.newPasswordConfirmPlaceholder')}
                   required
                 />
               </div>
               <Button type="submit" disabled={pwLoading}>
                 {pwLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                비밀번호 변경
+                {t('settings.changePasswordBtn')}
               </Button>
             </form>
           </CardContent>
@@ -435,9 +433,9 @@ export const Settings = () => {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center">
-              <KeyRound className="mr-2 h-5 w-5" /> 2차 인증 (OTP)
+              <KeyRound className="mr-2 h-5 w-5" /> {t('settings.twoFactorAuth')}
             </CardTitle>
-            <CardDescription>보안을 위해 2차 인증을 설정하세요.</CardDescription>
+            <CardDescription>{t('settings.twoFactorAuthDesc')}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             {!showSetup && (
@@ -445,9 +443,9 @@ export const Settings = () => {
                 <div className="flex items-center space-x-4">
                   {user.totp_enabled ? <ShieldCheck className="h-6 w-6 text-green-500" /> : <ShieldAlert className="h-6 w-6 text-yellow-500" />}
                   <div>
-                    <p className="font-medium">{user.totp_enabled ? '2차 인증 사용 중' : '2차 인증 미사용'}</p>
+                    <p className="font-medium">{user.totp_enabled ? t('settings.statusEnabled') : t('settings.statusDisabled')}</p>
                     <p className="text-sm text-muted-foreground">
-                      {user.totp_enabled ? '계정이 안전하게 보호되고 있습니다.' : '인증기 앱을 사용하여 OTP를 등록하세요.'}
+                      {user.totp_enabled ? t('settings.enabledDesc') : t('settings.disabledDesc')}
                     </p>
                   </div>
                 </div>
@@ -466,11 +464,11 @@ export const Settings = () => {
                   </div>
                   <div className="flex-1 w-full space-y-3">
                     <p className="text-xs text-muted-foreground leading-snug">
-                      Google Authenticator 등 앱으로 좌측 QR 코드를 스캔한 후 인증 코드를 입력하세요.
+                      {t('settings.otpSetupModalDesc')}
                     </p>
                     <form onSubmit={handleVerify2FA} className="space-y-3">
                       <div className="space-y-1.5">
-                        <Label htmlFor="otp" className="text-xs">인증 코드</Label>
+                        <Label htmlFor="otp" className="text-xs">{t('login.otpCode')}</Label>
                         <Input
                           id="otp"
                           value={otp}
@@ -482,8 +480,8 @@ export const Settings = () => {
                         />
                       </div>
                       <div className="flex space-x-2">
-                        <Button type="submit" className="h-9 text-sm">확인</Button>
-                        <Button type="button" variant="outline" className="h-9 text-sm" onClick={() => setShowSetup(false)}>취소</Button>
+                        <Button type="submit" className="h-9 text-sm">{t('settings.verifyBtn')}</Button>
+                        <Button type="button" variant="outline" className="h-9 text-sm" onClick={() => setShowSetup(false)}>{t('common.cancel')}</Button>
                       </div>
                     </form>
                   </div>
@@ -499,17 +497,17 @@ export const Settings = () => {
       <section className="space-y-4">
         <div className="flex items-center gap-2 pb-2 border-b border-border">
           <MonitorPlay className="h-5 w-5 text-primary" />
-          <h3 className="text-xl font-semibold">화면 및 시스템 설정</h3>
+          <h3 className="text-xl font-semibold">{t('settings.secScreen')}</h3>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
       {/* 화면 배율 설정 Card */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <ZoomIn className="h-5 w-5" /> 화면 배율 설정
+            <ZoomIn className="h-5 w-5" /> {t('settings.uiScale')}
           </CardTitle>
           <CardDescription>
-            전체적인 UI 글꼴 및 크기 배율을 조절하여 가장 편안한 크기로 화면을 사용하세요.
+            {t('settings.uiScaleDesc')}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -532,42 +530,72 @@ export const Settings = () => {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <MonitorPlay className="h-5 w-5" /> 다운로드 화질 설정
+            <MonitorPlay className="h-5 w-5" /> {t('settings.downloadResolution')}
           </CardTitle>
-          <CardDescription>라이브 영상과 다시보기 영상의 다운로드 화질을 선택합니다.</CardDescription>
+          <CardDescription>{t('settings.downloadResolutionDesc')}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-2xl">
             <div className="space-y-2">
-              <Label htmlFor="liveResolution">라이브 영상 화질</Label>
+              <Label htmlFor="liveResolution">{t('settings.liveResolution')}</Label>
               <select
                 id="liveResolution"
                 value={liveResolution}
                 onChange={(e) => { setLiveResolution(e.target.value); handleSaveUserSettings({ live_resolution: e.target.value }); }}
                 className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
               >
-                <option value="1080p">1080p (기본)</option>
+                <option value="1080p">1080p ({language === 'ko' ? '기본' : 'Default'})</option>
                 <option value="720p">720p</option>
                 <option value="360p">360p</option>
                 <option value="144p">144p</option>
               </select>
-              <p className="text-xs text-muted-foreground mt-1">선택한 화질이 없을 경우 가능한 최고/최저 화질로 자동 폴백됩니다.</p>
+              <p className="text-xs text-muted-foreground mt-1">{t('settings.resolutionNotice')}</p>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="vodResolution">다시보기(VOD) 화질</Label>
+              <Label htmlFor="vodResolution">{t('settings.vodResolution')}</Label>
               <select
                 id="vodResolution"
                 value={vodResolution}
                 onChange={(e) => { setVodResolution(e.target.value); handleSaveUserSettings({ vod_resolution: e.target.value }); }}
                 className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
               >
-                <option value="ask">다운로드 시에 묻기</option>
-                <option value="1080p">1080p (기본)</option>
+                <option value="ask">{t('settings.vodAskEveryTime')}</option>
+                <option value="1080p">1080p ({language === 'ko' ? '기본' : 'Default'})</option>
                 <option value="720p">720p</option>
                 <option value="360p">360p</option>
                 <option value="144p">144p</option>
               </select>
             </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Language Settings Card */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Globe className="h-5 w-5" /> {t('settings.language')}
+          </CardTitle>
+          <CardDescription>
+            {t('settings.languageDesc')}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center gap-2">
+            <Button
+              variant={language === 'en' ? 'default' : 'outline'}
+              onClick={() => { setLanguage('en'); toast.success(t('settings.languageSuccess')); }}
+              className="w-24"
+            >
+              English
+            </Button>
+            <Button
+              variant={language === 'ko' ? 'default' : 'outline'}
+              onClick={() => { setLanguage('ko'); toast.success(t('settings.languageSuccess')); }}
+              className="w-24"
+            >
+              한국어
+            </Button>
           </div>
         </CardContent>
       </Card>
@@ -578,7 +606,7 @@ export const Settings = () => {
       <section className="space-y-4">
         <div className="flex items-center gap-2 pb-2 border-b border-border">
           <Bell className="h-5 w-5 text-primary" />
-          <h3 className="text-xl font-semibold">외부 서비스 연동</h3>
+          <h3 className="text-xl font-semibold">{t('settings.secExternal')}</h3>
         </div>
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 pt-2 items-start">
           <div className="space-y-6">
@@ -588,15 +616,15 @@ export const Settings = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Cookie className="h-5 w-5" />
-            치지직 계정 연동
+            {t('settings.chzzkCookies')}
             {user.has_cookies && (
               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-medium bg-green-500/10 text-green-500 border border-green-500/20">
-                <CheckCircle2 className="h-3 w-3" /> 연동됨
+                <CheckCircle2 className="h-3 w-3" /> {language === 'ko' ? '연동됨' : 'Connected'}
               </span>
             )}
           </CardTitle>
           <CardDescription>
-            치지직 NID_AUT, NID_SES 쿠키를 입력하면 자동 녹화에 사용됩니다. 브라우저 개발자 도구(F12) → Application → Cookies에서 확인할 수 있습니다.
+            {t('settings.chzzkCookiesDesc')}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -608,7 +636,7 @@ export const Settings = () => {
                 value={nidAut}
                 onChange={e => { setNidAut(e.target.value); setCookieVerified(null); }}
                 onBlur={e => handleSaveCookies(e.target.value, nidSes)}
-                placeholder="NID_AUT 쿠키 값"
+                placeholder={t('settings.cookiesPlaceholder')}
                 className="font-mono text-sm"
               />
             </div>
@@ -619,7 +647,7 @@ export const Settings = () => {
                 value={nidSes}
                 onChange={e => { setNidSes(e.target.value); setCookieVerified(null); }}
                 onBlur={e => handleSaveCookies(nidAut, e.target.value)}
-                placeholder="NID_SES 쿠키 값"
+                placeholder={t('settings.cookiesPlaceholder')}
                 className="font-mono text-sm"
               />
             </div>
@@ -633,12 +661,12 @@ export const Settings = () => {
                 {cookieVerified.valid ? (
                   <>
                     <UserCheck className="h-4 w-4" />
-                    인증된 사용자: {cookieVerified.nickname}
+                    {t('settings.cookiesVerifiedSuccess', { name: cookieVerified.nickname || '' })}
                   </>
                 ) : (
                   <>
                     <ShieldQuestion className="h-4 w-4" />
-                    유효하지 않은 쿠키입니다.
+                    {t('settings.cookiesVerifiedFailed')}
                   </>
                 )}
               </div>
@@ -647,7 +675,7 @@ export const Settings = () => {
             <div className="flex flex-wrap gap-2">
               <Button type="button" variant="outline" onClick={handleVerifyCookies} disabled={cookieLoading}>
                 {cookieLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ShieldCheck className="mr-2 h-4 w-4" />}
-                쿠키 인증 확인
+                {t('settings.verifyCookies')}
               </Button>
               {user.has_cookies && (
                 <Button
@@ -657,7 +685,7 @@ export const Settings = () => {
                   onClick={handleClearCookies}
                   disabled={cookieSaveLoading}
                 >
-                  쿠키 초기화
+                  {t('settings.clearCookies')}
                 </Button>
               )}
             </div>
@@ -669,42 +697,39 @@ export const Settings = () => {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Bell className="h-5 w-5" /> 디스코드 연동
+            <Bell className="h-5 w-5" /> {t('settings.discordWebhook')}
           </CardTitle>
-          <CardDescription>개인 디스코드 Webhook을 등록하여 알림을 받습니다.</CardDescription>
+          <CardDescription>{t('settings.discordWebhookDesc')}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="discordWebhookUrl">Discord Webhook URL</Label>
+              <Label htmlFor="discordWebhookUrl">{t('settings.webhookUrl')}</Label>
               <Input
                 id="discordWebhookUrl"
                 value={discordWebhookUrl}
                 onChange={e => setDiscordWebhookUrl(e.target.value)}
                 onBlur={e => handleSaveUserSettings({ discord_webhook_url: e.target.value })}
-                placeholder="https://discord.com/api/webhooks/..."
+                placeholder={t('settings.webhookUrlPlaceholder')}
               />
-              <p className="text-xs text-muted-foreground">
-                디스코드 웹훅을 등록하면 녹화 시작/종료 시 알림을 받을 수 있습니다.
-              </p>
             </div>
             <div className="space-y-2">
-              <Label>알림 메시지 형태</Label>
+              <Label>{language === 'ko' ? '알림 메시지 형태' : 'Notification Format'}</Label>
               <div className="flex gap-4">
                 <label className={`flex items-center justify-center px-4 py-2 border rounded-md cursor-pointer transition-colors ${discordWebhookUseEmbed ? 'bg-primary/10 border-primary text-primary' : 'border-input hover:bg-accent'}`}>
                   <input type="radio" className="hidden" checked={discordWebhookUseEmbed} onChange={() => { setDiscordWebhookUseEmbed(true); handleSaveUserSettings({ discord_webhook_use_embed: true }); }} />
-                  <span className="text-sm font-medium">카드 형태 (Embed)</span>
+                  <span className="text-sm font-medium">{language === 'ko' ? '카드 형태 (Embed)' : 'Rich Card (Embed)'}</span>
                 </label>
                 <label className={`flex items-center justify-center px-4 py-2 border rounded-md cursor-pointer transition-colors ${!discordWebhookUseEmbed ? 'bg-primary/10 border-primary text-primary' : 'border-input hover:bg-accent'}`}>
                   <input type="radio" className="hidden" checked={!discordWebhookUseEmbed} onChange={() => { setDiscordWebhookUseEmbed(false); handleSaveUserSettings({ discord_webhook_use_embed: false }); }} />
-                  <span className="text-sm font-medium">단순 텍스트 형태</span>
+                  <span className="text-sm font-medium">{language === 'ko' ? '단순 텍스트 형태' : 'Simple Text'}</span>
                 </label>
               </div>
             </div>
 
             {/* 디스코드 알림 미리보기 */}
             <div className="mt-4 p-4 bg-[#313338] text-[#dbdee1] rounded-md font-sans max-w-md shadow-inner text-sm border border-[#1e1f22]">
-              <p className="text-xs text-[#949ba4] mb-3 uppercase font-bold tracking-wider">미리보기</p>
+              <p className="text-xs text-[#949ba4] mb-3 uppercase font-bold tracking-wider">{language === 'ko' ? '미리보기' : 'Preview'}</p>
               <div className="flex gap-4">
                 <div className="w-10 h-10 rounded-full bg-[#5865F2] flex-shrink-0 flex items-center justify-center text-white font-bold text-lg">
                   Z
@@ -713,22 +738,22 @@ export const Settings = () => {
                   <div className="flex items-center gap-2 mb-1">
                     <span className="font-medium text-white text-[15px]">ZKZZK Bot</span>
                     <span className="text-[10px] bg-[#5865F2] text-white px-1 py-[1px] rounded leading-none flex items-center justify-center uppercase font-bold">Bot</span>
-                    <span className="text-xs text-[#949ba4] font-medium ml-1">오늘 오후 3:00</span>
+                    <span className="text-xs text-[#949ba4] font-medium ml-1">{language === 'ko' ? '오늘 오후 3:00' : 'Today at 3:00 PM'}</span>
                   </div>
                   {discordWebhookUseEmbed ? (
                     <div className="bg-[#2b2d31] border-l-4 border-blue-500 rounded p-3 mt-1.5 inline-block min-w-[250px]">
-                      <p className="font-bold text-white text-base mb-1.5">🎥 업로드 완료</p>
+                      <p className="font-bold text-white text-base mb-1.5">🎥 {language === 'ko' ? '업로드 완료' : 'Upload Complete'}</p>
                       <div className="text-[13px] space-y-1">
-                        <p><strong>XXX</strong>님의 영상이 성공적으로 업로드되었습니다.</p>
-                        <p className="pt-1.5"><strong>제목:</strong> 테스트 영상</p>
+                        <p>{language === 'ko' ? 'XXX님의 영상이 성공적으로 업로드되었습니다.' : "XXX's video has been successfully uploaded."}</p>
+                        <p className="pt-1.5"><strong>{language === 'ko' ? '제목' : 'Title'}:</strong> {language === 'ko' ? '테스트 영상' : 'Test Video'}</p>
                         <p><strong>URL:</strong> <span className="text-[#00a8fc] cursor-pointer hover:underline">https://youtu.be/test</span></p>
                       </div>
                     </div>
                   ) : (
                     <div className="whitespace-pre-wrap text-[15px] leading-relaxed mt-0.5">
-                      <span className="font-bold">🎥 업로드 완료</span>{'\n'}
-                      **XXX**님의 영상이 성공적으로 업로드되었습니다.{'\n\n'}
-                      제목: 테스트 영상{'\n'}
+                      <span className="font-bold">🎥 {language === 'ko' ? '업로드 완료' : 'Upload Complete'}</span>{'\n'}
+                      {language === 'ko' ? '**XXX**님의 영상이 성공적으로 업로드되었습니다.' : "**XXX**'s video has been successfully uploaded."}{'\n\n'}
+                      {language === 'ko' ? '제목' : 'Title'}: {language === 'ko' ? '테스트 영상' : 'Test Video'}{'\n'}
                       URL: <span className="text-[#00a8fc] cursor-pointer hover:underline">https://youtu.be/test</span>
                     </div>
                   )}
@@ -746,16 +771,16 @@ export const Settings = () => {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <MonitorPlay className="h-5 w-5" /> YouTube 자동 업로드
+            <MonitorPlay className="h-5 w-5" /> {t('settings.youtubeAutoUpload')}
           </CardTitle>
-          <CardDescription>녹화된 영상을 YouTube에 자동으로 업로드하도록 설정합니다.</CardDescription>
+          <CardDescription>{t('settings.youtubeAutoUploadDesc')}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 gap-6 mb-4">
             <div className="flex items-center justify-between">
               <div className="space-y-0.5 pr-4">
-                <Label htmlFor="youtubeAutoUpload" className="text-sm font-medium cursor-pointer">자동 업로드 활성화</Label>
-                <p className="text-xs text-muted-foreground">녹화가 완료되면 설정된 YouTube 계정으로 영상을 자동 업로드합니다.</p>
+                <Label htmlFor="youtubeAutoUpload" className="text-sm font-medium cursor-pointer">{t('settings.autoUploadEnable')}</Label>
+                <p className="text-xs text-muted-foreground">{t('settings.youtubeAutoUploadDesc')}</p>
               </div>
               <Switch
                 id="youtubeAutoUpload"
@@ -765,8 +790,8 @@ export const Settings = () => {
             </div>
             <div className="flex items-center justify-between">
               <div className="space-y-0.5 pr-4">
-                <Label htmlFor="deleteAfterUpload" className="text-sm font-medium cursor-pointer">업로드 성공 시 자동 삭제</Label>
-                <p className="text-xs text-muted-foreground">YouTube 업로드가 성공적으로 완료되면 서버 용량 확보를 위해 원본 영상을 삭제합니다.</p>
+                <Label htmlFor="deleteAfterUpload" className="text-sm font-medium cursor-pointer">{t('settings.deleteAfterUpload')}</Label>
+                <p className="text-xs text-muted-foreground">{t('recordings.deleteConfirmDesc')}</p>
               </div>
               <Switch
                 id="deleteAfterUpload"
@@ -777,24 +802,24 @@ export const Settings = () => {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="youtubeClientId">YouTube Client ID</Label>
+            <Label htmlFor="youtubeClientId">{t('settings.clientId')}</Label>
             <Input
               id="youtubeClientId"
               value={youtubeClientId}
               onChange={e => setYoutubeClientId(e.target.value)}
               onBlur={e => handleSaveUserSettings({ youtube_client_id: e.target.value })}
-              placeholder="Google Cloud Console에서 발급받은 Client ID"
+              placeholder={t('settings.clientId')}
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="youtubeClientSecret">YouTube Client Secret</Label>
+            <Label htmlFor="youtubeClientSecret">{t('settings.clientSecret')}</Label>
             <div className="relative">
               <Input
                 id="youtubeClientSecret"
                 value={youtubeClientSecret}
                 onChange={e => setYoutubeClientSecret(e.target.value)}
                 onBlur={e => handleSaveUserSettings({ youtube_client_secret: e.target.value })}
-                placeholder="Google Cloud Console에서 발급받은 Client Secret"
+                placeholder={t('settings.clientSecret')}
                 type={showYoutubeClientSecret ? 'text' : 'password'}
               />
               <button
@@ -807,23 +832,47 @@ export const Settings = () => {
             </div>
             <div className="text-xs text-muted-foreground mt-2 mb-2 p-3 bg-muted rounded-md space-y-3">
               <div>
-                <p className="font-semibold mb-1 text-foreground">💡 자동 업로드 설정 방법:</p>
+                <p className="font-semibold mb-1 text-foreground">💡 {language === 'ko' ? '자동 업로드 설정 방법:' : 'How to configure Auto Upload:'}</p>
                 <ol className="list-decimal pl-4 space-y-1">
-                  <li><a href="https://console.cloud.google.com/" target="_blank" rel="noreferrer" className="text-primary hover:underline">Google Cloud Console</a>에서 프로젝트를 생성합니다.</li>
-                  <li><strong>YouTube Data API v3</strong>를 활성화합니다.</li>
-                  <li>OAuth 동의 화면을 설정하고, <strong>웹 애플리케이션</strong> 유형의 사용자 인증 정보를 만듭니다.</li>
-                  <li>승인된 리디렉션 URI에 <code className="select-all font-mono bg-muted px-1.5 py-0.5 rounded text-xs font-semibold text-primary border border-primary/10">{getCallbackUrl()}</code> 를 추가합니다.</li>
-                  <li>발급받은 Client ID와 Client Secret을 위에 입력하고 <strong>저장</strong>을 누릅니다.</li>
-                  <li><strong>YouTube 인증하기</strong> 버튼을 눌러 계정을 연동합니다.</li>
+                  {language === 'ko' ? (
+                    <>
+                      <li><a href="https://console.cloud.google.com/" target="_blank" rel="noreferrer" className="text-primary hover:underline">Google Cloud Console</a>에서 프로젝트를 생성합니다.</li>
+                      <li><strong>YouTube Data API v3</strong>를 활성화합니다.</li>
+                      <li>OAuth 동의 화면을 설정하고, <strong>웹 애플리케이션</strong> 유형의 사용자 인증 정보를 만듭니다.</li>
+                      <li>승인된 리디렉션 URI에 <code className="select-all font-mono bg-muted px-1.5 py-0.5 rounded text-xs font-semibold text-primary border border-primary/10">{getCallbackUrl()}</code> 를 추가합니다.</li>
+                      <li>발급받은 Client ID와 Client Secret을 위에 입력하고 <strong>저장</strong>을 누릅니다.</li>
+                      <li><strong>YouTube 인증하기</strong> 버튼을 눌러 계정을 연동합니다.</li>
+                    </>
+                  ) : (
+                    <>
+                      <li>Create a project on the <a href="https://console.cloud.google.com/" target="_blank" rel="noreferrer" className="text-primary hover:underline">Google Cloud Console</a>.</li>
+                      <li>Enable <strong>YouTube Data API v3</strong>.</li>
+                      <li>Configure the OAuth consent screen, and create credentials of type <strong>Web Application</strong>.</li>
+                      <li>Add <code className="select-all font-mono bg-muted px-1.5 py-0.5 rounded text-xs font-semibold text-primary border border-primary/10">{getCallbackUrl()}</code> to the Authorized Redirect URIs.</li>
+                      <li>Enter the Client ID and Client Secret above and save.</li>
+                      <li>Click the <strong>Connect YouTube Channel</strong> button to authenticate.</li>
+                    </>
+                  )}
                 </ol>
               </div>
               <div className="border-t border-border/60 pt-2.5">
-                <p className="font-semibold mb-1 text-amber-600 dark:text-amber-500">⚠️ '403 access_denied' (인증 절차 미완료) 오류 해결 방법:</p>
+                <p className="font-semibold mb-1 text-amber-600 dark:text-amber-500">⚠️ {language === 'ko' ? "'403 access_denied' (인증 절차 미완료) 오류 해결 방법:" : "How to fix '403 access_denied' errors:"}</p>
                 <ul className="list-disc pl-4 space-y-1">
-                  <li>Google Cloud Console의 <strong>Google 인증 플랫폼 &gt; 대상 &gt; OAuth 사용자 한도 &gt; 테스트 사용자</strong> 화면으로 이동합니다.</li>
-                  <li>해당 화면에서 <strong>ADD USERS</strong>를 클릭하고, 인증하려는 Google 계정(이메일 주소)을 등록한 뒤 다시 시도해 주세요.</li>
-                  <li>발급받은 <strong>API Key(OAuth 클라이언트)의 소유자 계정</strong>과 <strong>유튜브 인증을 진행하는 로그인 계정</strong>이 일치하는지 확인해 주세요. (서로 다른 계정일 경우 테스트 사용자 목록에 추가해야 합니다.)</li>
-                  <li>또는 앱 게시 상태가 '테스트 중'이기 때문이므로 <strong>앱 게시 (Publish App)</strong>를 눌러 프로덕션으로 전환하셔도 무방합니다. (보안 경고 발생 시 '고급 &gt; 이동' 클릭)</li>
+                  {language === 'ko' ? (
+                    <>
+                      <li>Google Cloud Console of <strong>Google 인증 플랫폼 &gt; 대상 &gt; OAuth 사용자 한도 &gt; 테스트 사용자</strong> 화면으로 이동합니다.</li>
+                      <li>해당 화면에서 <strong>ADD USERS</strong>를 클릭하고, 인증하려는 Google 계정(이메일 주소)을 등록한 뒤 다시 시도해 주세요.</li>
+                      <li>발급받은 <strong>API Key(OAuth 클라이언트)의 소유자 계정</strong>과 <strong>유튜브 인증을 진행하는 로그인 계정</strong>이 일치하는지 확인해 주세요.</li>
+                      <li>또는 앱 게시 상태가 '테스트 중'이기 때문이므로 <strong>앱 게시 (Publish App)</strong>를 눌러 프로덕션으로 전환하셔도 무방합니다.</li>
+                    </>
+                  ) : (
+                    <>
+                      <li>Go to <strong>APIs & Services &gt; OAuth consent screen &gt; Test users</strong> in Google Cloud Console.</li>
+                      <li>Click <strong>ADD USERS</strong>, register the Google email address you wish to authenticate, and try again.</li>
+                      <li>Ensure that the owner account of the API client matches the account you use to authorize YouTube uploads.</li>
+                      <li>Or, since the app status is in 'Testing', you can click <strong>Publish App</strong> to publish it to production to bypass testing limits.</li>
+                    </>
+                  )}
                 </ul>
               </div>
             </div>
@@ -831,7 +880,7 @@ export const Settings = () => {
           <div className="flex gap-2">
             {youtubeClientId && youtubeClientSecret && (
               <Button variant={youtubeConnected ? "secondary" : "default"} onClick={handleYouTubeAuth}>
-                {youtubeConnected ? 'YouTube 재인증' : 'YouTube 인증하기'}
+                {youtubeConnected ? t('settings.connectChannel') : t('settings.connectChannel')}
               </Button>
             )}
           </div>
@@ -846,7 +895,7 @@ export const Settings = () => {
         <section className="space-y-4">
           <div className="flex items-center gap-2 pb-2 border-b border-border">
             <Users className="h-5 w-5 text-primary" />
-            <h3 className="text-xl font-semibold">관리자 메뉴</h3>
+            <h3 className="text-xl font-semibold">{t('settings.userManagement')}</h3>
           </div>
           <div className="grid grid-cols-1 gap-6 pt-2">
 
@@ -854,36 +903,36 @@ export const Settings = () => {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Users className="h-5 w-5" /> 사용자 관리
-              <span className="text-xs font-normal px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-600 border border-amber-500/20">관리자 전용</span>
+              <Users className="h-5 w-5" /> {t('settings.userManagement')}
+              <span className="text-xs font-normal px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-600 border border-amber-500/20">{language === 'ko' ? '관리자 전용' : 'Admin Only'}</span>
             </CardTitle>
-            <CardDescription>사용자를 추가하고 관리합니다.</CardDescription>
+            <CardDescription>{t('settings.userManagementDesc')}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             {/* Add User Form */}
             <div className="p-4 border border-border rounded-lg bg-muted/20">
-              <h4 className="font-medium mb-3 text-sm">새 사용자 추가</h4>
+              <h4 className="font-medium mb-3 text-sm">{t('settings.addUser')}</h4>
               <form onSubmit={handleCreateUser} className="space-y-3">
                 <div className="flex flex-wrap gap-3 items-end">
                   <div className="space-y-1.5 flex-1 min-w-32">
-                    <Label htmlFor="newUsername" className="text-xs">사용자명</Label>
+                    <Label htmlFor="newUsername" className="text-xs">{t('login.username')}</Label>
                     <Input
                       id="newUsername"
                       value={newUsername}
                       onChange={e => setNewUsername(e.target.value)}
-                      placeholder="사용자명"
+                      placeholder={t('login.username')}
                       required
                       className="h-9"
                     />
                   </div>
                   <div className="space-y-1.5 flex-1 min-w-32">
-                    <Label htmlFor="newUserPass" className="text-xs">비밀번호</Label>
+                    <Label htmlFor="newUserPass" className="text-xs">{t('login.password')}</Label>
                     <Input
                       id="newUserPass"
                       type="password"
                       value={newUserPass}
                       onChange={e => setNewUserPass(e.target.value)}
-                      placeholder="비밀번호 (6자 이상)"
+                      placeholder={t('settings.newPasswordPlaceholder')}
                       required
                       className="h-9"
                     />
@@ -894,11 +943,11 @@ export const Settings = () => {
                       checked={newUserIsAdmin}
                       onCheckedChange={setNewUserIsAdmin}
                     />
-                    <Label htmlFor="newUserIsAdmin" className="text-sm cursor-pointer">관리자</Label>
+                    <Label htmlFor="newUserIsAdmin" className="text-sm cursor-pointer">{t('layout.admin')}</Label>
                   </div>
                   <Button type="submit" disabled={userLoading} className="h-9">
                     {userLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4 mr-1" />}
-                    추가
+                    {t('settings.addUserBtn')}
                   </Button>
                 </div>
               </form>
@@ -907,7 +956,7 @@ export const Settings = () => {
             {/* User List */}
             <div className="space-y-2">
               {users.length === 0 ? (
-                <p className="text-center py-4 text-muted-foreground text-sm">사용자 목록을 불러오는 중...</p>
+                <p className="text-center py-4 text-muted-foreground text-sm">{t('common.loading')}</p>
               ) : (
                 users.map((u) => (
                   <div key={u.id} className="flex items-center justify-between p-3 border border-border rounded-lg hover:bg-muted/30 transition-colors">
@@ -919,10 +968,10 @@ export const Settings = () => {
                         <p className="font-medium text-sm">{u.username}</p>
                         <div className="flex items-center gap-1.5 mt-0.5">
                           {u.is_admin && (
-                            <span className="text-xs px-1.5 py-0.5 rounded-md bg-amber-500/10 text-amber-600 border border-amber-500/20">관리자</span>
+                            <span className="text-xs px-1.5 py-0.5 rounded-md bg-amber-500/10 text-amber-600 border border-amber-500/20">{t('layout.admin')}</span>
                           )}
                           <span className="text-xs text-muted-foreground">
-                            {u.created_at ? new Date(u.created_at).toLocaleDateString('ko-KR') : ''}
+                            {u.created_at ? new Date(u.created_at).toLocaleDateString(language === 'ko' ? 'ko-KR' : 'en-US') : ''}
                           </span>
                         </div>
                       </div>
@@ -938,7 +987,7 @@ export const Settings = () => {
                       </Button>
                     )}
                     {u.id === user.id && (
-                      <span className="text-xs text-muted-foreground px-2 py-1">나</span>
+                      <span className="text-xs text-muted-foreground px-2 py-1">{language === 'ko' ? '나' : 'Me'}</span>
                     )}
                   </div>
                 ))
@@ -960,13 +1009,13 @@ export const Settings = () => {
           </DialogHeader>
           <DialogFooter className="flex justify-end gap-2 mt-4">
             <Button variant="outline" onClick={() => setConfirmConfig(null)}>
-              취소
+              {t('common.cancel')}
             </Button>
             <Button variant={confirmConfig?.isDestructive ? "destructive" : "default"} onClick={() => {
               confirmConfig?.onConfirm();
               setConfirmConfig(null);
             }}>
-              확인
+              {t('common.confirm')}
             </Button>
           </DialogFooter>
         </DialogContent>

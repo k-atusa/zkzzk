@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import { Plus, Trash2, StopCircle, RefreshCw, Loader2, Radio, PlayCircle } from 'lucide-react';
 import api from '@/api';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { useLanguage } from '../lib/i18n';
 
 export const Live = () => {
   const [streamers, setStreamers] = useState<any[]>([]);
@@ -27,13 +28,14 @@ export const Live = () => {
   } | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const { t } = useLanguage();
 
   const fetchStreamers = async () => {
     try {
       const res = await api.get('/streamers');
       setStreamers(res.data);
     } catch (e) {
-      toast.error('스트리머 목록을 불러오는데 실패했습니다.');
+      toast.error(t('live.loadFailed'));
     }
   };
 
@@ -75,7 +77,7 @@ export const Live = () => {
         setFollowedStreamers(res.data);
         setFollowFetched(true);
       } catch (error: any) {
-        const msg = error.response?.data?.message || '팔로우 목록을 가져오는데 실패했습니다.';
+        const msg = error.response?.data?.message || t('live.loadFollowFailed');
         toast.error(msg);
         setShowFollowDropdown(false);
       } finally {
@@ -87,17 +89,17 @@ export const Live = () => {
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!hasCookies) {
-      toast.error('먼저 설정 메뉴에서 치지직 쿠키를 설정해주세요.');
+      toast.error(t('live.cookieWarning'));
       return;
     }
     try {
       await api.post('/streamers/add_streamer', { channel_url: newUrl });
-      toast.success('스트리머가 추가되었습니다.');
+      toast.success(t('live.addedSuccess'));
       setNewUrl('');
       setShowFollowDropdown(false);
       fetchStreamers();
     } catch (error: any) {
-      toast.error(error.response?.data?.message || '추가 실패');
+      toast.error(error.response?.data?.message || t('live.addFailed'));
     }
   };
 
@@ -106,10 +108,10 @@ export const Live = () => {
     setShowFollowDropdown(false);
     try {
       await api.post('/streamers/add_streamer', { channel_url: channel.channel_url });
-      toast.success(`${channel.channelName}이(가) 추가되었습니다.`);
+      toast.success(t('live.addedStreamerSuccess', { name: channel.channelName }));
       fetchStreamers();
     } catch (error: any) {
-      toast.error(error.response?.data?.message || '추가 실패');
+      toast.error(error.response?.data?.message || t('live.addFailed'));
     } finally {
       setAddingId(null);
     }
@@ -117,21 +119,16 @@ export const Live = () => {
 
   const handleRemove = (streamer: any) => {
     setConfirmConfig({
-      title: '스트리머 삭제',
-      description: (
-        <>
-          정말 <strong>{streamer.nickname}</strong>님을 삭제하시겠습니까? <br />
-          삭제하시면 자동 녹화 대상에서 제외됩니다.
-        </>
-      ),
+      title: t('live.deleteConfirmTitle'),
+      description: t('live.deleteConfirmDesc', { name: streamer.nickname }),
       isDestructive: true,
       onConfirm: async () => {
         try {
           await api.post(`/streamers/remove_streamer/${streamer.id}`);
-          toast.success('삭제되었습니다.');
+          toast.success(t('live.deleteSuccess'));
           fetchStreamers();
         } catch (error: any) {
-          toast.error(error.response?.data?.message || '삭제 실패');
+          toast.error(error.response?.data?.message || t('live.addFailed'));
         }
       }
     });
@@ -139,16 +136,16 @@ export const Live = () => {
 
   const handleStopRecording = (id: string) => {
     setConfirmConfig({
-      title: '녹화 일시중지',
-      description: '자동 녹화를 일시중지하시겠습니까? (현재 방송 중이면 녹화가 종료됩니다)',
+      title: t('live.pauseConfirmTitle'),
+      description: t('live.pauseConfirmDesc'),
       isDestructive: true,
       onConfirm: async () => {
         try {
           await api.post(`/streamers/stop_recording/${id}`);
-          toast.success('녹화가 중지되었습니다.');
+          toast.success(t('live.stopSuccess'));
           fetchStreamers();
         } catch (error: any) {
-          toast.error(error.response?.data?.message || '중지 실패');
+          toast.error(error.response?.data?.message || t('live.addFailed'));
         }
       }
     });
@@ -157,10 +154,10 @@ export const Live = () => {
   const handleResumeRecording = async (id: string) => {
     try {
       await api.post(`/streamers/resume_recording/${id}`);
-      toast.success('자동 녹화가 재개되었습니다.');
+      toast.success(t('live.resumeSuccess'));
       fetchStreamers();
     } catch (error: any) {
-      toast.error(error.response?.data?.message || '재개 실패');
+      toast.error(error.response?.data?.message || t('live.addFailed'));
     }
   };
 
@@ -179,15 +176,15 @@ export const Live = () => {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-3xl font-bold tracking-tight">스트리머 관리</h2>
+        <h2 className="text-3xl font-bold tracking-tight">{t('live.title')}</h2>
         <Button variant="outline" onClick={fetchStreamers}>
-          <RefreshCw className="mr-2 h-4 w-4" /> 새로고침
+          <RefreshCw className="mr-2 h-4 w-4" /> {t('live.refresh')}
         </Button>
       </div>
 
       <Card className="!overflow-visible">
         <CardHeader>
-          <CardTitle>새 스트리머 추가</CardTitle>
+          <CardTitle>{t('live.addNewStreamer')}</CardTitle>
         </CardHeader>
         <CardContent className="!overflow-visible">
           <form onSubmit={handleAdd} className="flex space-x-2">
@@ -211,16 +208,16 @@ export const Live = () => {
                   {followLoading ? (
                     <div className="flex items-center justify-center py-6 text-muted-foreground text-sm gap-2">
                       <Loader2 className="h-4 w-4 animate-spin" />
-                      팔로우 목록 불러오는 중...
+                      {t('live.loadingFollowing')}
                     </div>
                   ) : filteredFollowed.length === 0 ? (
                     <div className="py-4 px-3 text-center text-sm text-muted-foreground">
-                      {newUrl ? '검색 결과가 없습니다.' : '팔로우 중인 스트리머가 없습니다.'}
+                      {newUrl ? t('live.searchNoResults') : t('live.noFollowedStreamers')}
                     </div>
                   ) : (
                     <div className="max-h-[480px] overflow-y-auto">
                       <div className="px-3 py-2 text-xs text-muted-foreground font-medium border-b border-border bg-muted/30">
-                        팔로우 중인 채널 ({filteredFollowed.length})
+                        {t('live.followedChannels', { count: filteredFollowed.length })}
                       </div>
                       {filteredFollowed.map((ch) => {
                         const isAdded = addedUrls.has(ch.channel_url);
@@ -287,7 +284,7 @@ export const Live = () => {
                               {isAdding ? (
                                 <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
                               ) : isAdded ? (
-                                <span className="text-xs text-muted-foreground">추가됨</span>
+                                <span className="text-xs text-muted-foreground">{t('live.addedLabel')}</span>
                               ) : null}
                             </div>
                           </button>
@@ -299,7 +296,7 @@ export const Live = () => {
               )}
             </div>
             <Button type="submit">
-              <Plus className="mr-2 h-4 w-4" /> 추가
+              <Plus className="mr-2 h-4 w-4" /> {t('live.addBtn')}
             </Button>
           </form>
         </CardContent>
@@ -307,22 +304,22 @@ export const Live = () => {
 
       <Card>
         <CardHeader>
-          <CardTitle>등록된 스트리머</CardTitle>
+          <CardTitle>{t('live.registeredStreamers')}</CardTitle>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>닉네임</TableHead>
-                <TableHead>상태</TableHead>
-                <TableHead>방송 정보</TableHead>
-                <TableHead className="text-right">작업</TableHead>
+                <TableHead>{t('live.nickname')}</TableHead>
+                <TableHead>{t('live.status')}</TableHead>
+                <TableHead>{t('live.broadcastInfo')}</TableHead>
+                <TableHead className="text-right">{t('common.actions')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {streamers.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={4} className="text-center py-6 text-muted-foreground">등록된 스트리머가 없습니다.</TableCell>
+                  <TableCell colSpan={4} className="text-center py-6 text-muted-foreground">{t('live.noStreamers')}</TableCell>
                 </TableRow>
               ) : streamers.map((s) => (
                 <TableRow key={s.id}>
@@ -332,16 +329,16 @@ export const Live = () => {
                   <TableCell>
                     {s.is_paused ? (
                       <span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium bg-yellow-500/10 text-yellow-600">
-                        일시중지
+                        {t('live.paused')}
                       </span>
                     ) : s.is_recording ? (
                       <span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium bg-red-500/10 text-red-500">
                         <span className="w-2 h-2 mr-1.5 bg-red-500 rounded-full animate-pulse"></span>
-                        녹화중
+                        {t('live.recording')}
                       </span>
                     ) : (
                       <span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium bg-muted text-muted-foreground">
-                        대기중
+                        {t('live.waiting')}
                       </span>
                     )}
                   </TableCell>
@@ -377,7 +374,7 @@ export const Live = () => {
                         size="sm"
                         onClick={() => handleResumeRecording(s.id)}
                         className="h-8 w-8 p-0 bg-transparent hover:bg-green-500/10 border-border/50 hover:border-green-500/50 transition-colors"
-                        title="녹화 재개"
+                        title={t('live.resumeRecording')}
                       >
                         <PlayCircle className="h-4 w-4 text-green-500" />
                       </Button>
@@ -387,7 +384,7 @@ export const Live = () => {
                         size="sm"
                         onClick={() => handleStopRecording(s.id)}
                         className="h-8 w-8 p-0 bg-transparent hover:bg-red-500/10 border-border/50 hover:border-red-500/50 transition-colors"
-                        title="녹화 중지"
+                        title={t('live.stopRecording')}
                       >
                         <StopCircle className="h-5 w-5 text-red-500" />
                       </Button>
@@ -397,7 +394,7 @@ export const Live = () => {
                       size="sm"
                       onClick={() => handleRemove(s)}
                       className="h-8 w-8 p-0 bg-transparent hover:bg-red-500/10 border-border/50 hover:border-red-500/50 transition-colors"
-                      title="스트리머 삭제"
+                      title={t('live.deleteStreamer')}
                     >
                       <Trash2 className="h-4 w-4 text-red-500" />
                     </Button>
@@ -419,13 +416,13 @@ export const Live = () => {
           </DialogHeader>
           <DialogFooter className="flex justify-end gap-2 mt-4">
             <Button variant="outline" onClick={() => setConfirmConfig(null)}>
-              취소
+              {t('common.cancel')}
             </Button>
             <Button variant={confirmConfig?.isDestructive ? "destructive" : "default"} onClick={() => {
               confirmConfig?.onConfirm();
               setConfirmConfig(null);
             }}>
-              확인
+              {t('common.confirm')}
             </Button>
           </DialogFooter>
         </DialogContent>

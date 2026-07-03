@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import api from '@/api';
+import { useLanguage } from '@/lib/i18n';
 
 export const Login = () => {
   const [username, setUsername] = useState('');
@@ -14,6 +15,7 @@ export const Login = () => {
   const [isSetup, setIsSetup] = useState(false);
   const [requireOtp, setRequireOtp] = useState(false);
   const navigate = useNavigate();
+  const { t } = useLanguage();
 
   useEffect(() => {
     api.get('/auth/status').then(res => {
@@ -26,20 +28,20 @@ export const Login = () => {
     try {
       if (isSetup) {
         await api.post('/auth/setup', { username, password });
-        toast.success('관리자 계정이 생성되었습니다.');
+        toast.success(t('login.accountCreated'));
         navigate('/');
       } else {
         const res = await api.post('/auth/login', { username, password, otp });
         if (res.data.requireOtp) {
           setRequireOtp(true);
-          toast.info('OTP 코드를 입력해주세요.');
+          toast.info(t('login.enterOtp'));
         } else {
-          toast.success('로그인 성공');
+          toast.success(t('login.loginSuccess'));
           navigate('/');
         }
       }
     } catch (error: any) {
-      toast.error(error.response?.data?.message || '오류가 발생했습니다.');
+      toast.error(error.response?.data?.message || t('login.errorOccurred'));
     }
   };
 
@@ -47,9 +49,9 @@ export const Login = () => {
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold tracking-tight font-google-sans">ZKZZK</CardTitle>
+          <CardTitle className="text-2xl font-bold tracking-tight font-google-sans">{t('login.title')}</CardTitle>
           <CardDescription>
-            {isSetup ? '최초 관리자 계정을 생성합니다.' : (requireOtp ? '2차 인증 OTP를 입력하세요.' : '계정에 로그인하세요.')}
+            {isSetup ? t('login.setupSubtitle') : (requireOtp ? t('login.otpSubtitle') : t('login.loginSubtitle'))}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -57,23 +59,23 @@ export const Login = () => {
             {!requireOtp && (
               <>
                 <div className="space-y-2">
-                  <Label htmlFor="username">아이디</Label>
+                  <Label htmlFor="username">{t('login.username')}</Label>
                   <Input id="username" value={username} onChange={e => setUsername(e.target.value)} required />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="password">비밀번호</Label>
+                  <Label htmlFor="password">{t('login.password')}</Label>
                   <Input id="password" type="password" value={password} onChange={e => setPassword(e.target.value)} required />
                 </div>
               </>
             )}
             {requireOtp && (
               <div className="space-y-2">
-                <Label htmlFor="otp">OTP 코드</Label>
+                <Label htmlFor="otp">{t('login.otpCode')}</Label>
                 <Input id="otp" type="text" value={otp} onChange={e => setOtp(e.target.value)} required autoFocus />
               </div>
             )}
             <Button type="submit" className="w-full">
-              {isSetup ? '계정 생성' : (requireOtp ? '인증' : '로그인')}
+              {isSetup ? t('login.createAccount') : (requireOtp ? t('login.verify') : t('login.loginBtn'))}
             </Button>
           </form>
         </CardContent>

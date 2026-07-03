@@ -9,17 +9,17 @@ import { toast } from 'sonner';
 import { Trash2, Video, Film, FileText, MonitorPlay, Play, AlertCircle, CheckCircle2, Loader2, Upload, AlertTriangle, Search, X } from 'lucide-react';
 import api from '@/api';
 import { format } from 'date-fns';
-import { ko } from 'date-fns/locale';
+import { ko, enUS } from 'date-fns/locale';
 import mpegts from 'mpegts.js';
 import pkg from '../../package.json';
-
-
+import { useLanguage } from '../lib/i18n';
 
 // Self-contained Video Player for .ts and .mp4 formats
 const VideoPlayer = ({ filename }: { filename: string }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const playerRef = useRef<any>(null);
   const [error, setError] = useState<string | null>(null);
+  const { t } = useLanguage();
 
   const videoUrl = `http://localhost:5001/api/recordings/download/${filename}`;
   const isTs = filename.endsWith('.ts');
@@ -54,10 +54,10 @@ const VideoPlayer = ({ filename }: { filename: string }) => {
 
           player.on(mpegts.Events.ERROR, (type, detail, info) => {
             console.error('mpegts error:', type, detail, info);
-            setError(`재생 중 오류가 발생했습니다: ${type} (${detail})`);
+            setError(t('recordings.playbackError', { type, detail }));
           });
         } catch (e: any) {
-          setError(`플레이어 초기화 실패: ${e.message}`);
+          setError(t('recordings.initFailed', { message: e.message }));
         }
 
         return () => {
@@ -67,10 +67,10 @@ const VideoPlayer = ({ filename }: { filename: string }) => {
           }
         };
       } else {
-        setError('이 브라우저는 MPEG-TS 재생을 지원하지 않습니다.');
+        setError(t('recordings.mseUnsupported'));
       }
     }
-  }, [videoUrl, isTs]);
+  }, [videoUrl, isTs, t]);
 
   if (error) {
     return (
@@ -78,7 +78,7 @@ const VideoPlayer = ({ filename }: { filename: string }) => {
         <AlertCircle className="h-10 w-10 text-destructive/80" />
         <div>
           <p className="font-semibold text-sm">{error}</p>
-          <p className="text-xs text-muted-foreground mt-1">대체 방법: 우측의 다운로드 버튼을 이용해 다운로드 후 PC에서 재생해 주세요.</p>
+          <p className="text-xs text-muted-foreground mt-1">{t('recordings.alternativePlay')}</p>
         </div>
       </div>
     );
@@ -121,13 +121,14 @@ export const Recordings = () => {
   } | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [vodProgress, setVodProgress] = useState<Record<string, string>>({});
+  const { t, language } = useLanguage();
 
   const fetchRecordings = async () => {
     try {
       const res = await api.get('/recordings');
       setRecordings(res.data);
     } catch (e) {
-      toast.error('녹화본 목록을 불러오는데 실패했습니다.');
+      toast.error(t('recordings.loadFailed'));
     }
   };
 
@@ -145,7 +146,7 @@ export const Recordings = () => {
 
           toast.success(
             <div className="flex flex-col gap-1">
-              <span className="font-semibold text-foreground">업로드가 완료되었습니다.</span>
+              <span className="font-semibold text-foreground">{t('recordings.uploadComplete')}</span>
               {video_id && (
                 <a 
                   href={`https://youtu.be/${video_id}`} 
@@ -153,7 +154,7 @@ export const Recordings = () => {
                   rel="noopener noreferrer" 
                   className="text-blue-500 underline text-sm hover:text-blue-600 transition-colors mt-1"
                 >
-                  유튜브에서 보기
+                  {t('recordings.viewOnYoutube')}
                 </a>
               )}
             </div>
@@ -216,7 +217,7 @@ export const Recordings = () => {
       youtubeEventSource.close();
       vodEventSource.close();
     };
-  }, []);
+  }, [t]);
 
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -283,32 +284,32 @@ export const Recordings = () => {
   }, [recordings, totalOtherCount]);
 
   const handleDelete = (filename: string) => {
-    toast.custom((t) => (
+    toast.custom((tActive) => (
       <div className="flex flex-col gap-3 w-full bg-background border border-border p-4 rounded-lg shadow-lg">
         <div className="flex items-start gap-3">
           <AlertTriangle className="h-5 w-5 text-red-500 mt-0.5 shrink-0" />
           <div className="flex flex-col gap-1">
-            <span className="font-semibold text-foreground text-sm">녹화본 삭제</span>
+            <span className="font-semibold text-foreground text-sm">{t('recordings.deleteConfirmTitle')}</span>
             <span className="text-xs text-muted-foreground leading-relaxed">
-              정말 이 녹화본 파일을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.
+              {t('recordings.deleteConfirmDesc')}
             </span>
           </div>
         </div>
         <div className="flex justify-end gap-2 mt-1">
-          <Button size="sm" variant="outline" onClick={() => toast.dismiss(t)}>
-            취소
+          <Button size="sm" variant="outline" onClick={() => toast.dismiss(tActive)}>
+            {t('common.cancel')}
           </Button>
           <Button size="sm" variant="destructive" onClick={async () => {
-            toast.dismiss(t);
+            toast.dismiss(tActive);
             try {
               await api.post('/recordings/delete', { filename });
-              toast.success('삭제되었습니다.');
+              toast.success(t('live.deleteSuccess'));
               fetchRecordings();
             } catch (error: any) {
-              toast.error(error.response?.data?.message || '삭제 실패');
+              toast.error(error.response?.data?.message || t('recordings.deleteFailed'));
             }
           }}>
-            삭제
+            {t('recordings.deleteBtn')}
           </Button>
         </div>
       </div>
@@ -340,24 +341,24 @@ export const Recordings = () => {
       if (res.data.already_uploaded) {
         toast.success(
           <div className="flex flex-col gap-1">
-            <span>이미 업로드된 영상입니다.</span>
+            <span>{t('recordings.alreadyUploaded')}</span>
             <a 
               href={`https://youtu.be/${res.data.video_id}`} 
               target="_blank" 
               rel="noreferrer" 
               className="text-blue-500 underline text-sm hover:text-blue-600 transition-colors"
             >
-              유튜브에서 보기
+              {t('recordings.viewOnYoutube')}
             </a>
           </div>
         );
       } else {
-        toast.success('유튜브 업로드가 시작되었습니다.');
+        toast.success(t('recordings.uploadSuccess'));
       }
       setUploadConfig(null);
       fetchRecordings();
     } catch (error: any) {
-      toast.error(error.response?.data?.message || '유튜브 업로드 요청 실패');
+      toast.error(error.response?.data?.message || t('recordings.uploadFailed'));
     } finally {
       setIsUploading(false);
     }
@@ -372,7 +373,7 @@ export const Recordings = () => {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-3xl font-bold tracking-tight">녹화본 관리</h2>
+        <h2 className="text-3xl font-bold tracking-tight">{t('recordings.title')}</h2>
       </div>
 
       {/* Modern Tabs & Search Navigation */}
@@ -387,7 +388,7 @@ export const Recordings = () => {
             }`}
           >
             <Video className="h-4 w-4" />
-            라이브 영상
+            {t('recordings.liveTab')}
             {liveCount > 0 && (
               <span className="px-2 py-0.5 text-xs font-bold rounded-md bg-primary/10 text-primary">
                 {liveCount}
@@ -403,7 +404,7 @@ export const Recordings = () => {
             }`}
           >
             <Film className="h-4 w-4" />
-            다시보기 (VOD)
+            {t('recordings.vodTab')}
             {vodCount > 0 && (
               <span className="px-2 py-0.5 text-xs font-bold rounded-md bg-primary/10 text-primary">
                 {vodCount}
@@ -420,7 +421,7 @@ export const Recordings = () => {
               }`}
             >
               <FileText className="h-4 w-4" />
-              기타 파일
+              {t('recordings.otherTab')}
               <span className="px-2 py-0.5 text-xs font-bold rounded-md bg-primary/10 text-primary">
                 {otherCount}
               </span>
@@ -432,7 +433,7 @@ export const Recordings = () => {
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               type="text"
-              placeholder="영상 제목 또는 스트리머 검색..."
+              placeholder={language === 'ko' ? "영상 제목 또는 스트리머 검색..." : "Search by video title or streamer..."}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-9 h-9"
@@ -456,9 +457,9 @@ export const Recordings = () => {
           <CardContent className="py-16 text-center text-muted-foreground flex flex-col items-center justify-center gap-3">
             <MonitorPlay className="h-10 w-10 text-muted-foreground/50" />
             {searchQuery.trim() ? (
-              <p>검색 결과가 없습니다.</p>
+              <p>{t('recordings.searchNoResults')}</p>
             ) : (
-              <p>선택한 카테고리에 저장된 녹화본이 없습니다.</p>
+              <p>{t('recordings.noRecordings')}</p>
             )}
           </CardContent>
         </Card>
@@ -472,10 +473,10 @@ export const Recordings = () => {
               <Table>
                 <TableHeader className="bg-muted/5">
                   <TableRow>
-                    <TableHead className="pl-6 py-3">방송 정보</TableHead>
-                    <TableHead className="w-28 py-3">파일 크기</TableHead>
-                    <TableHead className="w-48 py-3">녹화 완료 일시</TableHead>
-                    <TableHead className="text-right pr-6 py-3 w-40">작업</TableHead>
+                    <TableHead className="pl-6 py-3">{t('recordings.broadcastInfo')}</TableHead>
+                    <TableHead className="w-28 py-3">{t('recordings.fileSize')}</TableHead>
+                    <TableHead className="w-48 py-3">{t('recordings.dateRecorded')}</TableHead>
+                    <TableHead className="text-right pr-6 py-3 w-40">{t('recordings.actions')}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -498,7 +499,7 @@ export const Recordings = () => {
                               )}
                               {r.is_recording && !vodProgress[r.id] && (
                                 <span className="inline-flex items-center gap-1 text-xs px-1.5 py-0.5 rounded bg-red-500/10 text-red-600 border border-red-500/20">
-                                  <Video className="h-3 w-3" /> 녹화중
+                                  <Video className="h-3 w-3" /> {t('recordings.recordingStatus')}
                                 </span>
                               )}
                               {r.is_recording && vodProgress[r.id] && (
@@ -508,17 +509,17 @@ export const Recordings = () => {
                               )}
                               {r.youtube_status === 'DUPLICATE_PENDING' && (
                                 <span className="inline-flex items-center gap-1 text-xs px-1.5 py-0.5 rounded bg-yellow-500/10 text-yellow-600 border border-yellow-500/20">
-                                  <AlertCircle className="h-3 w-3" /> 유튜브 업로드 대기 (중복 의심)
+                                  <AlertCircle className="h-3 w-3" /> {t('recordings.youtubeWaitingDuplicate')}
                                 </span>
                               )}
                               {r.youtube_status === 'UPLOADING' && (
                                 <span className="inline-flex items-center gap-1 text-xs px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-600 border border-blue-500/20">
-                                  <Loader2 className="h-3 w-3 animate-spin" /> 유튜브 업로드 중
+                                  <Loader2 className="h-3 w-3 animate-spin" /> {t('recordings.youtubeUploading')}
                                 </span>
                               )}
                               {r.youtube_status === 'UPLOADED' && (
                                 <span className="inline-flex items-center gap-1 text-xs px-1.5 py-0.5 rounded bg-green-500/10 text-green-600 border border-green-500/20">
-                                  <CheckCircle2 className="h-3 w-3" /> 유튜브 업로드 완료
+                                  <CheckCircle2 className="h-3 w-3" /> {t('recordings.youtubeUploaded')}
                                 </span>
                               )}
                             </div>
@@ -527,15 +528,15 @@ export const Recordings = () => {
                       </TableCell>
                       <TableCell className="text-muted-foreground text-sm font-medium">{r.size_mb} MB</TableCell>
                       <TableCell className="text-muted-foreground text-sm">
-                        {format(new Date(r.created_at), 'PPP pp', { locale: ko })}
+                        {format(new Date(r.created_at), 'PPP pp', { locale: language === 'ko' ? ko : enUS })}
                       </TableCell>
                       <TableCell className="text-right pr-6 py-4 flex justify-end gap-2">
                         {!r.is_recording && r.youtube_status !== 'UPLOADING' && r.youtube_status !== 'UPLOADED' && (
-                          <Button variant="outline" size="sm" onClick={() => handleYoutubeUploadClick(r.id || '', r.filename)} className="h-8 w-8 p-0 bg-transparent hover:bg-primary/10 border-border/50 hover:border-primary/50 transition-colors" title="유튜브 업로드">
+                          <Button variant="outline" size="sm" onClick={() => handleYoutubeUploadClick(r.id || '', r.filename)} className="h-8 w-8 p-0 bg-transparent hover:bg-primary/10 border-border/50 hover:border-primary/50 transition-colors" title={t('recordings.uploadToYoutube')}>
                             <Upload className="h-5 w-5 text-foreground" />
                           </Button>
                         )}
-                        <Button variant="outline" size="sm" onClick={() => handleDelete(r.filename)} className="h-8 w-8 p-0 bg-transparent hover:bg-red-500/10 border-border/50 hover:border-red-500/50 transition-colors" title="삭제">
+                        <Button variant="outline" size="sm" onClick={() => handleDelete(r.filename)} className="h-8 w-8 p-0 bg-transparent hover:bg-red-500/10 border-border/50 hover:border-red-500/50 transition-colors" title={t('common.delete')}>
                           <Trash2 className="h-4 w-4 text-red-500" />
                         </Button>
                       </TableCell>
@@ -570,14 +571,14 @@ export const Recordings = () => {
         <DialogContent className="sm:max-w-md">
           <form onSubmit={submitYoutubeUpload}>
             <DialogHeader>
-              <DialogTitle>YouTube 영상 업로드</DialogTitle>
+              <DialogTitle>{t('recordings.youtubeModalTitle')}</DialogTitle>
               <DialogDescription>
-                업로드할 영상의 제목과 설명을 입력해주세요.
+                {t('recordings.youtubeModalDesc')}
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4 py-4">
               <div className="space-y-2">
-                <Label htmlFor="yt-title">영상 제목</Label>
+                <Label htmlFor="yt-title">{t('recordings.videoTitle')}</Label>
                 <Input
                   id="yt-title"
                   value={uploadConfig?.title || ''}
@@ -586,7 +587,7 @@ export const Recordings = () => {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="yt-desc">설명</Label>
+                <Label htmlFor="yt-desc">{t('recordings.description')}</Label>
                 <textarea
                   id="yt-desc"
                   className="flex min-h-[80px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
@@ -597,16 +598,16 @@ export const Recordings = () => {
             </div>
             <DialogFooter className="flex justify-end gap-2">
               <Button type="button" variant="outline" onClick={() => setUploadConfig(null)} disabled={isUploading}>
-                취소
+                {t('common.cancel')}
               </Button>
               <Button type="submit" disabled={isUploading}>
                 {isUploading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    업로드 요청 중...
+                    {t('recordings.requestingUpload')}
                   </>
                 ) : (
-                  '업로드'
+                  t('recordings.uploadBtn')
                 )}
               </Button>
             </DialogFooter>

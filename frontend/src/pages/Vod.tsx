@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 import { Search, Download, AlertTriangle } from 'lucide-react';
 import api from '@/api';
+import { useLanguage } from '../lib/i18n';
 
 export const Vod = () => {
   const [url, setUrl] = useState('');
@@ -12,6 +13,7 @@ export const Vod = () => {
   const [loading, setLoading] = useState(false);
   const [hasCookies, setHasCookies] = useState(false);
   const [userResolution, setUserResolution] = useState<string>('ask');
+  const { t } = useLanguage();
 
   useEffect(() => {
     const fetchMe = async () => {
@@ -34,37 +36,37 @@ export const Vod = () => {
         resolution: resInfo,
         overwrite
       });
-      toast.success(`[${resInfo.quality}] 다운로드가 시작되었습니다. 녹화본 페이지에서 확인하세요.`);
+      toast.success(t('vod.downloadStarted', { quality: resInfo.quality }));
       setUrl('');
       setVodInfo(null);
     } catch (error: any) {
       if (error.response?.data?.message === 'FILE_EXISTS') {
-        toast.custom((t) => (
+        toast.custom((tActive) => (
           <div className="flex flex-col gap-3 w-full bg-background border border-border p-4 rounded-lg shadow-lg">
             <div className="flex items-start gap-3">
               <AlertTriangle className="h-5 w-5 text-yellow-500 mt-0.5 shrink-0" />
               <div className="flex flex-col gap-1">
-                <span className="font-semibold text-foreground text-sm">이미 동일한 파일이 존재합니다.</span>
+                <span className="font-semibold text-foreground text-sm">{t('vod.fileExistsTitle')}</span>
                 <span className="text-xs text-muted-foreground leading-relaxed">
-                  기존 파일을 삭제하고 처음부터 다시 다운로드하시겠습니까?
+                  {t('vod.fileExistsDesc')}
                 </span>
               </div>
             </div>
             <div className="flex justify-end gap-2 mt-1">
-              <Button size="sm" variant="outline" onClick={() => toast.dismiss(t)}>
-                취소
+              <Button size="sm" variant="outline" onClick={() => toast.dismiss(tActive)}>
+                {t('common.cancel')}
               </Button>
               <Button size="sm" onClick={() => {
-                toast.dismiss(t);
+                toast.dismiss(tActive);
                 executeDownload(resInfo, videoInfo, true);
               }}>
-                덮어쓰기
+                {t('vod.overwrite')}
               </Button>
             </div>
           </div>
         ), { duration: Number.POSITIVE_INFINITY, id: 'confirm-toast' });
       } else {
-        toast.error(error.response?.data?.message || '다운로드 요청 실패');
+        toast.error(error.response?.data?.message || t('vod.downloadRequestFailed'));
       }
     }
   };
@@ -72,7 +74,7 @@ export const Vod = () => {
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!hasCookies) {
-      toast.error('먼저 설정 메뉴에서 치지직 쿠키를 설정해주세요.');
+      toast.error(t('vod.cookieWarning'));
       return;
     }
     setLoading(true);
@@ -86,7 +88,7 @@ export const Vod = () => {
         
         if (!targetRes && fetchedVodInfo.resolutions.length > 0) {
           targetRes = fetchedVodInfo.resolutions[0];
-          toast.info(`요청하신 ${targetQuality} 화질이 없어 ${targetRes.quality} 화질로 다운로드합니다.`);
+          toast.info(t('vod.qualityFallbackInfo', { quality: targetQuality, fallbackQuality: targetRes.quality }));
         }
 
         if (targetRes) {
@@ -96,7 +98,7 @@ export const Vod = () => {
         setVodInfo(fetchedVodInfo);
       }
     } catch (error: any) {
-      toast.error(error.response?.data?.message || '정보를 가져올 수 없습니다.');
+      toast.error(error.response?.data?.message || t('vod.fetchInfoFailed'));
       setVodInfo(null);
     } finally {
       setLoading(false);
@@ -111,23 +113,23 @@ export const Vod = () => {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-3xl font-bold tracking-tight">VOD 다운로더</h2>
+      <h2 className="text-3xl font-bold tracking-tight">{t('vod.title')}</h2>
 
       <Card>
         <CardHeader>
-          <CardTitle>치지직 VOD 검색</CardTitle>
-          <CardDescription>다운로드할 VOD URL을 입력하세요.</CardDescription>
+          <CardTitle>{t('vod.searchTitle')}</CardTitle>
+          <CardDescription>{t('vod.searchDesc')}</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSearch} className="flex space-x-2">
             <Input
               value={url}
               onChange={e => setUrl(e.target.value)}
-              placeholder="https://chzzk.naver.com/video/..."
+              placeholder={t('vod.searchPlaceholder')}
               required
             />
             <Button type="submit" disabled={loading}>
-              <Search className="mr-2 h-4 w-4" /> {loading ? '검색중...' : '검색'}
+              <Search className="mr-2 h-4 w-4" /> {loading ? t('vod.searching') : t('vod.searchBtn')}
             </Button>
           </form>
         </CardContent>
@@ -143,13 +145,13 @@ export const Vod = () => {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex flex-col gap-3 max-w-sm">
-              <h3 className="text-sm font-medium text-muted-foreground mb-1">다운로드 화질 선택</h3>
+              <h3 className="text-sm font-medium text-muted-foreground mb-1">{t('vod.selectQuality')}</h3>
               {vodInfo.resolutions.map((res: any) => (
                 <Button 
-                  key={res.resolution} 
-                  variant="outline" 
-                  className="w-full flex justify-between items-center h-12 px-4 hover:border-primary/50 hover:bg-primary/5 transition-colors" 
-                  onClick={() => handleDownload(res.resolution)}
+                   key={res.resolution} 
+                   variant="outline" 
+                   className="w-full flex justify-between items-center h-12 px-4 hover:border-primary/50 hover:bg-primary/5 transition-colors" 
+                   onClick={() => handleDownload(res.resolution)}
                 >
                   <div className="flex items-center gap-2">
                     <span className="font-bold text-base">{res.resolution}</span>
