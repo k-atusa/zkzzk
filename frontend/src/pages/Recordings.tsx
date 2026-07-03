@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import { Trash2, Video, Film, FileText, MonitorPlay, Play, AlertCircle, CheckCircle2, Loader2, Upload, AlertTriangle } from 'lucide-react';
+import { Trash2, Video, Film, FileText, MonitorPlay, Play, AlertCircle, CheckCircle2, Loader2, Upload, AlertTriangle, Search, X } from 'lucide-react';
 import api from '@/api';
 import { format } from 'date-fns';
 import { ko } from 'date-fns/locale';
@@ -218,6 +218,31 @@ export const Recordings = () => {
     };
   }, []);
 
+  const [searchQuery, setSearchQuery] = useState('');
+
+  // Helper to filter recordings by streamer name or video title/filename
+  const filterRecordings = (recsMap: Record<string, any[]>) => {
+    if (!searchQuery.trim()) return recsMap;
+    const query = searchQuery.toLowerCase().trim();
+    const filtered: Record<string, any[]> = {};
+    
+    Object.entries(recsMap).forEach(([streamerName, recs]) => {
+      const isStreamerMatch = streamerName.toLowerCase().includes(query);
+      if (isStreamerMatch) {
+        filtered[streamerName] = recs;
+      } else {
+        const matchingRecs = recs.filter(r => 
+          (r.title && r.title.toLowerCase().includes(query)) ||
+          (r.filename && r.filename.toLowerCase().includes(query))
+        );
+        if (matchingRecs.length > 0) {
+          filtered[streamerName] = matchingRecs;
+        }
+      }
+    });
+    return filtered;
+  };
+
   // Parse and separate recordings into categories
   const liveRecordings: Record<string, any[]> = {};
   const vodRecordings: Record<string, any[]> = {};
@@ -235,9 +260,14 @@ export const Recordings = () => {
     }
   });
 
-  const liveCount = Object.values(liveRecordings).reduce((acc, curr) => acc + curr.length, 0);
-  const vodCount = Object.values(vodRecordings).reduce((acc, curr) => acc + curr.length, 0);
-  const otherCount = Object.values(otherRecordings).reduce((acc, curr) => acc + curr.length, 0);
+  const filteredLiveRecordings = filterRecordings(liveRecordings);
+  const filteredVodRecordings = filterRecordings(vodRecordings);
+  const filteredOtherRecordings = filterRecordings(otherRecordings);
+
+  const liveCount = Object.values(filteredLiveRecordings).reduce((acc, curr) => acc + curr.length, 0);
+  const vodCount = Object.values(filteredVodRecordings).reduce((acc, curr) => acc + curr.length, 0);
+  const otherCount = Object.values(filteredOtherRecordings).reduce((acc, curr) => acc + curr.length, 0);
+  const totalOtherCount = Object.values(otherRecordings).reduce((acc, curr) => acc + curr.length, 0);
 
   // Auto-switch tab if the default 'live' tab is empty but others have contents
   useEffect(() => {
@@ -246,11 +276,11 @@ export const Recordings = () => {
       const hasVod = Object.keys(recordings).some(k => k.endsWith(' (다시보기)') || k === '다시보기 (기존)');
       if (!hasLive && hasVod) {
         setActiveTab('vod');
-      } else if (!hasLive && !hasVod && otherCount > 0) {
+      } else if (!hasLive && !hasVod && totalOtherCount > 0) {
         setActiveTab('other');
       }
     }
-  }, [recordings, otherCount]);
+  }, [recordings, totalOtherCount]);
 
   const handleDelete = (filename: string) => {
     toast.custom((t) => (
@@ -334,8 +364,8 @@ export const Recordings = () => {
   };
 
   const currentCategoryRecordings = 
-    activeTab === 'live' ? liveRecordings :
-    activeTab === 'vod' ? vodRecordings : otherRecordings;
+    activeTab === 'live' ? filteredLiveRecordings :
+    activeTab === 'vod' ? filteredVodRecordings : filteredOtherRecordings;
 
   const hasRecordingsInActiveTab = Object.keys(currentCategoryRecordings).length > 0;
 
@@ -345,56 +375,79 @@ export const Recordings = () => {
         <h2 className="text-3xl font-bold tracking-tight">녹화본 관리</h2>
       </div>
 
-      {/* Modern Tabs Navigation */}
-      <div className="flex border-b border-border space-x-6">
-        <button
-          onClick={() => setActiveTab('live')}
-          className={`pb-3 text-sm font-semibold border-b-2 transition-all flex items-center gap-2 relative ${
-            activeTab === 'live'
-              ? 'border-primary text-primary'
-              : 'border-transparent text-muted-foreground hover:text-foreground'
-          }`}
-        >
-          <Video className="h-4 w-4" />
-          라이브 영상
-          {liveCount > 0 && (
-            <span className="px-2 py-0.5 text-xs font-bold rounded-md bg-primary/10 text-primary">
-              {liveCount}
-            </span>
-          )}
-        </button>
-        <button
-          onClick={() => setActiveTab('vod')}
-          className={`pb-3 text-sm font-semibold border-b-2 transition-all flex items-center gap-2 relative ${
-            activeTab === 'vod'
-              ? 'border-primary text-primary'
-              : 'border-transparent text-muted-foreground hover:text-foreground'
-          }`}
-        >
-          <Film className="h-4 w-4" />
-          다시보기 (VOD)
-          {vodCount > 0 && (
-            <span className="px-2 py-0.5 text-xs font-bold rounded-md bg-primary/10 text-primary">
-              {vodCount}
-            </span>
-          )}
-        </button>
-        {otherCount > 0 && (
+      {/* Modern Tabs & Search Navigation */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-border pb-3 sm:pb-0">
+        <div className="flex space-x-6 overflow-x-auto">
           <button
-            onClick={() => setActiveTab('other')}
+            onClick={() => setActiveTab('live')}
             className={`pb-3 text-sm font-semibold border-b-2 transition-all flex items-center gap-2 relative ${
-              activeTab === 'other'
+              activeTab === 'live'
                 ? 'border-primary text-primary'
                 : 'border-transparent text-muted-foreground hover:text-foreground'
             }`}
           >
-            <FileText className="h-4 w-4" />
-            기타 파일
-            <span className="px-2 py-0.5 text-xs font-bold rounded-md bg-primary/10 text-primary">
-              {otherCount}
-            </span>
+            <Video className="h-4 w-4" />
+            라이브 영상
+            {liveCount > 0 && (
+              <span className="px-2 py-0.5 text-xs font-bold rounded-md bg-primary/10 text-primary">
+                {liveCount}
+              </span>
+            )}
           </button>
-        )}
+          <button
+            onClick={() => setActiveTab('vod')}
+            className={`pb-3 text-sm font-semibold border-b-2 transition-all flex items-center gap-2 relative ${
+              activeTab === 'vod'
+                ? 'border-primary text-primary'
+                : 'border-transparent text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            <Film className="h-4 w-4" />
+            다시보기 (VOD)
+            {vodCount > 0 && (
+              <span className="px-2 py-0.5 text-xs font-bold rounded-md bg-primary/10 text-primary">
+                {vodCount}
+              </span>
+            )}
+          </button>
+          {otherCount > 0 && (
+            <button
+              onClick={() => setActiveTab('other')}
+              className={`pb-3 text-sm font-semibold border-b-2 transition-all flex items-center gap-2 relative ${
+                activeTab === 'other'
+                  ? 'border-primary text-primary'
+                  : 'border-transparent text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              <FileText className="h-4 w-4" />
+              기타 파일
+              <span className="px-2 py-0.5 text-xs font-bold rounded-md bg-primary/10 text-primary">
+                {otherCount}
+              </span>
+            </button>
+          )}
+        </div>
+        <div className="pb-3 w-full sm:w-72">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              type="text"
+              placeholder="영상 제목 또는 스트리머 검색..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9 h-9"
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery('')}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* Recordings List */}
@@ -402,7 +455,11 @@ export const Recordings = () => {
         <Card className="border-dashed">
           <CardContent className="py-16 text-center text-muted-foreground flex flex-col items-center justify-center gap-3">
             <MonitorPlay className="h-10 w-10 text-muted-foreground/50" />
-            <p>선택한 카테고리에 저장된 녹화본이 없습니다.</p>
+            {searchQuery.trim() ? (
+              <p>검색 결과가 없습니다.</p>
+            ) : (
+              <p>선택한 카테고리에 저장된 녹화본이 없습니다.</p>
+            )}
           </CardContent>
         </Card>
       ) : (
