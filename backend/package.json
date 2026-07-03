@@ -19,7 +19,7 @@
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "prisma:generate": "prisma generate",
-    "postprisma:generate": "sed -i 's/path\\.dirname(fileURLToPath(import\\.meta\\.url))/__dirname/g' src/generated/prisma/client.ts"
+    "postprisma:generate": "node -e \"const fs = require('fs'); const f = 'src/generated/prisma/client.ts'; if (fs.existsSync(f)) fs.writeFileSync(f, fs.readFileSync(f, 'utf8').replace(/path\\.dirname\\(fileURLToPath\\(import\\.meta\\.url\\)\\)/g, '__dirname'));\""
   },
   "dependencies": {
     "@nestjs/common": "^11.1.25",
@@ -90,5 +90,11 @@
     ],
     "coverageDirectory": "../coverage",
     "testEnvironment": "node"
+  },
+  "allowScripts": {
+    "better-sqlite3@12.11.1": true,
+    "prisma@7.8.0": true,
+    "@prisma/engines@7.8.0": true,
+    "unrs-resolver@1.12.2": true
   }
 }
