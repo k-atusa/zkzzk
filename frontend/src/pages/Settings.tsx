@@ -18,21 +18,7 @@ export const Settings = () => {
   const [user, setUser] = useState<any>(null);
   const { t, language, setLanguage } = useLanguage();
 
-  const getCallbackUrl = () => {
-    const apiBase = api.defaults.baseURL || 'http://localhost:5001/api';
-    if (apiBase.startsWith('http')) {
-      try {
-        const url = new URL(apiBase);
-        if (window.location.hostname && window.location.hostname !== 'localhost' && url.hostname === 'localhost') {
-          url.hostname = window.location.hostname;
-        }
-        return `${url.origin}${url.pathname}/youtube/callback`;
-      } catch (e) {
-        return `${apiBase}/youtube/callback`;
-      }
-    }
-    return `${window.location.origin}${apiBase}/youtube/callback`;
-  };
+
 
   const [confirmConfig, setConfirmConfig] = useState<{
     title: string;
