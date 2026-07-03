@@ -13,6 +13,7 @@ export const Live = () => {
   const [streamers, setStreamers] = useState<any[]>([]);
   const [newUrl, setNewUrl] = useState('');
   const [hasCookies, setHasCookies] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   // Following dropdown
   const [followedStreamers, setFollowedStreamers] = useState<any[]>([]);
@@ -31,11 +32,14 @@ export const Live = () => {
   const { t } = useLanguage();
 
   const fetchStreamers = async () => {
+    setRefreshing(true);
     try {
       const res = await api.get('/streamers');
       setStreamers(res.data);
     } catch (e) {
       toast.error(t('live.loadFailed'));
+    } finally {
+      setTimeout(() => setRefreshing(false), 600);
     }
   };
 
@@ -177,8 +181,8 @@ export const Live = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-3xl font-bold tracking-tight">{t('live.title')}</h2>
-        <Button variant="outline" onClick={fetchStreamers}>
-          <RefreshCw className="mr-2 h-4 w-4" /> {t('live.refresh')}
+        <Button variant="outline" onClick={fetchStreamers} disabled={refreshing}>
+          <RefreshCw className={`mr-2 h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} /> {t('live.refresh')}
         </Button>
       </div>
 
