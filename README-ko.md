@@ -42,8 +42,7 @@ docker run -d \
   -p 5001:5001 \
   -e TZ=Asia/Seoul \
   -v $(pwd)/database.db:/app/backend/database.db \
-  -v $(pwd)/recordings:/app/backend/recordings \
-  -v $(pwd)/downloads:/app/backend/downloads \
+  -v $(pwd)/downloads:/app/downloads \
   --name zkzzk-app \
   d3vle0/zkzzk:latest
 ```
