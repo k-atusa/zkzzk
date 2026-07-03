@@ -830,51 +830,29 @@ export const Settings = () => {
                       {showYoutubeClientSecret ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </button>
                   </div>
-                  <div className="text-xs text-muted-foreground mt-2 mb-2 p-3 bg-muted rounded-md space-y-3">
-                    <div>
-                      <p className="font-semibold mb-1 text-foreground">💡 {language === 'ko' ? '자동 업로드 설정 방법:' : 'How to configure Auto Upload:'}</p>
-                      <ol className="list-decimal pl-4 space-y-1">
-                        {language === 'ko' ? (
-                          <>
-                            <li><a href="https://console.cloud.google.com/" target="_blank" rel="noreferrer" className="text-primary hover:underline">Google Cloud Console</a>에서 프로젝트를 생성합니다.</li>
-                            <li><strong>YouTube Data API v3</strong>를 활성화합니다.</li>
-                            <li>OAuth 동의 화면을 설정하고, <strong>웹 애플리케이션</strong> 유형의 사용자 인증 정보를 만듭니다.</li>
-                            <li>승인된 리디렉션 URI에 <code className="select-all font-mono bg-muted px-1.5 py-0.5 rounded text-xs font-semibold text-primary border border-primary/10">{getCallbackUrl()}</code> 를 추가합니다.</li>
-                            <li>발급받은 Client ID와 Client Secret을 위에 입력하고 <strong>저장</strong>을 누릅니다.</li>
-                            <li><strong>YouTube 인증하기</strong> 버튼을 눌러 계정을 연동합니다.</li>
-                          </>
-                        ) : (
-                          <>
-                            <li>Create a project on the <a href="https://console.cloud.google.com/" target="_blank" rel="noreferrer" className="text-primary hover:underline">Google Cloud Console</a>.</li>
-                            <li>Enable <strong>YouTube Data API v3</strong>.</li>
-                            <li>Configure the OAuth consent screen, and create credentials of type <strong>Web Application</strong>.</li>
-                            <li>Add <code className="select-all font-mono bg-muted px-1.5 py-0.5 rounded text-xs font-semibold text-primary border border-primary/10">{getCallbackUrl()}</code> to the Authorized Redirect URIs.</li>
-                            <li>Enter the Client ID and Client Secret above and save.</li>
-                            <li>Click the <strong>Connect YouTube Channel</strong> button to authenticate.</li>
-                          </>
-                        )}
-                      </ol>
-                    </div>
-                    <div className="border-t border-border/60 pt-2.5">
-                      <p className="font-semibold mb-1 text-amber-600 dark:text-amber-500">⚠️ {language === 'ko' ? "'403 access_denied' (인증 절차 미완료) 오류 해결 방법:" : "How to fix '403 access_denied' errors:"}</p>
-                      <ul className="list-disc pl-4 space-y-1">
-                        {language === 'ko' ? (
-                          <>
-                            <li>Google Cloud Console of <strong>Google 인증 플랫폼 &gt; 대상 &gt; OAuth 사용자 한도 &gt; 테스트 사용자</strong> 화면으로 이동합니다.</li>
-                            <li>해당 화면에서 <strong>ADD USERS</strong>를 클릭하고, 인증하려는 Google 계정(이메일 주소)을 등록한 뒤 다시 시도해 주세요.</li>
-                            <li>발급받은 <strong>API Key(OAuth 클라이언트)의 소유자 계정</strong>과 <strong>유튜브 인증을 진행하는 로그인 계정</strong>이 일치하는지 확인해 주세요.</li>
-                            <li>또는 앱 게시 상태가 '테스트 중'이기 때문이므로 <strong>앱 게시 (Publish App)</strong>를 눌러 프로덕션으로 전환하셔도 무방합니다.</li>
-                          </>
-                        ) : (
-                          <>
-                            <li>Go to <strong>APIs & Services &gt; OAuth consent screen &gt; Test users</strong> in Google Cloud Console.</li>
-                            <li>Click <strong>ADD USERS</strong>, register the Google email address you wish to authenticate, and try again.</li>
-                            <li>Ensure that the owner account of the API client matches the account you use to authorize YouTube uploads.</li>
-                            <li>Or, since the app status is in 'Testing', you can click <strong>Publish App</strong> to publish it to production to bypass testing limits.</li>
-                          </>
-                        )}
-                      </ul>
-                    </div>
+                  <br />
+                  <div className="text-xs text-muted-foreground mt-2 mb-2 p-3 bg-muted rounded-md space-y-2">
+                    <p className="font-semibold text-foreground">
+                      💡 {language === 'ko' ? '자동 업로드 가이드 및 오류 해결' : 'Auto Upload Guide & Troubleshooting'}
+                    </p>
+                    <p>
+                      {language === 'ko' ? (
+                        <>
+                          API 키 발급 절차 및 연동 중 발생하는 오류(403 access_denied 등) 해결 방법은 상세한 가이드가 준비되어 있는{' '}
+                          <a href="https://github.com/k-atusa/zkzzk/wiki/ZKZZK-Settings-Guide" target="_blank" rel="noreferrer" className="text-primary hover:underline font-semibold">
+                            ZKZZK 설정 가이드 (Wiki)
+                          </a>
+                          를 참고해 주세요.
+                        </>
+                      ) : (
+                        <>
+                          For instructions on issuing API keys and resolving authentication errors (e.g., 403 access_denied), please refer to the detailed{' '}
+                          <a href="https://github.com/k-atusa/zkzzk/wiki/en/ZKZZK-Settings-Guide" target="_blank" rel="noreferrer" className="text-primary hover:underline font-semibold">
+                            ZKZZK Settings Guide (Wiki)
+                          </a>.
+                        </>
+                      )}
+                    </p>
                   </div>
                 </div>
                 <div className="flex gap-2">
