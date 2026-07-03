@@ -791,7 +791,7 @@ export const Settings = () => {
             <div className="flex items-center justify-between">
               <div className="space-y-0.5 pr-4">
                 <Label htmlFor="deleteAfterUpload" className="text-sm font-medium cursor-pointer">{t('settings.deleteAfterUpload')}</Label>
-                <p className="text-xs text-muted-foreground">{t('recordings.deleteConfirmDesc')}</p>
+                <p className="text-xs text-muted-foreground">{t('settings.deleteAfterUploadDesc')}</p>
               </div>
               <Switch
                 id="deleteAfterUpload"
