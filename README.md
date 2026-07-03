@@ -39,12 +39,36 @@ The fastest way to get zkzzk up and running is via Docker.
 
 ```bash
 docker run -d \
+  --name zkzzk-app \
+  --restart unless-stopped \
   -p 5001:5001 \
   -e TZ=Asia/Seoul \
   -v $(pwd)/database.db:/app/backend/database.db \
   -v $(pwd)/downloads:/app/downloads \
-  --name zkzzk-app \
   d3vle0/zkzzk:latest
+```
+
+Alternatively, you can use **Docker Compose**:
+
+Create a `docker-compose.yml` file:
+```yaml
+services:
+  zkzzk-app:
+    image: d3vle0/zkzzk:latest
+    container_name: zkzzk-app
+    restart: unless-stopped
+    ports:
+      - "5001:5001"
+    environment:
+      - TZ=Asia/Seoul
+    volumes:
+      - ./database.db:/app/backend/database.db
+      - ./downloads:/app/downloads
+```
+
+Then start it with:
+```bash
+docker-compose up -d
 ```
 
 Once running, simply navigate to `http://localhost:5001` to access your dashboard.

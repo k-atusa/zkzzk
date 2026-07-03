@@ -1,0 +1,12 @@
+services:
+  zkzzk-app:
+    image: d3vle0/zkzzk:latest
+    container_name: zkzzk-app
+    restart: unless-stopped
+    ports:
+      - "5001:5001"
+    environment:
+      - TZ=Asia/Seoul
+    volumes:
+      - ./database.db:/app/backend/database.db
+      - ./downloads:/app/downloads

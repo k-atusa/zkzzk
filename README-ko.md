@@ -39,12 +39,36 @@
 
 ```bash
 docker run -d \
+  --name zkzzk-app \
+  --restart unless-stopped \
   -p 5001:5001 \
   -e TZ=Asia/Seoul \
   -v $(pwd)/database.db:/app/backend/database.db \
   -v $(pwd)/downloads:/app/downloads \
-  --name zkzzk-app \
   d3vle0/zkzzk:latest
+```
+
+또는 **Docker Compose**를 사용할 수도 있습니다:
+
+`docker-compose.yml` 파일을 아래와 같이 생성합니다:
+```yaml
+services:
+  zkzzk-app:
+    image: d3vle0/zkzzk:latest
+    container_name: zkzzk-app
+    restart: unless-stopped
+    ports:
+      - "5001:5001"
+    environment:
+      - TZ=Asia/Seoul
+    volumes:
+      - ./database.db:/app/backend/database.db
+      - ./downloads:/app/downloads
+```
+
+그 후 아래 명령어로 실행합니다:
+```bash
+docker-compose up -d
 ```
 
 컨테이너가 실행되면 `http://localhost:5001`에 접속하여 대시보드를 사용할 수 있습니다.
