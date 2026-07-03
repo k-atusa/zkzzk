@@ -49,7 +49,7 @@ export const Live = () => {
   useEffect(() => {
     fetchStreamers();
     fetchMe();
-    const interval = setInterval(fetchStreamers, 2000);
+    const interval = setInterval(fetchStreamers, 10000);
     return () => clearInterval(interval);
   }, []);
 
