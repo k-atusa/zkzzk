@@ -14,7 +14,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
       if (path.isAbsolute(dbPath)) {
         sqlitePath = dbPath;
       } else {
-        sqlitePath = path.resolve(process.cwd(), 'prisma', dbPath);
+        sqlitePath = path.resolve(process.cwd(), dbPath);
       }
     }
 
