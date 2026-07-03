@@ -20,9 +20,9 @@ export class RecordingsController {
 
   // To serve files, it is usually better to use express.static or Res().sendFile
   // For security, only serve if authorized.
-  @Get('download/*')
+  @Get('download/*path')
   serveRecording(@Req() req: any, @Res() res: any) {
-    let filename = req.params[0] || req.params['0'];
+    let filename = req.params.path || req.params['0'];
 
     if (!filename) {
       // Try extracting from req.path

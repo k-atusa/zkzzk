@@ -16,7 +16,7 @@ import { VodModule } from './vod/vod.module';
   imports: [
     ServeStaticModule.forRoot({
       rootPath: join(__dirname, '..', '..', 'frontend', 'dist'),
-      exclude: ['/api/(.*)'],
+      exclude: ['/api/{*path}'],
     }),
     AuthModule,
     PrismaModule,
