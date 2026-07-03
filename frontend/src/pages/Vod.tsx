@@ -16,16 +16,16 @@ export const Vod = () => {
   const { t } = useLanguage();
 
   useEffect(() => {
-    const fetchMe = async () => {
+    const fetchSettings = async () => {
       try {
-        const res = await api.get('/auth/me');
-        setHasCookies(res.data.has_cookies);
+        const res = await api.get('/auth/user-settings');
+        setHasCookies(!!(res.data.nid_aut && res.data.nid_ses));
         if (res.data.vod_resolution) {
           setUserResolution(res.data.vod_resolution);
         }
       } catch (e) {}
     };
-    fetchMe();
+    fetchSettings();
   }, []);
 
   const executeDownload = async (resInfo: any, videoInfo: any, overwrite: boolean = false) => {
