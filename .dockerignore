@@ -6,8 +6,8 @@ __pycache__/
 *.pyo
 *.pyd
 .Python
-node_modules
-dist
+**/node_modules
+**/dist
 npm-debug.log
 .DS_Store
 .env
