@@ -50,7 +50,7 @@ const dictionary: Record<Language, Record<string, any>> = {
       errorOccurred: "An error occurred."
     },
     live: {
-      title: "Streamer Management",
+      title: "Streamer List",
       refresh: "Refresh",
       addNewStreamer: "Add New Streamer",
       addBtn: "Add",
