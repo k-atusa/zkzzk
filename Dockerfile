@@ -34,8 +34,9 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/* \
     && pip3 install streamlink --break-system-packages
 
-# Set timezone dynamically via environment variable (default to Asia/Seoul)
+# Set default environment variables
 ENV TZ=Asia/Seoul
+ENV DATABASE_URL="file:./database.db"
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
 # Copy node_modules and built code from backend builder
