@@ -45,8 +45,8 @@ COPY --from=backend-builder /app/backend/dist ./dist
 COPY --from=backend-builder /app/backend/package*.json ./
 COPY --from=backend-builder /app/backend/prisma ./prisma
 COPY --from=backend-builder /app/backend/prisma.config.ts ./
-# Copy built frontend to backend's public directory
-COPY --from=frontend-builder /app/frontend/dist ./public
+# Copy built frontend to the expected path by backend
+COPY --from=frontend-builder /app/frontend/dist /app/frontend/dist
 
 EXPOSE 5001
 
