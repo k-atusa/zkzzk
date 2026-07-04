@@ -21,7 +21,7 @@ const VideoPlayer = ({ filename }: { filename: string }) => {
   const [error, setError] = useState<string | null>(null);
   const { t } = useLanguage();
 
-  const videoUrl = `http://localhost:5001/api/recordings/download/${filename}`;
+  const videoUrl = `/api/recordings/download/${filename}`;
   const isTs = filename.endsWith('.ts');
 
   useEffect(() => {
@@ -135,8 +135,8 @@ export const Recordings = () => {
   useEffect(() => {
     fetchRecordings();
 
-    const youtubeEventSource = new EventSource('http://localhost:5001/api/events/youtube');
-    const vodEventSource = new EventSource('http://localhost:5001/api/events/vod');
+    const youtubeEventSource = new EventSource('/api/events/youtube');
+    const vodEventSource = new EventSource('/api/events/vod');
 
     youtubeEventSource.onmessage = (event) => {
       try {

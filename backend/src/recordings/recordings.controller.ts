@@ -20,7 +20,7 @@ export class RecordingsController {
 
   // To serve files, it is usually better to use express.static or Res().sendFile
   // For security, only serve if authorized.
-  @Get('download/*path')
+  @Get('download/{*path}')
   serveRecording(@Req() req: any, @Res() res: any) {
     let filename = req.params.path || req.params['0'];
 
@@ -58,9 +58,12 @@ export class RecordingsController {
       });
     }
 
-    const normalized = path.normalize(filename).replace(/\\/g, '/');
-    if (normalized.startsWith('../') || normalized.startsWith('/')) {
-      return res.status(403).json({ message: 'Forbidden' });
+    let normalized = path.normalize(filename).replace(/\\/g, '/');
+    if (normalized.startsWith('/')) {
+      normalized = normalized.substring(1);
+    }
+    if (normalized.startsWith('../')) {
+      return res.status(403).json({ message: 'Forbidden directory traversal' });
     }
     if (!req.user.is_admin && !normalized.startsWith(`${req.user.username}/`)) {
       return res.status(403).json({ message: 'Forbidden' });
