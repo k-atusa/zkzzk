@@ -23,6 +23,9 @@ export class RecordingsController {
   @Get('download/{*path}')
   serveRecording(@Req() req: any, @Res() res: any) {
     let filename = req.params.path || req.params['0'];
+    if (Array.isArray(filename)) {
+      filename = filename.join('/');
+    }
 
     if (!filename) {
       // Try extracting from req.path
