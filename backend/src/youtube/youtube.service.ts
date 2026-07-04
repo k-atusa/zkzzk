@@ -37,7 +37,7 @@ export class YoutubeService {
     }
   }
 
-  private async getAuthClient(userId: string) {
+  private async getAuthClient(userId: string, origin: string = 'http://localhost:5001') {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user?.youtube_client_id || !user?.youtube_client_secret) {
       throw new Error('YouTube API is not configured for this user');
@@ -46,7 +46,7 @@ export class YoutubeService {
     const oauth2Client = new google.auth.OAuth2(
       user.youtube_client_id,
       user.youtube_client_secret,
-      'http://localhost:5001/api/youtube/callback'
+      `${origin}/api/youtube/callback`
     );
 
     if (user.youtube_refresh_token) {
@@ -58,8 +58,8 @@ export class YoutubeService {
     return oauth2Client;
   }
 
-  async getAuthUrl(userId: string) {
-    const oauth2Client = await this.getAuthClient(userId);
+  async getAuthUrl(userId: string, origin: string) {
+    const oauth2Client = await this.getAuthClient(userId, origin);
     const url = oauth2Client.generateAuthUrl({
       access_type: 'offline',
       scope: [
@@ -72,8 +72,8 @@ export class YoutubeService {
     return url;
   }
 
-  async setCredentials(code: string, userId: string): Promise<string | null> {
-    const oauth2Client = await this.getAuthClient(userId);
+  async setCredentials(code: string, userId: string, origin: string): Promise<string | null> {
+    const oauth2Client = await this.getAuthClient(userId, origin);
     const { tokens } = await oauth2Client.getToken(code);
 
     oauth2Client.setCredentials(tokens);

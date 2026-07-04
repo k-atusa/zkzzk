@@ -11,7 +11,10 @@ export class YoutubeController {
   @Get('auth-url')
   async getAuthUrl(@Req() req: any) {
     try {
-      const url = await this.youtubeService.getAuthUrl(req.user.id);
+      const protocol = req.headers['x-forwarded-proto'] || req.protocol;
+      const host = req.headers['x-forwarded-host'] || req.get('host');
+      const origin = `${protocol}://${host}`;
+      const url = await this.youtubeService.getAuthUrl(req.user.id, origin);
       return { url };
     } catch (e: any) {
       return { error: e.message };
@@ -19,14 +22,17 @@ export class YoutubeController {
   }
 
   @Get('callback')
-  async handleCallback(@Query('code') code: string, @Query('state') state: string, @Res() res: Response) {
+  async handleCallback(@Query('code') code: string, @Query('state') state: string, @Res() res: Response, @Req() req: any) {
     const frontendUrl = process.env.FRONTEND_URL || '';
     if (!code || !state) {
       return res.redirect(`${frontendUrl}/settings?youtube=error`);
     }
 
     try {
-      const channelName = await this.youtubeService.setCredentials(code, state);
+      const protocol = req.headers['x-forwarded-proto'] || req.protocol;
+      const host = req.headers['x-forwarded-host'] || req.get('host');
+      const origin = `${protocol}://${host}`;
+      const channelName = await this.youtubeService.setCredentials(code, state, origin);
       if (channelName) {
         const encodedName = encodeURIComponent(channelName);
         return res.redirect(`${frontendUrl}/settings?youtube=success&channelName=${encodedName}`);
