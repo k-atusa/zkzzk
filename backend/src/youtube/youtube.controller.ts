@@ -20,20 +20,21 @@ export class YoutubeController {
 
   @Get('callback')
   async handleCallback(@Query('code') code: string, @Query('state') state: string, @Res() res: Response) {
+    const frontendUrl = process.env.FRONTEND_URL || '';
     if (!code || !state) {
-      return res.redirect('http://localhost:5173/settings?youtube=error');
+      return res.redirect(`${frontendUrl}/settings?youtube=error`);
     }
 
     try {
       const channelName = await this.youtubeService.setCredentials(code, state);
       if (channelName) {
         const encodedName = encodeURIComponent(channelName);
-        return res.redirect(`http://localhost:5173/settings?youtube=success&channelName=${encodedName}`);
+        return res.redirect(`${frontendUrl}/settings?youtube=success&channelName=${encodedName}`);
       } else {
-        return res.redirect('http://localhost:5173/settings?youtube=error');
+        return res.redirect(`${frontendUrl}/settings?youtube=error`);
       }
     } catch (e: any) {
-      return res.redirect(`http://localhost:5173/settings?youtube=error`);
+      return res.redirect(`${frontendUrl}/settings?youtube=error`);
     }
   }
 
