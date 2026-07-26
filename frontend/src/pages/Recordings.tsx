@@ -548,14 +548,14 @@ export const Recordings = () => {
 
       {/* Video Player Modal */}
       <Dialog open={!!playingVideo} onOpenChange={(open) => { if (!open) setPlayingVideo(null); }}>
-        <DialogContent className="w-[95vw] max-w-4xl p-3 sm:p-6 gap-3 sm:gap-4">
+        <DialogContent className="w-[95vw] sm:w-[92vw] sm:max-w-5xl md:max-w-6xl lg:max-w-7xl xl:max-w-[1400px] p-3 sm:p-5 gap-3 max-h-[92vh] flex flex-col justify-center">
           <DialogHeader className="pb-2 border-b border-border/50">
             <DialogTitle className="text-base sm:text-lg font-bold pr-6 line-clamp-1 flex items-center gap-2 text-foreground">
               <Play className="h-5 w-5 text-primary fill-primary/10" />
               {playingVideo?.title}
             </DialogTitle>
           </DialogHeader>
-          <div className="relative aspect-video w-full overflow-hidden rounded-lg bg-black flex items-center justify-center shadow-inner ring-1 ring-white/5">
+          <div className="relative aspect-video w-full overflow-hidden rounded-lg bg-black flex items-center justify-center shadow-inner ring-1 ring-white/5 max-h-[78vh]">
             {playingVideo && (
               <VideoPlayer filename={playingVideo.filename} />
             )}
