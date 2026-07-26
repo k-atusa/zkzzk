@@ -1046,7 +1046,7 @@ export const Settings = () => {
                     <div className="flex items-center gap-2">
                       <CardTitle className="flex items-center gap-2">
                         <Users className="h-5 w-5" />
-                        {t('settings.userManagement')}
+                        {language === 'ko' ? '사용자 추가/제거' : 'Add / Remove Users'}
                       </CardTitle>
                       <span className="text-[10px] font-bold px-2 py-0.5 rounded-full uppercase bg-amber-500/20 text-amber-700 dark:text-amber-300">{language === 'ko' ? '관리자 전용' : 'Admin Only'}</span>
                     </div>
