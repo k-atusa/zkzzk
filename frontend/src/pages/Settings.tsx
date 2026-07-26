@@ -73,7 +73,6 @@ export const Settings = () => {
   const [nidSes, setNidSes] = useState('');
   const [chzzkNickname, setChzzkNickname] = useState('');
   const [showCookieInputs, setShowCookieInputs] = useState(false);
-  const [cookieLoading, setCookieLoading] = useState(false);
   const [cookieVerified, setCookieVerified] = useState<{ valid: boolean; nickname?: string } | null>(null);
   const [cookieSaveLoading, setCookieSaveLoading] = useState(false);
 
@@ -211,36 +210,13 @@ export const Settings = () => {
   };
 
   // Cookie handlers
-  const handleVerifyCookies = async () => {
-    if (!nidAut.trim() || !nidSes.trim()) {
-      toast.error(t('settings.cookiesRequired'));
-      return;
-    }
-    setCookieLoading(true);
-    setCookieVerified(null);
-    try {
-      const res = await api.post('/auth/verify-cookies', { nid_aut: nidAut.trim(), nid_ses: nidSes.trim() });
-      setCookieVerified(res.data);
-      if (res.data.valid) {
-        toast.success(t('settings.cookiesVerifiedSuccess', { name: res.data.nickname }));
-        if (res.data.nickname) setChzzkNickname(res.data.nickname);
-      } else {
-        toast.error(t('settings.cookiesVerifiedFailed'));
-      }
-    } catch (error: any) {
-      toast.error(t('settings.cookiesVerifyError'));
-      setCookieVerified({ valid: false });
-    } finally {
-      setCookieLoading(false);
-    }
-  };
-
   const handleSaveCookiesSubmit = async () => {
     if (!nidAut.trim() || !nidSes.trim()) {
       toast.error(t('settings.cookiesRequired'));
       return;
     }
     setCookieSaveLoading(true);
+    setCookieVerified(null);
     try {
       const verifyRes = await api.post('/auth/verify-cookies', { nid_aut: nidAut.trim(), nid_ses: nidSes.trim() });
       if (verifyRes.data?.valid) {
@@ -248,7 +224,7 @@ export const Settings = () => {
         const name = verifyRes.data.nickname || '';
         setChzzkNickname(name);
         await api.post('/auth/user-settings', { nid_aut: nidAut.trim(), nid_ses: nidSes.trim(), chzzk_nickname: name });
-        toast.success(t('settings.cookiesSaved'));
+        toast.success(t('settings.cookiesVerifiedSuccess', { name }));
         setShowCookieInputs(false);
         fetchMe();
         fetchUserSettings();
@@ -257,6 +233,7 @@ export const Settings = () => {
         toast.error(t('settings.cookiesVerifiedFailed'));
       }
     } catch (error: any) {
+      setCookieVerified({ valid: false });
       toast.error(error.response?.data?.message || t('settings.cookiesSaveFailed'));
     } finally {
       setCookieSaveLoading(false);
@@ -765,10 +742,6 @@ export const Settings = () => {
                       <Button type="button" onClick={handleSaveCookiesSubmit} disabled={cookieSaveLoading}>
                         {cookieSaveLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                         {t('settings.save')}
-                      </Button>
-                      <Button type="button" variant="outline" onClick={handleVerifyCookies} disabled={cookieLoading}>
-                        {cookieLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ShieldCheck className="mr-2 h-4 w-4" />}
-                        {t('settings.verifyCookies')}
                       </Button>
                       <Button type="button" variant="ghost" onClick={() => setShowCookieInputs(false)}>
                         {t('settings.cancel')}
