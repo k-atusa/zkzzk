@@ -182,7 +182,7 @@ export const Layout = () => {
           <div className="px-2 mb-4 text-sm text-muted-foreground flex items-center gap-1.5 flex-wrap">
             {t('layout.loggedInAs')} <span className="text-foreground font-medium truncate max-w-[80px]">{user.username}</span>
             {user.is_admin && (
-              <span className="text-[10px] px-1.5 py-0.5 rounded-md bg-amber-500/10 text-amber-600 border border-amber-500/20 font-medium">
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full uppercase bg-amber-500/20 text-amber-700 dark:text-amber-300">
                 {t('layout.admin')}
               </span>
             )}

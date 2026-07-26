@@ -265,12 +265,12 @@ export const Live = () => {
                               {ch.openLive && (ch.liveCategoryValue || (ch.tags && ch.tags.length > 0)) && (
                                 <div className="flex flex-wrap items-center gap-1.5 mt-1">
                                   {ch.liveCategoryValue && (
-                                    <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-primary/10 text-primary">
+                                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-primary/10 text-primary">
                                       {ch.liveCategoryValue}
                                     </span>
                                   )}
                                   {ch.tags && ch.tags.slice(0, 3).map((tag: string, idx: number) => (
-                                    <span key={idx} className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] bg-muted text-muted-foreground">
+                                    <span key={idx} className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-muted text-muted-foreground">
                                       #{tag}
                                     </span>
                                   ))}
@@ -331,16 +331,16 @@ export const Live = () => {
                   </TableCell>
                   <TableCell>
                     {s.is_paused ? (
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium bg-yellow-500/10 text-yellow-600">
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-700 dark:text-amber-300">
                         {t('live.paused')}
                       </span>
                     ) : s.is_recording ? (
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium bg-red-500/10 text-red-500">
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-500/20 text-red-700 dark:text-red-300">
                         <span className="w-2 h-2 mr-1.5 bg-red-500 rounded-full animate-pulse"></span>
                         {t('live.recording')}
                       </span>
                     ) : (
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium bg-muted text-muted-foreground">
+                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-muted text-muted-foreground">
                         {t('live.waiting')}
                       </span>
                     )}
@@ -354,12 +354,12 @@ export const Live = () => {
                         {(s.current_broadcast_category || (s.current_broadcast_tags && s.current_broadcast_tags.length > 0)) && (
                           <div className="flex flex-wrap items-center gap-1">
                             {s.current_broadcast_category && (
-                              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-primary/10 text-primary">
+                              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-primary/10 text-primary">
                                 {s.current_broadcast_category}
                               </span>
                             )}
                             {s.current_broadcast_tags && s.current_broadcast_tags.slice(0, 3).map((tag: string, idx: number) => (
-                              <span key={idx} className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] bg-muted text-muted-foreground">
+                              <span key={idx} className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-muted text-muted-foreground">
                                 #{tag}
                               </span>
                             ))}

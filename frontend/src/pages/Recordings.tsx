@@ -389,7 +389,7 @@ export const Recordings = () => {
             <Video className="h-4 w-4" />
             {t('recordings.liveTab')}
             {liveCount > 0 && (
-              <span className="px-2 py-0.5 text-xs font-bold rounded-md bg-primary/10 text-primary">
+              <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-primary/10 text-primary">
                 {liveCount}
               </span>
             )}
@@ -404,7 +404,7 @@ export const Recordings = () => {
             <Film className="h-4 w-4" />
             {t('recordings.vodTab')}
             {vodCount > 0 && (
-              <span className="px-2 py-0.5 text-xs font-bold rounded-md bg-primary/10 text-primary">
+              <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-primary/10 text-primary">
                 {vodCount}
               </span>
             )}
@@ -419,7 +419,7 @@ export const Recordings = () => {
             >
               <FileText className="h-4 w-4" />
               {t('recordings.otherTab')}
-              <span className="px-2 py-0.5 text-xs font-bold rounded-md bg-primary/10 text-primary">
+              <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-primary/10 text-primary">
                 {otherCount}
               </span>
             </button>
@@ -490,32 +490,32 @@ export const Recordings = () => {
                           {(r.youtube_status || r.resolution) && (
                             <div className="flex items-center flex-wrap gap-1.5 mt-0.5">
                               {r.resolution && (
-                                <span className="inline-flex items-center text-[10px] font-bold px-1.5 py-0.5 rounded bg-secondary text-secondary-foreground border border-border">
+                                <span className="inline-flex items-center text-[10px] font-bold px-2 py-0.5 rounded-full bg-secondary text-secondary-foreground">
                                   {r.resolution}
                                 </span>
                               )}
                               {r.is_recording && !vodProgress[r.id] && (
-                                <span className="inline-flex items-center gap-1 text-xs px-1.5 py-0.5 rounded bg-red-500/10 text-red-600 border border-red-500/20">
+                                <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-red-500/20 text-red-700 dark:text-red-300">
                                   <Video className="h-3 w-3" /> {t('recordings.recordingStatus')}
                                 </span>
                               )}
                               {r.is_recording && vodProgress[r.id] && (
-                                <span className="inline-flex items-center gap-1 text-xs px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-600 border border-blue-500/20">
+                                <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-700 dark:text-blue-300">
                                   <Loader2 className="h-3 w-3 animate-spin" /> {vodProgress[r.id]}
                                 </span>
                               )}
                               {r.youtube_status === 'DUPLICATE_PENDING' && (
-                                <span className="inline-flex items-center gap-1 text-xs px-1.5 py-0.5 rounded bg-yellow-500/10 text-yellow-600 border border-yellow-500/20">
+                                <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-700 dark:text-amber-300">
                                   <AlertCircle className="h-3 w-3" /> {t('recordings.youtubeWaitingDuplicate')}
                                 </span>
                               )}
                               {r.youtube_status === 'UPLOADING' && (
-                                <span className="inline-flex items-center gap-1 text-xs px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-600 border border-blue-500/20">
+                                <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-700 dark:text-blue-300">
                                   <Loader2 className="h-3 w-3 animate-spin" /> {t('recordings.youtubeUploading')}
                                 </span>
                               )}
                               {r.youtube_status === 'UPLOADED' && (
-                                <span className="inline-flex items-center gap-1 text-xs px-1.5 py-0.5 rounded bg-green-500/10 text-green-600 border border-green-500/20">
+                                <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-green-500/20 text-green-700 dark:text-green-300">
                                   <CheckCircle2 className="h-3 w-3" /> {t('recordings.youtubeUploaded')}
                                 </span>
                               )}

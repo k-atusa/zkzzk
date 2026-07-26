@@ -1048,7 +1048,7 @@ export const Settings = () => {
                         <Users className="h-5 w-5" />
                         {t('settings.userManagement')}
                       </CardTitle>
-                      <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-600 border border-amber-500/20">{language === 'ko' ? '관리자 전용' : 'Admin Only'}</span>
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full uppercase bg-amber-500/20 text-amber-700 dark:text-amber-300">{language === 'ko' ? '관리자 전용' : 'Admin Only'}</span>
                     </div>
                     <CardDescription className="text-xs mt-1">{t('settings.userManagementDesc')}</CardDescription>
                   </div>
@@ -1152,7 +1152,7 @@ export const Settings = () => {
                             <p className="font-medium text-sm text-foreground">{u.username}</p>
                             <div className="flex items-center gap-1.5 mt-0.5">
                               {u.is_admin && (
-                                <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-md bg-amber-500/10 text-amber-600 border border-amber-500/20">{t('layout.admin')}</span>
+                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full uppercase bg-amber-500/20 text-amber-700 dark:text-amber-300">{t('layout.admin')}</span>
                               )}
                               <span className="text-[11px] text-muted-foreground">
                                 {u.created_at ? new Date(u.created_at).toLocaleDateString(language === 'ko' ? 'ko-KR' : 'en-US') : ''}
@@ -1172,7 +1172,7 @@ export const Settings = () => {
                           </Button>
                         )}
                         {u.id === user.id && (
-                          <span className="text-xs text-muted-foreground font-medium px-2 py-1 bg-muted rounded-md">{language === 'ko' ? '나' : 'Me'}</span>
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full uppercase bg-muted text-muted-foreground">{language === 'ko' ? '나' : 'Me'}</span>
                         )}
                       </div>
                     ))
