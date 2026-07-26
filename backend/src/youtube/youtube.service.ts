@@ -58,8 +58,9 @@ export class YoutubeService {
     return oauth2Client;
   }
 
-  async getAuthUrl(userId: string, origin: string) {
+  async getAuthUrl(userId: string, origin: string, frontendUrl?: string) {
     const oauth2Client = await this.getAuthClient(userId, origin);
+    const statePayload = Buffer.from(JSON.stringify({ userId, frontendUrl: frontendUrl || '' })).toString('base64url');
     const url = oauth2Client.generateAuthUrl({
       access_type: 'offline',
       scope: [
@@ -67,7 +68,7 @@ export class YoutubeService {
         'https://www.googleapis.com/auth/youtube.readonly'
       ],
       prompt: 'consent', // Force to get refresh token
-      state: userId,
+      state: statePayload,
     });
     return url;
   }

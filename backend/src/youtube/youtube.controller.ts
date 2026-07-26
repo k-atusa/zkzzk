@@ -14,7 +14,16 @@ export class YoutubeController {
       const protocol = req.headers['x-forwarded-proto'] || req.protocol;
       const host = req.headers['x-forwarded-host'] || req.get('host');
       const origin = `${protocol}://${host}`;
-      const url = await this.youtubeService.getAuthUrl(req.user.id, origin);
+
+      const referer = req.headers['referer'] || req.headers['origin'];
+      let frontendUrl = process.env.FRONTEND_URL || '';
+      if (!frontendUrl && referer) {
+        try {
+          frontendUrl = new URL(referer).origin;
+        } catch (e) {}
+      }
+
+      const url = await this.youtubeService.getAuthUrl(req.user.id, origin, frontendUrl);
       return { url };
     } catch (e: any) {
       return { error: e.message };
@@ -22,9 +31,19 @@ export class YoutubeController {
   }
 
   @Get('callback')
-  async handleCallback(@Query('code') code: string, @Query('state') state: string, @Res() res: Response, @Req() req: any) {
-    const frontendUrl = process.env.FRONTEND_URL || '';
-    if (!code || !state) {
+  async handleCallback(@Query('code') code: string, @Query('state') rawState: string, @Res() res: Response, @Req() req: any) {
+    let userId = rawState || '';
+    let frontendUrl = process.env.FRONTEND_URL || '';
+
+    if (rawState) {
+      try {
+        const decoded = JSON.parse(Buffer.from(rawState, 'base64url').toString('utf8'));
+        if (decoded.userId) userId = decoded.userId;
+        if (decoded.frontendUrl) frontendUrl = decoded.frontendUrl;
+      } catch (e) {}
+    }
+
+    if (!code || !userId) {
       return res.redirect(`${frontendUrl}/settings?youtube=error`);
     }
 
@@ -32,7 +51,7 @@ export class YoutubeController {
       const protocol = req.headers['x-forwarded-proto'] || req.protocol;
       const host = req.headers['x-forwarded-host'] || req.get('host');
       const origin = `${protocol}://${host}`;
-      const channelName = await this.youtubeService.setCredentials(code, state, origin);
+      const channelName = await this.youtubeService.setCredentials(code, userId, origin);
       if (channelName) {
         const encodedName = encodeURIComponent(channelName);
         return res.redirect(`${frontendUrl}/settings?youtube=success&channelName=${encodedName}`);
