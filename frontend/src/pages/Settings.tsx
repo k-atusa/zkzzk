@@ -399,7 +399,7 @@ export const Settings = () => {
                   <Button
                     type="button"
                     onClick={() => setShowPasswordForm(true)}
-                    className="shrink-0"
+                    className="shrink-0 px-4"
                   >
                     <Lock className="h-4 w-4 mr-1.5" />
                     {t('settings.changePasswordBtn')}
@@ -519,7 +519,7 @@ export const Settings = () => {
                   <Button
                     variant={user?.totp_enabled ? 'outline' : 'default'}
                     onClick={() => user?.totp_enabled ? handleDisable2FA() : handleSetup2FA()}
-                    className={user?.totp_enabled ? 'text-destructive border-destructive/50 hover:bg-destructive/10 shrink-0' : 'shrink-0'}
+                    className={user?.totp_enabled ? 'text-destructive border-destructive/50 hover:bg-destructive/10 shrink-0 px-4' : 'shrink-0 px-4'}
                   >
                     <KeyRound className="h-4 w-4 mr-1.5" />
                     {user?.totp_enabled ? (language === 'ko' ? '2차 인증 해제' : 'Disable 2FA') : (language === 'ko' ? '2차 인증 설정' : 'Setup 2FA')}
@@ -736,6 +736,7 @@ export const Settings = () => {
                         type="button"
                         variant="outline"
                         onClick={() => setShowCookieInputs(true)}
+                        className="px-4"
                       >
                         <KeyRound className="mr-2 h-4 w-4" />
                         {user.has_cookies ? t('settings.editCookieValues') : t('settings.enterCookieValues')}
@@ -744,7 +745,7 @@ export const Settings = () => {
                         <Button
                           type="button"
                           variant="outline"
-                          className="text-red-500 border-red-500/50 hover:bg-red-500/10 hover:text-red-600"
+                          className="text-red-500 border-red-500/50 hover:bg-red-500/10 hover:text-red-600 px-4"
                           onClick={handleClearCookies}
                           disabled={cookieSaveLoading}
                         >
@@ -867,7 +868,7 @@ export const Settings = () => {
                     )}
 
                     <div className="flex flex-wrap gap-2">
-                      <Button type="button" variant="outline" onClick={() => setShowYoutubeInputs(true)}>
+                      <Button type="button" variant="outline" onClick={() => setShowYoutubeInputs(true)} className="px-4">
                         <KeyRound className="mr-2 h-4 w-4" />
                         {youtubeConnected ? t('settings.editChannelBtn') : t('settings.connectChannelBtn')}
                       </Button>
@@ -875,7 +876,7 @@ export const Settings = () => {
                         <Button
                           type="button"
                           variant="outline"
-                          className="text-red-500 border-red-500/50 hover:bg-red-500/10 hover:text-red-600"
+                          className="text-red-500 border-red-500/50 hover:bg-red-500/10 hover:text-red-600 px-4"
                           onClick={handleDisconnectYoutube}
                         >
                           {t('settings.disconnectChannel')}
@@ -976,15 +977,23 @@ export const Settings = () => {
                   </div>
                   <div className="space-y-2">
                     <Label>{language === 'ko' ? '알림 메시지 형태' : 'Notification Format'}</Label>
-                    <div className="flex flex-col sm:flex-row gap-3">
-                      <label className={`flex items-center justify-center px-4 py-2 border rounded-lg cursor-pointer transition-colors ${discordWebhookUseEmbed ? 'bg-primary/10 border-primary text-primary' : 'border-input hover:bg-accent'}`}>
-                        <input type="radio" className="hidden" checked={discordWebhookUseEmbed} onChange={() => { setDiscordWebhookUseEmbed(true); handleSaveUserSettings({ discord_webhook_use_embed: true }); }} />
-                        <span className="text-sm font-medium">{language === 'ko' ? '카드 형태 (Embed)' : 'Rich Card (Embed)'}</span>
-                      </label>
-                      <label className={`flex items-center justify-center px-4 py-2 border rounded-lg cursor-pointer transition-colors ${!discordWebhookUseEmbed ? 'bg-primary/10 border-primary text-primary' : 'border-input hover:bg-accent'}`}>
-                        <input type="radio" className="hidden" checked={!discordWebhookUseEmbed} onChange={() => { setDiscordWebhookUseEmbed(false); handleSaveUserSettings({ discord_webhook_use_embed: false }); }} />
-                        <span className="text-sm font-medium">{language === 'ko' ? '단순 텍스트 형태' : 'Simple Text'}</span>
-                      </label>
+                    <div className="flex flex-wrap gap-2">
+                      <Button
+                        type="button"
+                        variant={discordWebhookUseEmbed ? 'default' : 'outline'}
+                        onClick={() => { setDiscordWebhookUseEmbed(true); handleSaveUserSettings({ discord_webhook_use_embed: true }); }}
+                        className="px-4"
+                      >
+                        {language === 'ko' ? '카드 형태 (Embed)' : 'Rich Card (Embed)'}
+                      </Button>
+                      <Button
+                        type="button"
+                        variant={!discordWebhookUseEmbed ? 'default' : 'outline'}
+                        onClick={() => { setDiscordWebhookUseEmbed(false); handleSaveUserSettings({ discord_webhook_use_embed: false }); }}
+                        className="px-4"
+                      >
+                        {language === 'ko' ? '단순 텍스트 형태' : 'Simple Text'}
+                      </Button>
                     </div>
                   </div>
 
@@ -1057,7 +1066,7 @@ export const Settings = () => {
                     <Button
                       type="button"
                       onClick={() => setShowAddUserForm(true)}
-                      className="shrink-0"
+                      className="shrink-0 px-4"
                     >
                       <Plus className="h-4 w-4 mr-1.5" />
                       {t('settings.addUser')}
