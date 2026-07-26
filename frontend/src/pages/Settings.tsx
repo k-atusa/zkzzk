@@ -295,9 +295,12 @@ export const Settings = () => {
         youtube_client_id: youtubeClientId.trim(),
         youtube_client_secret: youtubeClientSecret.trim(),
       });
-      toast.success(t('settings.webhookSaved'));
-      setShowYoutubeInputs(false);
-      fetchUserSettings();
+      const res = await api.get('/youtube/auth-url');
+      if (res.data.url) {
+        window.location.href = res.data.url;
+      } else {
+        toast.error(t('settings.getAuthUrlFailed'));
+      }
     } catch (error: any) {
       toast.error(error.response?.data?.message || t('settings.webhookSaveFailed'));
     }
@@ -323,17 +326,6 @@ export const Settings = () => {
         }
       }
     });
-  };
-
-  const handleYouTubeAuth = async () => {
-    try {
-      const res = await api.get('/youtube/auth-url');
-      if (res.data.url) {
-        window.location.href = res.data.url;
-      }
-    } catch (e: any) {
-      toast.error(t('settings.getAuthUrlFailed'));
-    }
   };
 
   // User Management
@@ -964,11 +956,6 @@ export const Settings = () => {
                       <Button type="button" onClick={handleSaveYoutubeSettingsSubmit}>
                         {t('settings.save')}
                       </Button>
-                      {youtubeClientId && youtubeClientSecret && (
-                        <Button type="button" variant="secondary" onClick={handleYouTubeAuth}>
-                          {t('settings.connectChannel')}
-                        </Button>
-                      )}
                       <Button type="button" variant="ghost" onClick={() => setShowYoutubeInputs(false)}>
                         {t('settings.cancel')}
                       </Button>
