@@ -37,16 +37,18 @@ export class YoutubeService {
     }
   }
 
-  private async getAuthClient(userId: string, origin: string = 'http://localhost:5001') {
+  private async getAuthClient(userId: string, origin?: string) {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
     if (!user?.youtube_client_id || !user?.youtube_client_secret) {
       throw new Error('YouTube API is not configured for this user');
     }
 
+    const redirectUri = (user as any)?.youtube_redirect_uri || (origin ? `${origin}/api/youtube/callback` : 'http://localhost:5001/api/youtube/callback');
+
     const oauth2Client = new google.auth.OAuth2(
       user.youtube_client_id,
       user.youtube_client_secret,
-      `${origin}/api/youtube/callback`
+      redirectUri
     );
 
     if (user.youtube_refresh_token) {
@@ -79,11 +81,11 @@ export class YoutubeService {
 
     oauth2Client.setCredentials(tokens);
 
+    const redirectUri = `${origin}/api/youtube/callback`;
+    const updateData: any = { youtube_redirect_uri: redirectUri };
+
     if (tokens.refresh_token) {
-      await this.prisma.user.update({
-        where: { id: userId },
-        data: { youtube_refresh_token: tokens.refresh_token }
-      });
+      updateData.youtube_refresh_token = tokens.refresh_token;
     } else {
       // In case Google OAuth doesn't return a refresh_token (already consented),
       // we still check if we have an existing one. If not, we still proceed to get the channel name.
@@ -92,6 +94,11 @@ export class YoutubeService {
         this.logger.warn('No refresh token received and none stored in database.');
       }
     }
+
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: updateData
+    });
 
     try {
       const youtube = google.youtube({ version: 'v3', auth: oauth2Client });
@@ -126,13 +133,15 @@ export class YoutubeService {
   }
 
   acquireLock(key: string): boolean {
-    if (this.uploadLocks.has(key)) return false;
-    this.uploadLocks.add(key);
+    const normKey = path.normalize(key).replace(/\\/g, '/');
+    if (this.uploadLocks.has(normKey)) return false;
+    this.uploadLocks.add(normKey);
     return true;
   }
 
   releaseLock(key: string): void {
-    this.uploadLocks.delete(key);
+    const normKey = path.normalize(key).replace(/\\/g, '/');
+    this.uploadLocks.delete(normKey);
   }
 
   async checkDuplicateVideo(userId: string, title: string, filePath?: string): Promise<{ isDuplicate: boolean; fileHash: string | null }> {
@@ -168,7 +177,7 @@ export class YoutubeService {
       const responseTitle = await youtube.search.list({
         part: ['snippet'],
         forMine: true,
-        type: ['video'],
+        type: 'video' as any,
         q: cleanTitle,
         maxResults: 5,
       });
@@ -185,7 +194,7 @@ export class YoutubeService {
         const responseHash = await youtube.search.list({
           part: ['snippet'],
           forMine: true,
-          type: ['video'],
+          type: 'video' as any,
           q: fileHash,
           maxResults: 5,
         });
@@ -258,10 +267,11 @@ export class YoutubeService {
         finalDescription += `\n\n[FileHash: ${fileHash}]`;
       }
 
+      let finalTags: string[] = Array.isArray(tags) ? [...tags] : [];
       let finalCategory = category;
       if (!/^\d+$/.test(finalCategory)) {
-        if (finalCategory && finalCategory !== '20' && !tags.includes(finalCategory)) {
-          tags.push(finalCategory);
+        if (finalCategory && finalCategory !== '20' && !finalTags.includes(finalCategory)) {
+          finalTags.push(finalCategory);
         }
         finalCategory = '20';
       }
@@ -273,7 +283,7 @@ export class YoutubeService {
             title: cleanTitle,
             description: finalDescription,
             categoryId: finalCategory,
-            tags: tags,
+            tags: finalTags,
           },
           status: {
             privacyStatus: 'unlisted', // Or 'public' depending on requirement

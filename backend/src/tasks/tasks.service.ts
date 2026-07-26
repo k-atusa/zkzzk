@@ -330,12 +330,18 @@ export class TasksService {
                       } else {
                         const pkg = JSON.parse(fs.readFileSync(path.join(process.cwd(), 'package.json'), 'utf8'));
                         const description = `Automatically uploaded via ZKZZK version ${pkg.version}`;
-                        this.youtubeService.uploadVideo(recording.id, mp4Filepath, mp4Filename, description, liveCategoryValue || '20', tags, user.id, fileHash).catch(e => {
+                        const uploadTags = Array.isArray(tags) ? tags : [];
+                        this.youtubeService.uploadVideo(recording.id, mp4Filepath, mp4Filename, description, liveCategoryValue || '20', uploadTags, user.id, fileHash).catch(e => {
                           this.logger.error(`YouTube upload failed: ${e.message}`);
                         });
                       }
-                    } catch (err) {
+                    } catch (err: any) {
+                      this.logger.error(`YouTube auto-upload error for ${mp4Filename}: ${err.message}`, err.stack);
                       this.youtubeService.releaseLock(mp4Filepath);
+                      await this.prisma.recording.updateMany({
+                        where: { id: recording.id },
+                        data: { youtube_status: 'FAILED' }
+                      }).catch(() => {});
                     }
                   } else {
                     this.logger.warn(`Auto-upload skipped for ${mp4Filename} because it's already locked by another process.`);
