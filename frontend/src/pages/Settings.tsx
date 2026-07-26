@@ -7,7 +7,7 @@ import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
 import {
   ShieldCheck, ShieldAlert, KeyRound, Lock, Cookie,
-  Users, Plus, Trash2, UserCheck, Loader2, CheckCircle2,
+  Users, Plus, Trash2, UserCheck, Loader2, CheckCircle2, XCircle, X,
   Eye, EyeOff, ShieldQuestion, ZoomIn, Bell, MonitorPlay, Globe
 } from 'lucide-react';
 import api from '@/api';
@@ -82,6 +82,7 @@ export const Settings = () => {
   const [newUserPass, setNewUserPass] = useState('');
   const [newUserIsAdmin, setNewUserIsAdmin] = useState(false);
   const [userLoading, setUserLoading] = useState(false);
+  const [showAddUserForm, setShowAddUserForm] = useState(false);
 
   const fetchMe = async () => {
     try {
@@ -339,6 +340,7 @@ export const Settings = () => {
       setNewUsername('');
       setNewUserPass('');
       setNewUserIsAdmin(false);
+      setShowAddUserForm(false);
       fetchUsers();
     } catch (error: any) {
       toast.error(error.response?.data?.message || t('settings.userAddFailed'));
@@ -381,17 +383,22 @@ export const Settings = () => {
         </div>
         <div className="grid grid-cols-1 min-[1101px]:grid-cols-2 gap-6 pt-2">
           {/* Password Change Card */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <Lock className="mr-2 h-5 w-5" /> {t('settings.changePassword')}
-              </CardTitle>
-              <CardDescription>{t('settings.changePasswordDesc')}</CardDescription>
+          <Card className="shadow-xs border-border/80">
+            <CardHeader className="pb-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-lg bg-primary/10 text-primary shrink-0">
+                  <Lock className="h-5 w-5" />
+                </div>
+                <div>
+                  <CardTitle className="text-lg">{t('settings.changePassword')}</CardTitle>
+                  <CardDescription className="text-xs mt-0.5">{t('settings.changePasswordDesc')}</CardDescription>
+                </div>
+              </div>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleChangePassword} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="currentPassword">{t('settings.currentPassword')}</Label>
+                <div className="space-y-1.5">
+                  <Label htmlFor="currentPassword" className="text-xs font-medium">{t('settings.currentPassword')}</Label>
                   <div className="relative">
                     <Input
                       id="currentPassword"
@@ -400,18 +407,20 @@ export const Settings = () => {
                       onChange={e => setCurrentPassword(e.target.value)}
                       placeholder={t('settings.currentPasswordPlaceholder')}
                       required
+                      className="pr-10"
                     />
                     <button
                       type="button"
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-1 transition-colors"
                       onClick={() => setShowCurrentPw(v => !v)}
                     >
                       {showCurrentPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </button>
                   </div>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="newPassword">{t('settings.newPassword')}</Label>
+
+                <div className="space-y-1.5">
+                  <Label htmlFor="newPassword" className="text-xs font-medium">{t('settings.newPassword')}</Label>
                   <div className="relative">
                     <Input
                       id="newPassword"
@@ -420,18 +429,20 @@ export const Settings = () => {
                       onChange={e => setNewPassword(e.target.value)}
                       placeholder={t('settings.newPasswordPlaceholder')}
                       required
+                      className="pr-10"
                     />
                     <button
                       type="button"
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-1 transition-colors"
                       onClick={() => setShowNewPw(v => !v)}
                     >
                       {showNewPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </button>
                   </div>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="confirmPassword">{t('settings.newPasswordConfirm')}</Label>
+
+                <div className="space-y-1.5">
+                  <Label htmlFor="confirmPassword" className="text-xs font-medium">{t('settings.newPasswordConfirm')}</Label>
                   <Input
                     id="confirmPassword"
                     type="password"
@@ -440,9 +451,25 @@ export const Settings = () => {
                     placeholder={t('settings.newPasswordConfirmPlaceholder')}
                     required
                   />
+                  {confirmPassword && (
+                    <div className="pt-1">
+                      {newPassword !== confirmPassword ? (
+                        <p className="text-xs text-destructive flex items-center gap-1">
+                          <XCircle className="h-3.5 w-3.5" />
+                          {language === 'ko' ? '비밀번호가 일치하지 않습니다.' : 'Passwords do not match.'}
+                        </p>
+                      ) : (
+                        <p className="text-xs text-green-600 dark:text-green-500 flex items-center gap-1">
+                          <CheckCircle2 className="h-3.5 w-3.5" />
+                          {language === 'ko' ? '비밀번호가 일치합니다.' : 'Passwords match.'}
+                        </p>
+                      )}
+                    </div>
+                  )}
                 </div>
-                <Button type="submit" disabled={pwLoading}>
-                  {pwLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+
+                <Button type="submit" disabled={pwLoading} className="w-full">
+                  {pwLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Lock className="mr-2 h-4 w-4" />}
                   {t('settings.changePasswordBtn')}
                 </Button>
               </form>
@@ -450,45 +477,100 @@ export const Settings = () => {
           </Card>
 
           {/* 2FA Card */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <KeyRound className="mr-2 h-5 w-5" /> {t('settings.twoFactorAuth')}
-              </CardTitle>
-              <CardDescription>{t('settings.twoFactorAuthDesc')}</CardDescription>
+          <Card className="shadow-xs border-border/80">
+            <CardHeader className="pb-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 rounded-lg bg-primary/10 text-primary shrink-0">
+                  <KeyRound className="h-5 w-5" />
+                </div>
+                <div>
+                  <CardTitle className="text-lg">{t('settings.twoFactorAuth')}</CardTitle>
+                  <CardDescription className="text-xs mt-0.5">{t('settings.twoFactorAuthDesc')}</CardDescription>
+                </div>
+              </div>
             </CardHeader>
             <CardContent className="space-y-4">
               {!showSetup && (
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 border border-border rounded-lg gap-3">
-                  <div className="flex items-center space-x-4">
-                    {user.totp_enabled ? <ShieldCheck className="h-6 w-6 text-green-500" /> : <ShieldAlert className="h-6 w-6 text-yellow-500" />}
-                    <div>
-                      <p className="font-medium">{user.totp_enabled ? t('settings.statusEnabled') : t('settings.statusDisabled')}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {user.totp_enabled ? t('settings.enabledDesc') : t('settings.disabledDesc')}
-                      </p>
+                <div className={`p-4 rounded-xl border transition-all ${user.totp_enabled
+                  ? 'bg-green-500/10 border-green-500/20 text-foreground'
+                  : 'bg-muted/30 border-border text-foreground'
+                  }`}>
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div className="flex items-start gap-3">
+                      {user.totp_enabled ? (
+                        <div className="p-2 rounded-full bg-green-500/20 text-green-600 dark:text-green-400 shrink-0">
+                          <ShieldCheck className="h-5 w-5" />
+                        </div>
+                      ) : (
+                        <div className="p-2 rounded-full bg-amber-500/20 text-amber-600 dark:text-amber-400 shrink-0">
+                          <ShieldAlert className="h-5 w-5" />
+                        </div>
+                      )}
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <p className="font-semibold text-sm">
+                            {user.totp_enabled ? t('settings.statusEnabled') : t('settings.statusDisabled')}
+                          </p>
+                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase ${user.totp_enabled
+                            ? 'bg-green-500/20 text-green-700 dark:text-green-300'
+                            : 'bg-amber-500/20 text-amber-700 dark:text-amber-300'
+                            }`}>
+                            {user.totp_enabled ? (language === 'ko' ? '보호 중' : 'Protected') : (language === 'ko' ? '미설정' : 'Unset')}
+                          </span>
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+                          {user.totp_enabled ? t('settings.enabledDesc') : t('settings.disabledDesc')}
+                        </p>
+                      </div>
                     </div>
+
+                    <Button
+                      variant={user.totp_enabled ? 'outline' : 'default'}
+                      size="sm"
+                      onClick={() => user.totp_enabled ? handleDisable2FA() : handleSetup2FA()}
+                      className={user.totp_enabled ? 'text-destructive border-destructive/50 hover:bg-destructive/10 shrink-0' : 'shrink-0'}
+                    >
+                      {user.totp_enabled ? (language === 'ko' ? '2차 인증 해제' : 'Disable 2FA') : (language === 'ko' ? '2차 인증 설정' : 'Setup 2FA')}
+                    </Button>
                   </div>
-                  <Switch
-                    checked={user.totp_enabled}
-                    onCheckedChange={(checked) => checked ? handleSetup2FA() : handleDisable2FA()}
-                  />
                 </div>
               )}
 
               {showSetup && (
-                <div className="mt-0 p-4 border border-border rounded-lg bg-muted/40">
-                  <div className="flex flex-col xl:flex-row gap-4 items-center xl:items-start">
-                    <div className="bg-white p-1.5 rounded-lg shrink-0">
-                      <img src={qrCode} alt="QR Code" className="w-32 h-32" />
+                <div className="p-4 sm:p-5 border border-border rounded-xl bg-muted/20 space-y-4">
+                  <div className="flex items-center justify-between pb-3 border-b border-border">
+                    <h4 className="font-semibold text-sm flex items-center gap-2">
+                      <KeyRound className="h-4 w-4 text-primary" />
+                      {language === 'ko' ? '2단계 인증 설정' : 'Setup 2-Factor Authentication'}
+                    </h4>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon-sm"
+                      onClick={() => setShowSetup(false)}
+                      className="text-muted-foreground hover:text-foreground"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row gap-5 items-center sm:items-start">
+                    <div className="bg-white p-2 rounded-xl border border-border shadow-xs shrink-0 text-center">
+                      <img src={qrCode} alt="QR Code" className="w-36 h-36 mx-auto" />
+                      <p className="text-[11px] text-zinc-500 font-mono mt-1">Scan QR Code</p>
                     </div>
-                    <div className="flex-1 w-full space-y-3">
-                      <p className="text-xs text-muted-foreground leading-snug">
-                        {t('settings.otpSetupModalDesc')}
-                      </p>
+
+                    <div className="flex-1 w-full space-y-4">
+                      <div className="space-y-1">
+                        <p className="text-xs font-semibold text-foreground">1. QR 코드 스캔</p>
+                        <p className="text-xs text-muted-foreground leading-relaxed">
+                          {t('settings.otpSetupModalDesc')}
+                        </p>
+                      </div>
+
                       <form onSubmit={handleVerify2FA} className="space-y-3">
                         <div className="space-y-1.5">
-                          <Label htmlFor="otp" className="text-xs">{t('login.otpCode')}</Label>
+                          <Label htmlFor="otp" className="text-xs font-semibold text-foreground">2. {t('login.otpCode')} 입력</Label>
                           <Input
                             id="otp"
                             value={otp}
@@ -496,12 +578,17 @@ export const Settings = () => {
                             placeholder="000000"
                             required
                             maxLength={6}
-                            className="h-9"
+                            className="h-10 text-center font-mono text-lg font-bold tracking-[0.4em] bg-background"
                           />
                         </div>
-                        <div className="flex space-x-2">
-                          <Button type="submit" className="h-9 text-sm">{t('settings.verifyBtn')}</Button>
-                          <Button type="button" variant="outline" className="h-9 text-sm" onClick={() => setShowSetup(false)}>{t('common.cancel')}</Button>
+                        <div className="flex items-center justify-end gap-2 pt-1">
+                          <Button type="button" variant="outline" size="sm" onClick={() => setShowSetup(false)}>
+                            {t('common.cancel')}
+                          </Button>
+                          <Button type="submit" size="sm">
+                            <ShieldCheck className="h-4 w-4 mr-1.5" />
+                            {t('settings.verifyBtn')}
+                          </Button>
                         </div>
                       </form>
                     </div>
@@ -973,77 +1060,125 @@ export const Settings = () => {
           <div className="grid grid-cols-1 gap-6 pt-2">
 
             {/* User Management Card (Admin only) */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Users className="h-5 w-5" /> {t('settings.userManagement')}
-                  <span className="text-xs font-normal px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-600 border border-amber-500/20">{language === 'ko' ? '관리자 전용' : 'Admin Only'}</span>
-                </CardTitle>
-                <CardDescription>{t('settings.userManagementDesc')}</CardDescription>
+            <Card className="shadow-xs border-border/80">
+              <CardHeader className="pb-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2.5 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 shrink-0">
+                      <Users className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <CardTitle className="text-lg">{t('settings.userManagement')}</CardTitle>
+                        <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-600 border border-amber-500/20">{language === 'ko' ? '관리자 전용' : 'Admin Only'}</span>
+                      </div>
+                      <CardDescription className="text-xs mt-0.5">{t('settings.userManagementDesc')}</CardDescription>
+                    </div>
+                  </div>
+
+                  {!showAddUserForm && (
+                    <Button
+                      type="button"
+                      onClick={() => setShowAddUserForm(true)}
+                      size="sm"
+                      className="shrink-0"
+                    >
+                      <Plus className="h-4 w-4 mr-1.5" />
+                      {t('settings.addUser')}
+                    </Button>
+                  )}
+                </div>
               </CardHeader>
               <CardContent className="space-y-6">
-                {/* Add User Form */}
-                <div className="p-4 border border-border rounded-lg bg-muted/20">
-                  <h4 className="font-medium mb-3 text-sm">{t('settings.addUser')}</h4>
-                  <form onSubmit={handleCreateUser} className="space-y-3">
-                    <div className="flex flex-col sm:flex-row flex-wrap gap-3 sm:items-end">
-                      <div className="space-y-1.5 flex-1 min-w-32">
-                        <Label htmlFor="newUsername" className="text-xs">{t('login.username')}</Label>
-                        <Input
-                          id="newUsername"
-                          value={newUsername}
-                          onChange={e => setNewUsername(e.target.value)}
-                          placeholder={t('login.username')}
-                          required
-                          className="h-9"
-                        />
-                      </div>
-                      <div className="space-y-1.5 flex-1 min-w-32">
-                        <Label htmlFor="newUserPass" className="text-xs">{t('login.password')}</Label>
-                        <Input
-                          id="newUserPass"
-                          type="password"
-                          value={newUserPass}
-                          onChange={e => setNewUserPass(e.target.value)}
-                          placeholder={t('settings.newPasswordPlaceholder')}
-                          required
-                          className="h-9"
-                        />
-                      </div>
-                      <div className="flex items-center gap-2 h-9">
-                        <Switch
-                          id="newUserIsAdmin"
-                          checked={newUserIsAdmin}
-                          onCheckedChange={setNewUserIsAdmin}
-                        />
-                        <Label htmlFor="newUserIsAdmin" className="text-sm cursor-pointer">{t('layout.admin')}</Label>
-                      </div>
-                      <Button type="submit" disabled={userLoading} className="h-9">
-                        {userLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4 mr-1" />}
-                        {t('settings.addUserBtn')}
+                {/* Add User Form (Collapsible) */}
+                {showAddUserForm && (
+                  <div className="p-4 border border-border rounded-xl bg-muted/30 shadow-xs space-y-4 animate-in fade-in-50 duration-200">
+                    <div className="flex items-center justify-between border-b border-border pb-3">
+                      <h4 className="font-semibold text-sm flex items-center gap-2 text-foreground">
+                        <UserCheck className="h-4 w-4 text-primary" />
+                        {t('settings.addUser')}
+                      </h4>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon-sm"
+                        onClick={() => setShowAddUserForm(false)}
+                        className="text-muted-foreground hover:text-foreground"
+                      >
+                        <X className="h-4 w-4" />
                       </Button>
                     </div>
-                  </form>
-                </div>
+
+                    <form onSubmit={handleCreateUser} className="space-y-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div className="space-y-1.5">
+                          <Label htmlFor="newUsername" className="text-xs font-medium">{t('login.username')}</Label>
+                          <Input
+                            id="newUsername"
+                            value={newUsername}
+                            onChange={e => setNewUsername(e.target.value)}
+                            placeholder={t('login.username')}
+                            required
+                            className="h-9 bg-background"
+                          />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label htmlFor="newUserPass" className="text-xs font-medium">{t('login.password')}</Label>
+                          <Input
+                            id="newUserPass"
+                            type="password"
+                            value={newUserPass}
+                            onChange={e => setNewUserPass(e.target.value)}
+                            placeholder={t('settings.newPasswordPlaceholder')}
+                            required
+                            className="h-9 bg-background"
+                          />
+                        </div>
+                      </div>
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
+                        <div className="flex items-center gap-2">
+                          <Switch
+                            id="newUserIsAdmin"
+                            checked={newUserIsAdmin}
+                            onCheckedChange={setNewUserIsAdmin}
+                          />
+                          <Label htmlFor="newUserIsAdmin" className="text-sm cursor-pointer select-none font-medium">{t('layout.admin')}</Label>
+                        </div>
+                        <div className="flex items-center gap-2 justify-end">
+                          <Button type="button" variant="outline" size="sm" onClick={() => setShowAddUserForm(false)}>
+                            {t('common.cancel')}
+                          </Button>
+                          <Button type="submit" size="sm" disabled={userLoading}>
+                            {userLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4 mr-1.5" />}
+                            {t('settings.addUserBtn')}
+                          </Button>
+                        </div>
+                      </div>
+                    </form>
+                  </div>
+                )}
 
                 {/* User List */}
                 <div className="space-y-2">
+                  <div className="text-xs text-muted-foreground font-medium pb-1 flex justify-between items-center">
+                    <span>{language === 'ko' ? `등록된 사용자 (${users.length}명)` : `Registered Users (${users.length})`}</span>
+                  </div>
                   {users.length === 0 ? (
-                    <p className="text-center py-4 text-muted-foreground text-sm">{t('common.loading')}</p>
+                    <p className="text-center py-6 text-muted-foreground text-sm">{t('common.loading')}</p>
                   ) : (
                     users.map((u) => (
                       <div key={u.id} className="flex items-center justify-between p-3 border border-border rounded-lg hover:bg-muted/30 transition-colors">
                         <div className="flex items-center gap-3">
-                          <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary text-sm font-bold">
+                          <div className="h-8 w-8 rounded-full bg-primary/10 text-primary flex items-center justify-center text-sm font-bold">
                             {u.username.charAt(0).toUpperCase()}
                           </div>
                           <div>
-                            <p className="font-medium text-sm">{u.username}</p>
+                            <p className="font-medium text-sm text-foreground">{u.username}</p>
                             <div className="flex items-center gap-1.5 mt-0.5">
                               {u.is_admin && (
-                                <span className="text-xs px-1.5 py-0.5 rounded-md bg-amber-500/10 text-amber-600 border border-amber-500/20">{t('layout.admin')}</span>
+                                <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded-md bg-amber-500/10 text-amber-600 border border-amber-500/20">{t('layout.admin')}</span>
                               )}
-                              <span className="text-xs text-muted-foreground">
+                              <span className="text-[11px] text-muted-foreground">
                                 {u.created_at ? new Date(u.created_at).toLocaleDateString(language === 'ko' ? 'ko-KR' : 'en-US') : ''}
                               </span>
                             </div>
@@ -1053,14 +1188,15 @@ export const Settings = () => {
                           <Button
                             variant="ghost"
                             size="sm"
-                            className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                            className="text-destructive hover:text-destructive hover:bg-destructive/10 h-8 w-8 p-0"
                             onClick={() => handleDeleteUser(u.id, u.username)}
+                            title={t('common.delete')}
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
                         )}
                         {u.id === user.id && (
-                          <span className="text-xs text-muted-foreground px-2 py-1">{language === 'ko' ? '나' : 'Me'}</span>
+                          <span className="text-xs text-muted-foreground font-medium px-2 py-1 bg-muted rounded-md">{language === 'ko' ? '나' : 'Me'}</span>
                         )}
                       </div>
                     ))
