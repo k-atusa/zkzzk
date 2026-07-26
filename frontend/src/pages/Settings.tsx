@@ -823,11 +823,6 @@ export const Settings = () => {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <MonitorPlay className="h-5 w-5" /> {t('settings.youtubeAutoUpload')}
-                  {youtubeConnected && (
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-medium bg-green-500/10 text-green-500 border border-green-500/20">
-                      <CheckCircle2 className="h-3 w-3" /> {language === 'ko' ? '연동됨' : 'Connected'}
-                    </span>
-                  )}
                 </CardTitle>
                 <CardDescription>{t('settings.youtubeAutoUploadDesc')}</CardDescription>
               </CardHeader>
