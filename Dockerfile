@@ -1,9 +1,9 @@
 # Stage 1: Base image with Python3 (used by both backend builder and runtime)
-FROM node:26-bookworm-slim AS base
+FROM node:24-bookworm-slim AS base
 RUN apt-get update && apt-get install -y python3 && rm -rf /var/lib/apt/lists/*
 
 # Stage 2: Build Frontend
-FROM node:26-bookworm-slim AS frontend-builder
+FROM node:24-bookworm-slim AS frontend-builder
 WORKDIR /app/frontend
 COPY frontend/package*.json ./
 RUN npm ci
@@ -14,6 +14,7 @@ RUN npm run build
 FROM base AS backend-builder
 WORKDIR /app/backend
 ENV DATABASE_URL="file:/app/backend/data/database.db"
+ENV NODE_OPTIONS="--max-old-space-size=4096"
 COPY backend/package*.json ./
 # Install build tools for better-sqlite3
 RUN apt-get update && apt-get install -y make g++ && rm -rf /var/lib/apt/lists/*
