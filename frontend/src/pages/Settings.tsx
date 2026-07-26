@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
 import {
-  ShieldCheck, ShieldAlert, KeyRound, Lock, Cookie,
+  ShieldCheck, KeyRound, Lock, Cookie,
   Users, Plus, Trash2, UserCheck, Loader2, CheckCircle2, XCircle, X,
   Eye, EyeOff, ShieldQuestion, ZoomIn, Bell, MonitorPlay, Globe
 } from 'lucide-react';
@@ -67,6 +67,7 @@ export const Settings = () => {
   const [showCurrentPw, setShowCurrentPw] = useState(false);
   const [showNewPw, setShowNewPw] = useState(false);
   const [pwLoading, setPwLoading] = useState(false);
+  const [showPasswordForm, setShowPasswordForm] = useState(false);
 
   // Cookies
   const [nidAut, setNidAut] = useState('');
@@ -203,6 +204,7 @@ export const Settings = () => {
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
+      setShowPasswordForm(false);
     } catch (error: any) {
       toast.error(error.response?.data?.message || t('settings.passwordChangeFailed'));
     } finally {
@@ -384,218 +386,195 @@ export const Settings = () => {
         <div className="grid grid-cols-1 min-[1101px]:grid-cols-2 gap-6 pt-2">
           {/* Password Change Card */}
           <Card className="shadow-xs border-border/80">
-            <CardHeader className="pb-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2.5 rounded-lg bg-primary/10 text-primary shrink-0">
-                  <Lock className="h-5 w-5" />
-                </div>
+            <CardHeader className={showPasswordForm ? "pb-2" : "pb-0"}>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
-                  <CardTitle className="text-lg">{t('settings.changePassword')}</CardTitle>
-                  <CardDescription className="text-xs mt-0.5">{t('settings.changePasswordDesc')}</CardDescription>
+                  <CardTitle className="flex items-center gap-2">
+                    <Lock className="h-5 w-5" />
+                    {t('settings.changePassword')}
+                  </CardTitle>
+                  <CardDescription className="text-xs mt-1">{t('settings.changePasswordDesc')}</CardDescription>
                 </div>
+                {!showPasswordForm && (
+                  <Button
+                    type="button"
+                    onClick={() => setShowPasswordForm(true)}
+                    className="shrink-0"
+                  >
+                    <Lock className="h-4 w-4 mr-1.5" />
+                    {t('settings.changePasswordBtn')}
+                  </Button>
+                )}
               </div>
             </CardHeader>
-            <CardContent>
-              <form onSubmit={handleChangePassword} className="space-y-4">
-                <div className="space-y-1.5">
-                  <Label htmlFor="currentPassword" className="text-xs font-medium">{t('settings.currentPassword')}</Label>
-                  <div className="relative">
-                    <Input
-                      id="currentPassword"
-                      type={showCurrentPw ? 'text' : 'password'}
-                      value={currentPassword}
-                      onChange={e => setCurrentPassword(e.target.value)}
-                      placeholder={t('settings.currentPasswordPlaceholder')}
-                      required
-                      className="pr-10"
-                    />
-                    <button
-                      type="button"
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-1 transition-colors"
-                      onClick={() => setShowCurrentPw(v => !v)}
-                    >
-                      {showCurrentPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                    </button>
-                  </div>
-                </div>
-
-                <div className="space-y-1.5">
-                  <Label htmlFor="newPassword" className="text-xs font-medium">{t('settings.newPassword')}</Label>
-                  <div className="relative">
-                    <Input
-                      id="newPassword"
-                      type={showNewPw ? 'text' : 'password'}
-                      value={newPassword}
-                      onChange={e => setNewPassword(e.target.value)}
-                      placeholder={t('settings.newPasswordPlaceholder')}
-                      required
-                      className="pr-10"
-                    />
-                    <button
-                      type="button"
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-1 transition-colors"
-                      onClick={() => setShowNewPw(v => !v)}
-                    >
-                      {showNewPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                    </button>
-                  </div>
-                </div>
-
-                <div className="space-y-1.5">
-                  <Label htmlFor="confirmPassword" className="text-xs font-medium">{t('settings.newPasswordConfirm')}</Label>
-                  <Input
-                    id="confirmPassword"
-                    type="password"
-                    value={confirmPassword}
-                    onChange={e => setConfirmPassword(e.target.value)}
-                    placeholder={t('settings.newPasswordConfirmPlaceholder')}
-                    required
-                  />
-                  {confirmPassword && (
-                    <div className="pt-1">
-                      {newPassword !== confirmPassword ? (
-                        <p className="text-xs text-destructive flex items-center gap-1">
-                          <XCircle className="h-3.5 w-3.5" />
-                          {language === 'ko' ? '비밀번호가 일치하지 않습니다.' : 'Passwords do not match.'}
-                        </p>
-                      ) : (
-                        <p className="text-xs text-green-600 dark:text-green-500 flex items-center gap-1">
-                          <CheckCircle2 className="h-3.5 w-3.5" />
-                          {language === 'ko' ? '비밀번호가 일치합니다.' : 'Passwords match.'}
-                        </p>
-                      )}
+            {showPasswordForm && (
+              <CardContent className="space-y-4 animate-in fade-in-50 duration-200">
+                <form onSubmit={handleChangePassword} className="space-y-4 pt-1">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="currentPassword" className="text-xs font-medium">{t('settings.currentPassword')}</Label>
+                    <div className="relative">
+                      <Input
+                        id="currentPassword"
+                        type={showCurrentPw ? 'text' : 'password'}
+                        value={currentPassword}
+                        onChange={e => setCurrentPassword(e.target.value)}
+                        placeholder={t('settings.currentPasswordPlaceholder')}
+                        required
+                        className="pr-10 bg-background"
+                      />
+                      <button
+                        type="button"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-1 transition-colors"
+                        onClick={() => setShowCurrentPw(v => !v)}
+                      >
+                        {showCurrentPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </button>
                     </div>
-                  )}
-                </div>
+                  </div>
 
-                <Button type="submit" disabled={pwLoading} className="w-full">
-                  {pwLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Lock className="mr-2 h-4 w-4" />}
-                  {t('settings.changePasswordBtn')}
-                </Button>
-              </form>
-            </CardContent>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="newPassword" className="text-xs font-medium">{t('settings.newPassword')}</Label>
+                    <div className="relative">
+                      <Input
+                        id="newPassword"
+                        type={showNewPw ? 'text' : 'password'}
+                        value={newPassword}
+                        onChange={e => setNewPassword(e.target.value)}
+                        placeholder={t('settings.newPasswordPlaceholder')}
+                        required
+                        className="pr-10 bg-background"
+                      />
+                      <button
+                        type="button"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-1 transition-colors"
+                        onClick={() => setShowNewPw(v => !v)}
+                      >
+                        {showNewPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label htmlFor="confirmPassword" className="text-xs font-medium">{t('settings.newPasswordConfirm')}</Label>
+                    <Input
+                      id="confirmPassword"
+                      type="password"
+                      value={confirmPassword}
+                      onChange={e => setConfirmPassword(e.target.value)}
+                      placeholder={t('settings.newPasswordConfirmPlaceholder')}
+                      required
+                      className="bg-background"
+                    />
+                    {confirmPassword && (
+                      <div className="pt-1">
+                        {newPassword !== confirmPassword ? (
+                          <p className="text-xs text-destructive flex items-center gap-1">
+                            <XCircle className="h-3.5 w-3.5" />
+                            {language === 'ko' ? '비밀번호가 일치하지 않습니다.' : 'Passwords do not match.'}
+                          </p>
+                        ) : (
+                          <p className="text-xs text-green-600 dark:text-green-500 flex items-center gap-1">
+                            <CheckCircle2 className="h-3.5 w-3.5" />
+                            {language === 'ko' ? '비밀번호가 일치합니다.' : 'Passwords match.'}
+                          </p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex items-center justify-end gap-2 pt-1">
+                    <Button type="button" variant="outline" onClick={() => setShowPasswordForm(false)}>
+                      {t('common.cancel')}
+                    </Button>
+                    <Button type="submit" disabled={pwLoading}>
+                      {pwLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Lock className="mr-2 h-4 w-4" />}
+                      {t('settings.changePasswordBtn')}
+                    </Button>
+                  </div>
+                </form>
+              </CardContent>
+            )}
           </Card>
 
           {/* 2FA Card */}
           <Card className="shadow-xs border-border/80">
-            <CardHeader className="pb-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2.5 rounded-lg bg-primary/10 text-primary shrink-0">
-                  <KeyRound className="h-5 w-5" />
-                </div>
+            <CardHeader className={showSetup ? "pb-2" : "pb-0"}>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
-                  <CardTitle className="text-lg">{t('settings.twoFactorAuth')}</CardTitle>
-                  <CardDescription className="text-xs mt-0.5">{t('settings.twoFactorAuthDesc')}</CardDescription>
+                  <div className="flex items-center gap-2">
+                    <CardTitle className="flex items-center gap-2">
+                      <KeyRound className="h-5 w-5" />
+                      {t('settings.twoFactorAuth')}
+                    </CardTitle>
+                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase ${user?.totp_enabled
+                      ? 'bg-green-500/20 text-green-700 dark:text-green-300'
+                      : 'bg-amber-500/20 text-amber-700 dark:text-amber-300'
+                      }`}>
+                      {user?.totp_enabled ? (language === 'ko' ? '보호 중' : 'Protected') : (language === 'ko' ? '미설정' : 'Unset')}
+                    </span>
+                  </div>
+                  <CardDescription className="text-xs mt-1">{t('settings.twoFactorAuthDesc')}</CardDescription>
                 </div>
+                {!showSetup && (
+                  <Button
+                    variant={user?.totp_enabled ? 'outline' : 'default'}
+                    onClick={() => user?.totp_enabled ? handleDisable2FA() : handleSetup2FA()}
+                    className={user?.totp_enabled ? 'text-destructive border-destructive/50 hover:bg-destructive/10 shrink-0' : 'shrink-0'}
+                  >
+                    <KeyRound className="h-4 w-4 mr-1.5" />
+                    {user?.totp_enabled ? (language === 'ko' ? '2차 인증 해제' : 'Disable 2FA') : (language === 'ko' ? '2차 인증 설정' : 'Setup 2FA')}
+                  </Button>
+                )}
               </div>
             </CardHeader>
-            <CardContent className="space-y-4">
-              {!showSetup && (
-                <div className={`p-4 rounded-xl border transition-all ${user.totp_enabled
-                  ? 'bg-green-500/10 border-green-500/20 text-foreground'
-                  : 'bg-muted/30 border-border text-foreground'
-                  }`}>
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <div className="flex items-start gap-3">
-                      {user.totp_enabled ? (
-                        <div className="p-2 rounded-full bg-green-500/20 text-green-600 dark:text-green-400 shrink-0">
-                          <ShieldCheck className="h-5 w-5" />
-                        </div>
-                      ) : (
-                        <div className="p-2 rounded-full bg-amber-500/20 text-amber-600 dark:text-amber-400 shrink-0">
-                          <ShieldAlert className="h-5 w-5" />
-                        </div>
-                      )}
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <p className="font-semibold text-sm">
-                            {user.totp_enabled ? t('settings.statusEnabled') : t('settings.statusDisabled')}
-                          </p>
-                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase ${user.totp_enabled
-                            ? 'bg-green-500/20 text-green-700 dark:text-green-300'
-                            : 'bg-amber-500/20 text-amber-700 dark:text-amber-300'
-                            }`}>
-                            {user.totp_enabled ? (language === 'ko' ? '보호 중' : 'Protected') : (language === 'ko' ? '미설정' : 'Unset')}
-                          </span>
-                        </div>
-                        <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
-                          {user.totp_enabled ? t('settings.enabledDesc') : t('settings.disabledDesc')}
-                        </p>
-                      </div>
+
+            {showSetup && (
+              <CardContent className="space-y-4 animate-in fade-in-50 duration-200">
+                <div className="flex flex-col sm:flex-row gap-5 items-center sm:items-start pt-1">
+                  <div className="bg-white p-2 rounded-lg border border-border shadow-xs shrink-0 text-center">
+                    <img src={qrCode} alt="QR Code" className="w-36 h-36 mx-auto" />
+                    <p className="text-[11px] text-zinc-500 font-mono mt-1">Scan QR Code</p>
+                  </div>
+
+                  <div className="flex-1 w-full space-y-4">
+                    <div className="space-y-1">
+                      <p className="text-xs font-semibold text-foreground">
+                        {language === 'ko' ? '1. QR 코드 스캔' : '1. Scan QR Code'}
+                      </p>
+                      <p className="text-xs text-muted-foreground leading-relaxed">
+                        {t('settings.otpSetupModalDesc')}
+                      </p>
                     </div>
 
-                    <Button
-                      variant={user.totp_enabled ? 'outline' : 'default'}
-                      size="sm"
-                      onClick={() => user.totp_enabled ? handleDisable2FA() : handleSetup2FA()}
-                      className={user.totp_enabled ? 'text-destructive border-destructive/50 hover:bg-destructive/10 shrink-0' : 'shrink-0'}
-                    >
-                      {user.totp_enabled ? (language === 'ko' ? '2차 인증 해제' : 'Disable 2FA') : (language === 'ko' ? '2차 인증 설정' : 'Setup 2FA')}
-                    </Button>
+                    <form onSubmit={handleVerify2FA} className="space-y-3">
+                      <div className="space-y-1.5">
+                        <Label htmlFor="otp" className="text-xs font-semibold text-foreground">
+                          {language === 'ko' ? `2. ${t('login.otpCode')} 입력` : `2. Enter ${t('login.otpCode')}`}
+                        </Label>
+                        <Input
+                          id="otp"
+                          value={otp}
+                          onChange={e => setOtp(e.target.value)}
+                          placeholder="000000"
+                          required
+                          maxLength={6}
+                          className="h-10 text-center font-mono text-lg font-bold tracking-[0.4em] bg-background"
+                        />
+                      </div>
+                      <div className="flex items-center justify-end gap-2 pt-1">
+                        <Button type="button" variant="outline" onClick={() => setShowSetup(false)}>
+                          {t('common.cancel')}
+                        </Button>
+                        <Button type="submit">
+                          <ShieldCheck className="h-4 w-4 mr-1.5" />
+                          {t('settings.verifyBtn')}
+                        </Button>
+                      </div>
+                    </form>
                   </div>
                 </div>
-              )}
-
-              {showSetup && (
-                <div className="p-4 sm:p-5 border border-border rounded-xl bg-muted/20 space-y-4">
-                  <div className="flex items-center justify-between pb-3 border-b border-border">
-                    <h4 className="font-semibold text-sm flex items-center gap-2">
-                      <KeyRound className="h-4 w-4 text-primary" />
-                      {language === 'ko' ? '2단계 인증 설정' : 'Setup 2-Factor Authentication'}
-                    </h4>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon-sm"
-                      onClick={() => setShowSetup(false)}
-                      className="text-muted-foreground hover:text-foreground"
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
-                  </div>
-
-                  <div className="flex flex-col sm:flex-row gap-5 items-center sm:items-start">
-                    <div className="bg-white p-2 rounded-xl border border-border shadow-xs shrink-0 text-center">
-                      <img src={qrCode} alt="QR Code" className="w-36 h-36 mx-auto" />
-                      <p className="text-[11px] text-zinc-500 font-mono mt-1">Scan QR Code</p>
-                    </div>
-
-                    <div className="flex-1 w-full space-y-4">
-                      <div className="space-y-1">
-                        <p className="text-xs font-semibold text-foreground">1. QR 코드 스캔</p>
-                        <p className="text-xs text-muted-foreground leading-relaxed">
-                          {t('settings.otpSetupModalDesc')}
-                        </p>
-                      </div>
-
-                      <form onSubmit={handleVerify2FA} className="space-y-3">
-                        <div className="space-y-1.5">
-                          <Label htmlFor="otp" className="text-xs font-semibold text-foreground">2. {t('login.otpCode')} 입력</Label>
-                          <Input
-                            id="otp"
-                            value={otp}
-                            onChange={e => setOtp(e.target.value)}
-                            placeholder="000000"
-                            required
-                            maxLength={6}
-                            className="h-10 text-center font-mono text-lg font-bold tracking-[0.4em] bg-background"
-                          />
-                        </div>
-                        <div className="flex items-center justify-end gap-2 pt-1">
-                          <Button type="button" variant="outline" size="sm" onClick={() => setShowSetup(false)}>
-                            {t('common.cancel')}
-                          </Button>
-                          <Button type="submit" size="sm">
-                            <ShieldCheck className="h-4 w-4 mr-1.5" />
-                            {t('settings.verifyBtn')}
-                          </Button>
-                        </div>
-                      </form>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </CardContent>
+              </CardContent>
+            )}
           </Card>
         </div>
       </section>
@@ -624,7 +603,7 @@ export const Settings = () => {
                     key={s}
                     variant={scale === s ? 'default' : 'outline'}
                     onClick={() => handleScaleChange(s)}
-                    className="w-20"
+                    className="min-w-20"
                   >
                     {s}%
                   </Button>
@@ -649,7 +628,7 @@ export const Settings = () => {
                     id="liveResolution"
                     value={liveResolution}
                     onChange={(e) => { setLiveResolution(e.target.value); handleSaveUserSettings({ live_resolution: e.target.value }); }}
-                    className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                    className="flex h-9 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
                   >
                     <option value="1080p">1080p ({language === 'ko' ? '기본' : 'Default'})</option>
                     <option value="720p">720p</option>
@@ -664,7 +643,7 @@ export const Settings = () => {
                     id="vodResolution"
                     value={vodResolution}
                     onChange={(e) => { setVodResolution(e.target.value); handleSaveUserSettings({ vod_resolution: e.target.value }); }}
-                    className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                    className="flex h-9 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
                   >
                     <option value="ask">{t('settings.vodAskEveryTime')}</option>
                     <option value="1080p">1080p ({language === 'ko' ? '기본' : 'Default'})</option>
@@ -692,14 +671,14 @@ export const Settings = () => {
                 <Button
                   variant={language === 'en' ? 'default' : 'outline'}
                   onClick={() => { setLanguage('en'); toast.success(t('settings.languageSuccess')); }}
-                  className="w-24"
+                  className="min-w-24"
                 >
                   English
                 </Button>
                 <Button
                   variant={language === 'ko' ? 'default' : 'outline'}
                   onClick={() => { setLanguage('ko'); toast.success(t('settings.languageSuccess')); }}
-                  className="w-24"
+                  className="min-w-24"
                 >
                   한국어
                 </Button>
@@ -831,80 +810,6 @@ export const Settings = () => {
               </CardContent>
             </Card>
 
-            {/* Discord Card */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Bell className="h-5 w-5" /> {t('settings.discordWebhook')}
-                </CardTitle>
-                <CardDescription>{t('settings.discordWebhookDesc')}</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="discordWebhookUrl">{t('settings.webhookUrl')}</Label>
-                    <Input
-                      id="discordWebhookUrl"
-                      value={discordWebhookUrl}
-                      onChange={e => setDiscordWebhookUrl(e.target.value)}
-                      onBlur={e => handleSaveUserSettings({ discord_webhook_url: e.target.value })}
-                      placeholder={t('settings.webhookUrlPlaceholder')}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>{language === 'ko' ? '알림 메시지 형태' : 'Notification Format'}</Label>
-                    <div className="flex flex-col sm:flex-row gap-3">
-                      <label className={`flex items-center justify-center px-4 py-2 border rounded-lg cursor-pointer transition-colors ${discordWebhookUseEmbed ? 'bg-primary/10 border-primary text-primary' : 'border-input hover:bg-accent'}`}>
-                        <input type="radio" className="hidden" checked={discordWebhookUseEmbed} onChange={() => { setDiscordWebhookUseEmbed(true); handleSaveUserSettings({ discord_webhook_use_embed: true }); }} />
-                        <span className="text-sm font-medium">{language === 'ko' ? '카드 형태 (Embed)' : 'Rich Card (Embed)'}</span>
-                      </label>
-                      <label className={`flex items-center justify-center px-4 py-2 border rounded-lg cursor-pointer transition-colors ${!discordWebhookUseEmbed ? 'bg-primary/10 border-primary text-primary' : 'border-input hover:bg-accent'}`}>
-                        <input type="radio" className="hidden" checked={!discordWebhookUseEmbed} onChange={() => { setDiscordWebhookUseEmbed(false); handleSaveUserSettings({ discord_webhook_use_embed: false }); }} />
-                        <span className="text-sm font-medium">{language === 'ko' ? '단순 텍스트 형태' : 'Simple Text'}</span>
-                      </label>
-                    </div>
-                  </div>
-
-                  {/* 디스코드 알림 미리보기 */}
-                  <div className="mt-4 p-4 bg-[#313338] text-[#dbdee1] rounded-lg font-sans max-w-md shadow-inner text-sm border border-[#1e1f22]">
-                    <p className="text-xs text-[#949ba4] mb-3 uppercase font-bold tracking-wider">{language === 'ko' ? '미리보기' : 'Preview'}</p>
-                    <div className="flex gap-4">
-                      <div className="w-10 h-10 rounded-full bg-[#5865F2] flex-shrink-0 flex items-center justify-center text-white font-bold text-lg">
-                        Z
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="font-medium text-white text-[15px]">ZKZZK Bot</span>
-                          <span className="text-[10px] bg-[#5865F2] text-white px-1 py-[1px] rounded leading-none flex items-center justify-center uppercase font-bold">Bot</span>
-                          <span className="text-xs text-[#949ba4] font-medium ml-1">{language === 'ko' ? '오늘 오후 3:00' : 'Today at 3:00 PM'}</span>
-                        </div>
-                        {discordWebhookUseEmbed ? (
-                          <div className="bg-[#2b2d31] border-l-4 border-blue-500 rounded p-3 mt-1.5 inline-block min-w-[250px]">
-                            <p className="font-bold text-white text-base mb-1.5">🎥 {language === 'ko' ? '업로드 완료' : 'Upload Complete'}</p>
-                            <div className="text-[13px] space-y-1">
-                              <p>{language === 'ko' ? 'XXX님의 영상이 성공적으로 업로드되었습니다.' : "XXX's video has been successfully uploaded."}</p>
-                              <p className="pt-1.5"><strong>{language === 'ko' ? '제목' : 'Title'}:</strong> {language === 'ko' ? '테스트 영상' : 'Test Video'}</p>
-                              <p><strong>URL:</strong> <span className="text-[#00a8fc] cursor-pointer hover:underline">https://youtu.be/test</span></p>
-                            </div>
-                          </div>
-                        ) : (
-                          <div className="whitespace-pre-wrap text-[15px] leading-relaxed mt-0.5">
-                            <span className="font-bold">🎥 {language === 'ko' ? '업로드 완료' : 'Upload Complete'}</span>{'\n'}
-                            {language === 'ko' ? '**XXX**님의 영상이 성공적으로 업로드되었습니다.' : "**XXX**'s video has been successfully uploaded."}{'\n\n'}
-                            {language === 'ko' ? '제목' : 'Title'}: {language === 'ko' ? '테스트 영상' : 'Test Video'}{'\n'}
-                            URL: <span className="text-[#00a8fc] cursor-pointer hover:underline">https://youtu.be/test</span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          <div className="space-y-6">
             {/* YouTube Auto Upload Card */}
             <Card>
               <CardHeader>
@@ -1047,6 +952,80 @@ export const Settings = () => {
               </CardContent>
             </Card>
           </div>
+
+          <div className="space-y-6">
+            {/* Discord Card */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Bell className="h-5 w-5" /> {t('settings.discordWebhook')}
+                </CardTitle>
+                <CardDescription>{t('settings.discordWebhookDesc')}</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="discordWebhookUrl">{t('settings.webhookUrl')}</Label>
+                    <Input
+                      id="discordWebhookUrl"
+                      value={discordWebhookUrl}
+                      onChange={e => setDiscordWebhookUrl(e.target.value)}
+                      onBlur={e => handleSaveUserSettings({ discord_webhook_url: e.target.value })}
+                      placeholder={t('settings.webhookUrlPlaceholder')}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>{language === 'ko' ? '알림 메시지 형태' : 'Notification Format'}</Label>
+                    <div className="flex flex-col sm:flex-row gap-3">
+                      <label className={`flex items-center justify-center px-4 py-2 border rounded-lg cursor-pointer transition-colors ${discordWebhookUseEmbed ? 'bg-primary/10 border-primary text-primary' : 'border-input hover:bg-accent'}`}>
+                        <input type="radio" className="hidden" checked={discordWebhookUseEmbed} onChange={() => { setDiscordWebhookUseEmbed(true); handleSaveUserSettings({ discord_webhook_use_embed: true }); }} />
+                        <span className="text-sm font-medium">{language === 'ko' ? '카드 형태 (Embed)' : 'Rich Card (Embed)'}</span>
+                      </label>
+                      <label className={`flex items-center justify-center px-4 py-2 border rounded-lg cursor-pointer transition-colors ${!discordWebhookUseEmbed ? 'bg-primary/10 border-primary text-primary' : 'border-input hover:bg-accent'}`}>
+                        <input type="radio" className="hidden" checked={!discordWebhookUseEmbed} onChange={() => { setDiscordWebhookUseEmbed(false); handleSaveUserSettings({ discord_webhook_use_embed: false }); }} />
+                        <span className="text-sm font-medium">{language === 'ko' ? '단순 텍스트 형태' : 'Simple Text'}</span>
+                      </label>
+                    </div>
+                  </div>
+
+                  {/* 디스코드 알림 미리보기 */}
+                  <div className="mt-4 p-4 bg-[#313338] text-[#dbdee1] rounded-lg font-sans max-w-md shadow-inner text-sm border border-[#1e1f22]">
+                    <p className="text-xs text-[#949ba4] mb-3 uppercase font-bold tracking-wider">{language === 'ko' ? '미리보기' : 'Preview'}</p>
+                    <div className="flex gap-4">
+                      <div className="w-10 h-10 rounded-full bg-[#5865F2] flex-shrink-0 flex items-center justify-center text-white font-bold text-lg">
+                        Z
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="font-medium text-white text-[15px]">ZKZZK Bot</span>
+                          <span className="text-[10px] bg-[#5865F2] text-white px-1 py-[1px] rounded leading-none flex items-center justify-center uppercase font-bold">Bot</span>
+                          <span className="text-xs text-[#949ba4] font-medium ml-1">{language === 'ko' ? '오늘 오후 3:00' : 'Today at 3:00 PM'}</span>
+                        </div>
+                        {discordWebhookUseEmbed ? (
+                          <div className="bg-[#2b2d31] border-l-4 border-blue-500 rounded p-3 mt-1.5 inline-block min-w-[250px]">
+                            <p className="font-bold text-white text-base mb-1.5">🎥 {language === 'ko' ? '업로드 완료' : 'Upload Complete'}</p>
+                            <div className="text-[13px] space-y-1">
+                              <p>{language === 'ko' ? 'XXX님의 영상이 성공적으로 업로드되었습니다.' : "XXX's video has been successfully uploaded."}</p>
+                              <p className="pt-1.5"><strong>{language === 'ko' ? '제목' : 'Title'}:</strong> {language === 'ko' ? '테스트 영상' : 'Test Video'}</p>
+                              <p><strong>URL:</strong> <span className="text-[#00a8fc] cursor-pointer hover:underline">https://youtu.be/test</span></p>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="whitespace-pre-wrap text-[15px] leading-relaxed mt-0.5">
+                            <span className="font-bold">🎥 {language === 'ko' ? '업로드 완료' : 'Upload Complete'}</span>{'\n'}
+                            {language === 'ko' ? '**XXX**님의 영상이 성공적으로 업로드되었습니다.' : "**XXX**'s video has been successfully uploaded."}{'\n\n'}
+                            {language === 'ko' ? '제목' : 'Title'}: {language === 'ko' ? '테스트 영상' : 'Test Video'}{'\n'}
+                            URL: <span className="text-[#00a8fc] cursor-pointer hover:underline">https://youtu.be/test</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </div>
       </section>
 
@@ -1063,24 +1042,21 @@ export const Settings = () => {
             <Card className="shadow-xs border-border/80">
               <CardHeader className="pb-4">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2.5 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 shrink-0">
-                      <Users className="h-5 w-5" />
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <CardTitle className="flex items-center gap-2">
+                        <Users className="h-5 w-5" />
+                        {t('settings.userManagement')}
+                      </CardTitle>
+                      <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-600 border border-amber-500/20">{language === 'ko' ? '관리자 전용' : 'Admin Only'}</span>
                     </div>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <CardTitle className="text-lg">{t('settings.userManagement')}</CardTitle>
-                        <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-600 border border-amber-500/20">{language === 'ko' ? '관리자 전용' : 'Admin Only'}</span>
-                      </div>
-                      <CardDescription className="text-xs mt-0.5">{t('settings.userManagementDesc')}</CardDescription>
-                    </div>
+                    <CardDescription className="text-xs mt-1">{t('settings.userManagementDesc')}</CardDescription>
                   </div>
 
                   {!showAddUserForm && (
                     <Button
                       type="button"
                       onClick={() => setShowAddUserForm(true)}
-                      size="sm"
                       className="shrink-0"
                     >
                       <Plus className="h-4 w-4 mr-1.5" />
@@ -1090,10 +1066,10 @@ export const Settings = () => {
                 </div>
               </CardHeader>
               <CardContent className="space-y-6">
-                {/* Add User Form (Collapsible) */}
+                {/* Add User Form (Collapsible, Direct Rendering) */}
                 {showAddUserForm && (
-                  <div className="p-4 border border-border rounded-xl bg-muted/30 shadow-xs space-y-4 animate-in fade-in-50 duration-200">
-                    <div className="flex items-center justify-between border-b border-border pb-3">
+                  <div className="pb-4 border-b border-border space-y-4 animate-in fade-in-50 duration-200">
+                    <div className="flex items-center justify-between">
                       <h4 className="font-semibold text-sm flex items-center gap-2 text-foreground">
                         <UserCheck className="h-4 w-4 text-primary" />
                         {t('settings.addUser')}
@@ -1101,9 +1077,9 @@ export const Settings = () => {
                       <Button
                         type="button"
                         variant="ghost"
-                        size="icon-sm"
+                        size="icon"
                         onClick={() => setShowAddUserForm(false)}
-                        className="text-muted-foreground hover:text-foreground"
+                        className="text-muted-foreground hover:text-foreground h-8 w-8"
                       >
                         <X className="h-4 w-4" />
                       </Button>
@@ -1145,10 +1121,10 @@ export const Settings = () => {
                           <Label htmlFor="newUserIsAdmin" className="text-sm cursor-pointer select-none font-medium">{t('layout.admin')}</Label>
                         </div>
                         <div className="flex items-center gap-2 justify-end">
-                          <Button type="button" variant="outline" size="sm" onClick={() => setShowAddUserForm(false)}>
+                          <Button type="button" variant="outline" onClick={() => setShowAddUserForm(false)}>
                             {t('common.cancel')}
                           </Button>
-                          <Button type="submit" size="sm" disabled={userLoading}>
+                          <Button type="submit" disabled={userLoading}>
                             {userLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4 mr-1.5" />}
                             {t('settings.addUserBtn')}
                           </Button>
