@@ -7,6 +7,7 @@
   "license": "MIT",
   "scripts": {
     "build": "nest build",
+    "postbuild": "node -e \"const fs = require('fs'); if (fs.existsSync('src/generated')) fs.cpSync('src/generated', 'dist/generated', { recursive: true });\"",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
     "start:dev": "nest start --watch",
