@@ -1,10 +1,11 @@
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Video, Download, Settings, LogOut, Sun, Moon, Monitor } from 'lucide-react';
+import { LayoutDashboard, Video, Download, Settings, LogOut, Sun, Moon, Monitor, Menu, X } from 'lucide-react';
 import { Button } from './ui/button';
 import api from '../api';
 import { useEffect, useState } from 'react';
 import pkg from '../../package.json';
 import { useLanguage } from '../lib/i18n';
+import { cn } from '../lib/utils';
 
 const navItems = [
   { path: '/', icon: LayoutDashboard, key: 'layout.live' },
@@ -19,6 +20,7 @@ export const Layout = () => {
   const [user, setUser] = useState<{ username: string; is_admin: boolean; version?: string } | null>(null);
   const [theme, setTheme] = useState<'light' | 'dark' | 'system'>('system');
   const [latestVersion, setLatestVersion] = useState<string | null>(null);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const { t } = useLanguage();
 
   useEffect(() => {
@@ -48,6 +50,11 @@ export const Layout = () => {
         .catch(() => { });
     }
   }, [navigate]);
+
+  // Close mobile drawer when route changes
+  useEffect(() => {
+    setMobileNavOpen(false);
+  }, [location.pathname]);
 
   const cycleTheme = () => {
     let nextTheme: 'light' | 'dark' | 'system';
@@ -80,28 +87,77 @@ export const Layout = () => {
   if (!user) return null;
 
   return (
-    <div className="flex h-screen bg-background text-foreground transition-colors duration-200 overflow-hidden">
-      {/* Sidebar */}
-      <aside className="w-64 border-r border-border bg-card px-4 py-6 flex flex-col justify-between">
+    <div className="flex flex-col md:flex-row h-screen bg-background text-foreground transition-colors duration-200 overflow-hidden">
+      {/* Mobile Top Navigation Header */}
+      <header className="md:hidden flex items-center justify-between px-4 py-3 border-b border-border bg-card z-40 shrink-0 relative">
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              setMobileNavOpen((prev) => !prev);
+            }}
+            className="p-2 -ml-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-colors cursor-pointer relative z-50"
+            aria-label="Toggle Navigation Menu"
+          >
+            {mobileNavOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+          </button>
+          <h1 className="text-xl font-bold tracking-tight text-foreground font-google-sans">ZKZZK</h1>
+        </div>
+        <button
+          type="button"
+          onClick={cycleTheme}
+          className="p-2 -mr-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-accent transition-colors cursor-pointer"
+          title={theme === 'system' ? t('layout.systemTheme') : theme === 'light' ? t('layout.lightMode') : t('layout.darkMode')}
+        >
+          {theme === 'system' ? <Monitor className="h-5 w-5" /> : theme === 'light' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+        </button>
+      </header>
+
+      {/* Backdrop for Mobile Drawer */}
+      {mobileNavOpen && (
+        <div
+          className="fixed inset-0 z-30 bg-black/50 backdrop-blur-xs md:hidden"
+          onClick={() => setMobileNavOpen(false)}
+        />
+      )}
+
+      {/* Sidebar / Mobile Nav Drawer */}
+      <aside
+        className={cn(
+          "fixed inset-y-0 left-0 z-50 w-64 border-r border-border bg-card px-4 py-6 flex flex-col justify-between transition-transform duration-200 ease-in-out md:static md:translate-x-0 shrink-0",
+          mobileNavOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
+        )}
+      >
         <div className="flex flex-col flex-1">
-          <div className="flex items-center justify-between mb-10 px-2">
+          <div className="flex items-center justify-between mb-8 px-2">
             <h1 className="text-2xl font-bold tracking-tight text-foreground font-google-sans">ZKZZK</h1>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={cycleTheme}
-              className="text-muted-foreground hover:text-foreground"
-              title={theme === 'system' ? t('layout.systemTheme') : theme === 'light' ? t('layout.lightMode') : t('layout.darkMode')}
-            >
-              {theme === 'system' ? <Monitor className="h-5 w-5" /> : theme === 'light' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
-            </Button>
+            <div className="flex items-center gap-1">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={cycleTheme}
+                className="text-muted-foreground hover:text-foreground hidden md:flex"
+                title={theme === 'system' ? t('layout.systemTheme') : theme === 'light' ? t('layout.lightMode') : t('layout.darkMode')}
+              >
+                {theme === 'system' ? <Monitor className="h-5 w-5" /> : theme === 'light' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setMobileNavOpen(false)}
+                className="text-muted-foreground hover:text-foreground md:hidden"
+              >
+                <X className="h-5 w-5" />
+              </Button>
+            </div>
           </div>
           <nav className="space-y-2">
             {navItems.map((item) => {
               const Icon = item.icon;
               const isActive = location.pathname === item.path || (item.path !== '/' && location.pathname.startsWith(item.path));
               return (
-                <Link key={item.path} to={item.path}>
+                <Link key={item.path} to={item.path} onClick={() => setMobileNavOpen(false)}>
                   <Button
                     variant={isActive ? 'secondary' : 'ghost'}
                     className="w-full justify-start gap-3"
@@ -139,7 +195,7 @@ export const Layout = () => {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 overflow-auto bg-background p-8">
+      <main className="flex-1 overflow-auto bg-background p-4 sm:p-6 md:p-8">
         <div className="max-w-6xl mx-auto">
           <Outlet />
         </div>
@@ -147,3 +203,4 @@ export const Layout = () => {
     </div>
   );
 }
+

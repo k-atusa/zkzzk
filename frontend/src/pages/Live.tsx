@@ -179,9 +179,9 @@ export const Live = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h2 className="text-3xl font-bold tracking-tight">{t('live.title')}</h2>
-        <Button variant="outline" onClick={fetchStreamers} disabled={refreshing}>
+      <div className="flex items-center justify-between gap-2">
+        <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">{t('live.title')}</h2>
+        <Button variant="outline" onClick={fetchStreamers} disabled={refreshing} size="sm" className="sm:size-default">
           <RefreshCw className={`mr-2 h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} /> {t('live.refresh')}
         </Button>
       </div>
@@ -191,7 +191,7 @@ export const Live = () => {
           <CardTitle>{t('live.addNewStreamer')}</CardTitle>
         </CardHeader>
         <CardContent className="!overflow-visible">
-          <form onSubmit={handleAdd} className="flex space-x-2">
+          <form onSubmit={handleAdd} className="flex flex-col sm:flex-row gap-2">
             <div className="relative flex-1">
               <Input
                 ref={inputRef}
@@ -219,7 +219,7 @@ export const Live = () => {
                       {newUrl ? t('live.searchNoResults') : t('live.noFollowedStreamers')}
                     </div>
                   ) : (
-                    <div className="max-h-[480px] overflow-y-auto">
+                    <div className="max-h-[320px] sm:max-h-[480px] overflow-y-auto">
                       <div className="px-3 py-2 text-xs text-muted-foreground font-medium border-b border-border bg-muted/30">
                         {t('live.followedChannels', { count: filteredFollowed.length })}
                       </div>
@@ -298,7 +298,7 @@ export const Live = () => {
                 </div>
               )}
             </div>
-            <Button type="submit">
+            <Button type="submit" className="w-full sm:w-auto shrink-0">
               <Plus className="mr-2 h-4 w-4" /> {t('live.addBtn')}
             </Button>
           </form>

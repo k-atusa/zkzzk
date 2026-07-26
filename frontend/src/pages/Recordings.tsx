@@ -373,12 +373,12 @@ export const Recordings = () => {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-3xl font-bold tracking-tight">{t('recordings.title')}</h2>
+        <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">{t('recordings.title')}</h2>
       </div>
 
       {/* Modern Tabs & Search Navigation */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-border pb-3 sm:pb-0">
-        <div className="flex space-x-6 overflow-x-auto">
+        <div className="flex space-x-4 sm:space-x-6 overflow-x-auto whitespace-nowrap no-scrollbar pb-1 sm:pb-0">
           <button
             onClick={() => setActiveTab('live')}
             className={`pb-3 text-sm font-semibold border-b-2 transition-all flex items-center gap-2 relative ${activeTab === 'live'
@@ -548,9 +548,9 @@ export const Recordings = () => {
 
       {/* Video Player Modal */}
       <Dialog open={!!playingVideo} onOpenChange={(open) => { if (!open) setPlayingVideo(null); }}>
-        <DialogContent className="sm:max-w-4xl p-6 gap-4">
+        <DialogContent className="w-[95vw] max-w-4xl p-3 sm:p-6 gap-3 sm:gap-4">
           <DialogHeader className="pb-2 border-b border-border/50">
-            <DialogTitle className="text-lg font-bold pr-6 line-clamp-1 flex items-center gap-2 text-foreground">
+            <DialogTitle className="text-base sm:text-lg font-bold pr-6 line-clamp-1 flex items-center gap-2 text-foreground">
               <Play className="h-5 w-5 text-primary fill-primary/10" />
               {playingVideo?.title}
             </DialogTitle>
@@ -565,7 +565,7 @@ export const Recordings = () => {
 
       {/* Youtube Upload Modal */}
       <Dialog open={!!uploadConfig} onOpenChange={(open) => { if (!open) setUploadConfig(null); }}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="w-[95vw] max-w-md p-4 sm:p-6">
           <form onSubmit={submitYoutubeUpload}>
             <DialogHeader>
               <DialogTitle>{t('recordings.youtubeModalTitle')}</DialogTitle>

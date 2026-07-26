@@ -113,7 +113,7 @@ export const Vod = () => {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-3xl font-bold tracking-tight">{t('vod.title')}</h2>
+      <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">{t('vod.title')}</h2>
 
       <Card>
         <CardHeader>
@@ -121,14 +121,15 @@ export const Vod = () => {
           <CardDescription>{t('vod.searchDesc')}</CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSearch} className="flex space-x-2">
+          <form onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-2">
             <Input
               value={url}
               onChange={e => setUrl(e.target.value)}
               placeholder={t('vod.searchPlaceholder')}
               required
+              className="flex-1"
             />
-            <Button type="submit" disabled={loading}>
+            <Button type="submit" disabled={loading} className="w-full sm:w-auto shrink-0">
               <Search className="mr-2 h-4 w-4" /> {loading ? t('vod.searching') : t('vod.searchBtn')}
             </Button>
           </form>
@@ -138,13 +139,13 @@ export const Vod = () => {
       {vodInfo && (
         <Card>
           <CardHeader>
-            <CardTitle>{vodInfo.video_info.title}</CardTitle>
+            <CardTitle className="text-lg sm:text-xl">{vodInfo.video_info.title}</CardTitle>
             <CardDescription>
               {vodInfo.video_info.author} • {vodInfo.video_info.category}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex flex-col gap-3 max-w-sm">
+            <div className="flex flex-col gap-3 w-full sm:max-w-sm">
               <h3 className="text-sm font-medium text-muted-foreground mb-1">{t('vod.selectQuality')}</h3>
               {vodInfo.resolutions.map((res: any) => (
                 <Button

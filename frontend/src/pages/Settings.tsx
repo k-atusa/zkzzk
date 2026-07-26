@@ -369,7 +369,7 @@ export const Settings = () => {
   return (
     <div className="space-y-10 pb-10">
       <div>
-        <h2 className="text-3xl font-bold tracking-tight mb-2">{t('settings.title')}</h2>
+        <h2 className="text-2xl sm:text-3xl font-bold tracking-tight mb-2">{t('settings.title')}</h2>
         <p className="text-muted-foreground">{t('settings.subtitle')}</p>
       </div>
 
@@ -379,7 +379,7 @@ export const Settings = () => {
           <Lock className="h-5 w-5 text-primary" />
           <h3 className="text-xl font-semibold">{t('settings.secAccount')}</h3>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+        <div className="grid grid-cols-1 min-[1101px]:grid-cols-2 gap-6 pt-2">
           {/* Password Change Card */}
           <Card>
             <CardHeader>
@@ -459,7 +459,7 @@ export const Settings = () => {
             </CardHeader>
             <CardContent className="space-y-4">
               {!showSetup && (
-                <div className="flex items-center justify-between p-4 border border-border rounded-lg">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 border border-border rounded-lg gap-3">
                   <div className="flex items-center space-x-4">
                     {user.totp_enabled ? <ShieldCheck className="h-6 w-6 text-green-500" /> : <ShieldAlert className="h-6 w-6 text-yellow-500" />}
                     <div>
@@ -519,7 +519,7 @@ export const Settings = () => {
           <MonitorPlay className="h-5 w-5 text-primary" />
           <h3 className="text-xl font-semibold">{t('settings.secScreen')}</h3>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+        <div className="grid grid-cols-1 min-[1101px]:grid-cols-2 gap-6 pt-2">
           {/* 화면 배율 설정 Card */}
           <Card>
             <CardHeader>
@@ -531,7 +531,7 @@ export const Settings = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 {[90, 100, 110, 120, 130].map((s) => (
                   <Button
                     key={s}
@@ -555,7 +555,7 @@ export const Settings = () => {
               <CardDescription>{t('settings.downloadResolutionDesc')}</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-2xl">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-2xl">
                 <div className="space-y-2">
                   <Label htmlFor="liveResolution">{t('settings.liveResolution')}</Label>
                   <select
@@ -628,7 +628,7 @@ export const Settings = () => {
           <Bell className="h-5 w-5 text-primary" />
           <h3 className="text-xl font-semibold">{t('settings.secExternal')}</h3>
         </div>
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 pt-2 items-start">
+        <div className="grid grid-cols-1 min-[1101px]:grid-cols-2 gap-6 pt-2 items-start">
           <div className="space-y-6">
 
             {/* Chzzk Cookie Card */}
@@ -766,7 +766,7 @@ export const Settings = () => {
                   </div>
                   <div className="space-y-2">
                     <Label>{language === 'ko' ? '알림 메시지 형태' : 'Notification Format'}</Label>
-                    <div className="flex gap-4">
+                    <div className="flex flex-col sm:flex-row gap-3">
                       <label className={`flex items-center justify-center px-4 py-2 border rounded-lg cursor-pointer transition-colors ${discordWebhookUseEmbed ? 'bg-primary/10 border-primary text-primary' : 'border-input hover:bg-accent'}`}>
                         <input type="radio" className="hidden" checked={discordWebhookUseEmbed} onChange={() => { setDiscordWebhookUseEmbed(true); handleSaveUserSettings({ discord_webhook_use_embed: true }); }} />
                         <span className="text-sm font-medium">{language === 'ko' ? '카드 형태 (Embed)' : 'Rich Card (Embed)'}</span>
@@ -986,7 +986,7 @@ export const Settings = () => {
                 <div className="p-4 border border-border rounded-lg bg-muted/20">
                   <h4 className="font-medium mb-3 text-sm">{t('settings.addUser')}</h4>
                   <form onSubmit={handleCreateUser} className="space-y-3">
-                    <div className="flex flex-wrap gap-3 items-end">
+                    <div className="flex flex-col sm:flex-row flex-wrap gap-3 sm:items-end">
                       <div className="space-y-1.5 flex-1 min-w-32">
                         <Label htmlFor="newUsername" className="text-xs">{t('login.username')}</Label>
                         <Input
@@ -1073,7 +1073,7 @@ export const Settings = () => {
       )}
 
       <Dialog open={!!confirmConfig} onOpenChange={(open) => { if (!open) setConfirmConfig(null); }}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="w-[95vw] max-w-md p-4 sm:p-6">
           <DialogHeader>
             <DialogTitle>{confirmConfig?.title}</DialogTitle>
             <DialogDescription>
