@@ -1,9 +1,9 @@
-# Stage 1: Base image with Python3 (used by both backend builder and runtime)
-FROM node:24-bookworm-slim AS base
-RUN apt-get update && apt-get install -y python3 && rm -rf /var/lib/apt/lists/*
+# Stage 1: Base image
+FROM node:24-alpine AS base
+RUN apk add --no-cache python3 py3-pip ffmpeg tzdata
 
 # Stage 2: Build Frontend
-FROM node:24-bookworm-slim AS frontend-builder
+FROM node:24-alpine AS frontend-builder
 WORKDIR /app/frontend
 COPY frontend/package*.json ./
 RUN npm ci
@@ -17,7 +17,7 @@ ENV DATABASE_URL="file:/app/backend/data/database.db"
 ENV NODE_OPTIONS="--max-old-space-size=4096"
 COPY backend/package*.json ./
 # Install build tools for better-sqlite3
-RUN apt-get update && apt-get install -y make g++ && rm -rf /var/lib/apt/lists/*
+RUN apk add --no-cache make g++ python3
 RUN npm ci
 COPY backend/ .
 # Generate Prisma client
@@ -28,18 +28,12 @@ RUN npm run build
 FROM base
 WORKDIR /app/backend
 
-# Install timezone data, ffmpeg, pip, and streamlink (python3 is already in base)
-RUN apt-get update && apt-get install -y \
-    tzdata \
-    ffmpeg \
-    python3-pip \
-    && rm -rf /var/lib/apt/lists/* \
-    && pip3 install streamlink --break-system-packages
+# Install streamlink
+RUN pip install --no-cache-dir streamlink --break-system-packages
 
 # Set default environment variables
 ENV TZ=Asia/Seoul
 ENV DATABASE_URL="file:/app/backend/data/database.db"
-RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
 # Copy node_modules and built code from backend builder
 COPY --from=backend-builder /app/backend/node_modules ./node_modules
