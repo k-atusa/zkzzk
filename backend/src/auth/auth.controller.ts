@@ -115,7 +115,7 @@ export class AuthController {
   async verifyCookies(@Req() req: any, @Body() body: any) {
     const { nid_aut, nid_ses } = body;
     if (!nid_aut || !nid_ses) throw new BadRequestException('쿠키 값을 입력해주세요.');
-    return this.authService.verifyCookies(nid_aut, nid_ses);
+    return this.authService.verifyCookies(nid_aut, nid_ses, req.user.id);
   }
 
   @UseGuards(JwtAuthGuard)
@@ -162,7 +162,9 @@ export class AuthController {
       body.delete_after_upload !== undefined ? body.delete_after_upload : undefined,
       body.live_resolution !== undefined ? body.live_resolution : undefined,
       body.vod_resolution !== undefined ? body.vod_resolution : undefined,
-      body.discord_webhook_use_embed !== undefined ? body.discord_webhook_use_embed : undefined
+      body.discord_webhook_use_embed !== undefined ? body.discord_webhook_use_embed : undefined,
+      body.chzzk_nickname !== undefined ? body.chzzk_nickname : undefined,
+      body.disconnect_youtube !== undefined ? body.disconnect_youtube : undefined
     );
   }
 }

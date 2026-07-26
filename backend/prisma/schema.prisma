@@ -17,11 +17,13 @@ model user {
   totp_enabled   Boolean?
   nid_aut        String?
   nid_ses        String?
+  chzzk_nickname String?
   discord_webhook_url   String?
   discord_webhook_use_embed Boolean? @default(true)
   youtube_client_id     String?
   youtube_client_secret String?
   youtube_refresh_token String?
+  youtube_channel_title String?
   youtube_auto_upload   Boolean?    @default(false)
   delete_after_upload   Boolean?    @default(false)
   live_resolution       String?     @default("1080p")

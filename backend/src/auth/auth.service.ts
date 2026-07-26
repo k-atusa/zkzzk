@@ -157,7 +157,7 @@ export class AuthService {
 
 
 
-  async verifyCookies(nid_aut: string, nid_ses: string) {
+  async verifyCookies(nid_aut: string, nid_ses: string, requesterId?: string) {
     try {
       const commonHeaders = {
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36',
@@ -186,6 +186,13 @@ export class AuthService {
         { headers: commonHeaders }
       );
       const nickname = userRes.data?.content?.nickname ?? null;
+
+      if (requesterId && nickname) {
+        await this.prisma.user.update({
+          where: { id: requesterId },
+          data: { chzzk_nickname: nickname }
+        });
+      }
 
       return { valid: true, nickname };
     } catch (e) {
@@ -237,23 +244,47 @@ export class AuthService {
   }
 
   async getUserSettings(requesterId: string) {
-    const user = await this.prisma.user.findUnique({ where: { id: requesterId } });
+    let user = await this.prisma.user.findUnique({ where: { id: requesterId } });
+    if (user?.nid_aut && user?.nid_ses && !user?.chzzk_nickname) {
+      try {
+        const res = await this.verifyCookies(user.nid_aut, user.nid_ses, requesterId);
+        if (res.valid && res.nickname) {
+          user = await this.prisma.user.findUnique({ where: { id: requesterId } });
+        }
+      } catch (e) {}
+    }
     return {
       discord_webhook_url: user?.discord_webhook_url || null,
       discord_webhook_use_embed: user?.discord_webhook_use_embed ?? true,
       youtube_client_id: user?.youtube_client_id || null,
       youtube_client_secret: user?.youtube_client_secret || null,
       youtube_connected: !!user?.youtube_refresh_token,
+      youtube_channel_title: user?.youtube_channel_title || null,
       youtube_auto_upload: user?.youtube_auto_upload ?? false,
       delete_after_upload: user?.delete_after_upload ?? false,
       nid_aut: user?.nid_aut || null,
       nid_ses: user?.nid_ses || null,
+      chzzk_nickname: user?.chzzk_nickname || null,
       live_resolution: user?.live_resolution || '1080p',
       vod_resolution: user?.vod_resolution || '1080p',
     };
   }
 
-  async updateUserSettings(requesterId: string, discord_webhook_url?: string | null, youtube_client_id?: string | null, youtube_client_secret?: string | null, nid_aut?: string | null, nid_ses?: string | null, youtube_auto_upload?: boolean, delete_after_upload?: boolean, live_resolution?: string, vod_resolution?: string, discord_webhook_use_embed?: boolean) {
+  async updateUserSettings(
+    requesterId: string,
+    discord_webhook_url?: string | null,
+    youtube_client_id?: string | null,
+    youtube_client_secret?: string | null,
+    nid_aut?: string | null,
+    nid_ses?: string | null,
+    youtube_auto_upload?: boolean,
+    delete_after_upload?: boolean,
+    live_resolution?: string,
+    vod_resolution?: string,
+    discord_webhook_use_embed?: boolean,
+    chzzk_nickname?: string | null,
+    disconnect_youtube?: boolean
+  ) {
     const updateData: any = {};
     if (discord_webhook_url !== undefined) updateData.discord_webhook_url = discord_webhook_url;
     if (discord_webhook_use_embed !== undefined) updateData.discord_webhook_use_embed = discord_webhook_use_embed;
@@ -261,15 +292,42 @@ export class AuthService {
     if (youtube_client_secret !== undefined) updateData.youtube_client_secret = youtube_client_secret;
     if (nid_aut !== undefined) updateData.nid_aut = nid_aut;
     if (nid_ses !== undefined) updateData.nid_ses = nid_ses;
+    if (chzzk_nickname !== undefined) updateData.chzzk_nickname = chzzk_nickname;
     if (youtube_auto_upload !== undefined) updateData.youtube_auto_upload = youtube_auto_upload;
     if (delete_after_upload !== undefined) updateData.delete_after_upload = delete_after_upload;
     if (live_resolution !== undefined) updateData.live_resolution = live_resolution;
     if (vod_resolution !== undefined) updateData.vod_resolution = vod_resolution;
 
+    if (nid_aut === null || nid_aut === '') {
+      updateData.nid_aut = null;
+      updateData.nid_ses = null;
+      updateData.chzzk_nickname = null;
+    }
+
+    if (disconnect_youtube || youtube_client_id === null) {
+      updateData.youtube_client_id = null;
+      updateData.youtube_client_secret = null;
+      updateData.youtube_refresh_token = null;
+      updateData.youtube_channel_title = null;
+    }
+
     await this.prisma.user.update({
       where: { id: requesterId },
       data: updateData
     });
+
+    if (updateData.nid_aut && updateData.nid_ses && !chzzk_nickname) {
+      try {
+        const verifyRes = await this.verifyCookies(updateData.nid_aut, updateData.nid_ses, requesterId);
+        if (verifyRes.valid && verifyRes.nickname) {
+          await this.prisma.user.update({
+            where: { id: requesterId },
+            data: { chzzk_nickname: verifyRes.nickname }
+          });
+        }
+      } catch (e) {}
+    }
+
     return { success: true };
   }
 }

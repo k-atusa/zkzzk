@@ -98,10 +98,18 @@ export class YoutubeService {
         part: ['snippet'],
         mine: true,
       });
-      const channelName = response.data.items?.[0]?.snippet?.title || null;
+      const channelName = response.data.items?.[0]?.snippet?.title || '인증된 채널';
+      await this.prisma.user.update({
+        where: { id: userId },
+        data: { youtube_channel_title: channelName }
+      });
       return channelName;
     } catch (e: any) {
       this.logger.error(`Failed to fetch YouTube channel info: ${e.message}`);
+      await this.prisma.user.update({
+        where: { id: userId },
+        data: { youtube_channel_title: '인증된 채널' }
+      });
       return '인증된 채널';
     }
   }

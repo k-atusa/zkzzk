@@ -34,6 +34,8 @@ export const Settings = () => {
   const [youtubeClientSecret, setYoutubeClientSecret] = useState('');
   const [showYoutubeClientSecret, setShowYoutubeClientSecret] = useState(false);
   const [youtubeConnected, setYoutubeConnected] = useState(false);
+  const [youtubeChannelTitle, setYoutubeChannelTitle] = useState('');
+  const [showYoutubeInputs, setShowYoutubeInputs] = useState(false);
   const [youtubeAutoUpload, setYoutubeAutoUpload] = useState(true);
   const [deleteAfterUpload, setDeleteAfterUpload] = useState(false);
 
@@ -69,6 +71,8 @@ export const Settings = () => {
   // Cookies
   const [nidAut, setNidAut] = useState('');
   const [nidSes, setNidSes] = useState('');
+  const [chzzkNickname, setChzzkNickname] = useState('');
+  const [showCookieInputs, setShowCookieInputs] = useState(false);
   const [cookieLoading, setCookieLoading] = useState(false);
   const [cookieVerified, setCookieVerified] = useState<{ valid: boolean; nickname?: string } | null>(null);
   const [cookieSaveLoading, setCookieSaveLoading] = useState(false);
@@ -101,10 +105,12 @@ export const Settings = () => {
       if (res.data.youtube_client_id) setYoutubeClientId(res.data.youtube_client_id);
       if (res.data.youtube_client_secret) setYoutubeClientSecret(res.data.youtube_client_secret);
       if (res.data.youtube_connected) setYoutubeConnected(true);
+      if (res.data.youtube_channel_title) setYoutubeChannelTitle(res.data.youtube_channel_title);
       if (res.data.youtube_auto_upload !== undefined) setYoutubeAutoUpload(res.data.youtube_auto_upload);
       if (res.data.delete_after_upload !== undefined) setDeleteAfterUpload(res.data.delete_after_upload);
       if (res.data.nid_aut) setNidAut(res.data.nid_aut);
       if (res.data.nid_ses) setNidSes(res.data.nid_ses);
+      if (res.data.chzzk_nickname) setChzzkNickname(res.data.chzzk_nickname);
       if (res.data.live_resolution) setLiveResolution(res.data.live_resolution);
       if (res.data.vod_resolution) setVodResolution(res.data.vod_resolution);
     } catch (e) { }
@@ -125,11 +131,13 @@ export const Settings = () => {
     const searchParams = new URLSearchParams(window.location.search);
     if (searchParams.get('youtube') === 'success') {
       const channelName = searchParams.get('channelName');
+      if (channelName) setYoutubeChannelTitle(channelName);
       toast.success(channelName
         ? t('settings.oauthSuccess', { name: channelName })
         : t('settings.oauthSuccessNoName')
       );
       window.history.replaceState({}, document.title, window.location.pathname);
+      fetchUserSettings();
     } else if (searchParams.get('youtube') === 'error') {
       toast.error(t('settings.oauthError'));
       window.history.replaceState({}, document.title, window.location.pathname);
@@ -215,6 +223,7 @@ export const Settings = () => {
       setCookieVerified(res.data);
       if (res.data.valid) {
         toast.success(t('settings.cookiesVerifiedSuccess', { name: res.data.nickname }));
+        if (res.data.nickname) setChzzkNickname(res.data.nickname);
       } else {
         toast.error(t('settings.cookiesVerifiedFailed'));
       }
@@ -226,14 +235,27 @@ export const Settings = () => {
     }
   };
 
-  const handleSaveCookies = async (aut?: string, ses?: string) => {
+  const handleSaveCookiesSubmit = async () => {
+    if (!nidAut.trim() || !nidSes.trim()) {
+      toast.error(t('settings.cookiesRequired'));
+      return;
+    }
     setCookieSaveLoading(true);
     try {
-      await api.post('/auth/user-settings', {
-        nid_aut: (aut ?? nidAut)?.trim() || null,
-        nid_ses: (ses ?? nidSes)?.trim() || null
-      });
-      fetchMe();
+      const verifyRes = await api.post('/auth/verify-cookies', { nid_aut: nidAut.trim(), nid_ses: nidSes.trim() });
+      if (verifyRes.data?.valid) {
+        setCookieVerified(verifyRes.data);
+        const name = verifyRes.data.nickname || '';
+        setChzzkNickname(name);
+        await api.post('/auth/user-settings', { nid_aut: nidAut.trim(), nid_ses: nidSes.trim(), chzzk_nickname: name });
+        toast.success(t('settings.cookiesSaved'));
+        setShowCookieInputs(false);
+        fetchMe();
+        fetchUserSettings();
+      } else {
+        setCookieVerified({ valid: false });
+        toast.error(t('settings.cookiesVerifiedFailed'));
+      }
     } catch (error: any) {
       toast.error(error.response?.data?.message || t('settings.cookiesSaveFailed'));
     } finally {
@@ -249,12 +271,15 @@ export const Settings = () => {
       onConfirm: async () => {
         setCookieSaveLoading(true);
         try {
-          await api.post('/auth/user-settings', { nid_aut: null, nid_ses: null });
+          await api.post('/auth/user-settings', { nid_aut: null, nid_ses: null, chzzk_nickname: null });
           setNidAut('');
           setNidSes('');
+          setChzzkNickname('');
           setCookieVerified(null);
+          setShowCookieInputs(false);
           toast.success(t('settings.cookiesCleared'));
           fetchMe();
+          fetchUserSettings();
         } catch (error: any) {
           toast.error(t('settings.cookiesClearFailed'));
         } finally {
@@ -281,6 +306,46 @@ export const Settings = () => {
     } catch (error: any) {
       toast.error(error.response?.data?.message || t('settings.webhookSaveFailed'));
     }
+  };
+
+  const handleSaveYoutubeSettingsSubmit = async () => {
+    if (!youtubeClientId.trim() || !youtubeClientSecret.trim()) {
+      toast.error(language === 'ko' ? '클라이언트 ID와 비밀번호를 모두 입력해 주세요.' : 'Please enter both Client ID and Secret.');
+      return;
+    }
+    try {
+      await api.post('/auth/user-settings', {
+        youtube_client_id: youtubeClientId.trim(),
+        youtube_client_secret: youtubeClientSecret.trim(),
+      });
+      toast.success(t('settings.webhookSaved'));
+      setShowYoutubeInputs(false);
+      fetchUserSettings();
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || t('settings.webhookSaveFailed'));
+    }
+  };
+
+  const handleDisconnectYoutube = () => {
+    setConfirmConfig({
+      title: t('settings.disconnectConfirmTitle') || 'YouTube 연동 해제',
+      description: t('settings.disconnectConfirmDesc') || 'YouTube 채널 연동을 해제하시겠습니까?',
+      isDestructive: true,
+      onConfirm: async () => {
+        try {
+          await api.post('/auth/user-settings', { disconnect_youtube: true });
+          setYoutubeClientId('');
+          setYoutubeClientSecret('');
+          setYoutubeConnected(false);
+          setYoutubeChannelTitle('');
+          setShowYoutubeInputs(false);
+          toast.success(t('settings.disconnectSuccess') || 'YouTube 연동이 해제되었습니다.');
+          fetchUserSettings();
+        } catch (e) {
+          toast.error(t('settings.disconnectFailed') || '연동 해제 실패');
+        }
+      }
+    });
   };
 
   const handleYouTubeAuth = async () => {
@@ -603,79 +668,114 @@ export const Settings = () => {
                 <CardTitle className="flex items-center gap-2">
                   <Cookie className="h-5 w-5" />
                   {t('settings.chzzkCookies')}
-                  {user.has_cookies && (
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-medium bg-green-500/10 text-green-500 border border-green-500/20">
-                      <CheckCircle2 className="h-3 w-3" /> {language === 'ko' ? '연동됨' : 'Connected'}
-                    </span>
-                  )}
                 </CardTitle>
                 <CardDescription>
                   {t('settings.chzzkCookiesDesc')}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="space-y-4 max-w-lg">
-                  <div className="space-y-2">
-                    <Label htmlFor="nidAut">NID_AUT</Label>
-                    <Input
-                      id="nidAut"
-                      value={nidAut}
-                      onChange={e => { setNidAut(e.target.value); setCookieVerified(null); }}
-                      onBlur={e => handleSaveCookies(e.target.value, nidSes)}
-                      placeholder={t('settings.cookiesPlaceholder')}
-                      className="font-mono text-sm"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="nidSes">NID_SES</Label>
-                    <Input
-                      id="nidSes"
-                      value={nidSes}
-                      onChange={e => { setNidSes(e.target.value); setCookieVerified(null); }}
-                      onBlur={e => handleSaveCookies(nidAut, e.target.value)}
-                      placeholder={t('settings.cookiesPlaceholder')}
-                      className="font-mono text-sm"
-                    />
-                  </div>
+                {!showCookieInputs ? (
+                  <div className="space-y-4 max-w-lg">
+                    {user.has_cookies ? (
+                      <div className="p-4 rounded-lg bg-green-500/10 border border-green-500/20 space-y-1">
+                        <div className="flex items-center gap-2 text-green-600 font-semibold text-sm">
+                          <CheckCircle2 className="h-4 w-4" />
+                          <span>{language === 'ko' ? '치지직 계정이 연동되었습니다.' : 'Chzzk account is connected.'}</span>
+                        </div>
+                        {chzzkNickname && (
+                          <p className="text-xs text-muted-foreground pl-6 font-medium">
+                            {language === 'ko' ? `치지직 닉네임: ${chzzkNickname}` : `Chzzk Nickname: ${chzzkNickname}`}
+                          </p>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="p-4 rounded-lg bg-muted/40 border border-border">
+                        <p className="text-sm text-muted-foreground">
+                          {t('settings.chzzkNotConnected')}
+                        </p>
+                      </div>
+                    )}
 
-                  {/* Verification status */}
-                  {cookieVerified !== null && (
-                    <div className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium ${cookieVerified.valid
-                      ? 'bg-green-500/10 text-green-600 border border-green-500/20'
-                      : 'bg-red-500/10 text-red-500 border border-red-500/20'
-                      }`}>
-                      {cookieVerified.valid ? (
-                        <>
-                          <UserCheck className="h-4 w-4" />
-                          {t('settings.cookiesVerifiedSuccess', { name: cookieVerified.nickname || '' })}
-                        </>
-                      ) : (
-                        <>
-                          <ShieldQuestion className="h-4 w-4" />
-                          {t('settings.cookiesVerifiedFailed')}
-                        </>
-                      )}
-                    </div>
-                  )}
-
-                  <div className="flex flex-wrap gap-2">
-                    <Button type="button" variant="outline" onClick={handleVerifyCookies} disabled={cookieLoading}>
-                      {cookieLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ShieldCheck className="mr-2 h-4 w-4" />}
-                      {t('settings.verifyCookies')}
-                    </Button>
-                    {user.has_cookies && (
+                    <div className="flex flex-wrap gap-2">
                       <Button
                         type="button"
                         variant="outline"
-                        className="text-red-500 border-red-500/50 hover:bg-red-500/10 hover:text-red-600"
-                        onClick={handleClearCookies}
-                        disabled={cookieSaveLoading}
+                        onClick={() => setShowCookieInputs(true)}
                       >
-                        {t('settings.clearCookies')}
+                        <KeyRound className="mr-2 h-4 w-4" />
+                        {user.has_cookies ? t('settings.editCookieValues') : t('settings.enterCookieValues')}
                       </Button>
-                    )}
+                      {user.has_cookies && (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          className="text-red-500 border-red-500/50 hover:bg-red-500/10 hover:text-red-600"
+                          onClick={handleClearCookies}
+                          disabled={cookieSaveLoading}
+                        >
+                          {t('settings.clearCookies')}
+                        </Button>
+                      )}
+                    </div>
                   </div>
-                </div>
+                ) : (
+                  <div className="space-y-4 max-w-lg">
+                    <div className="space-y-2">
+                      <Label htmlFor="nidAut">NID_AUT</Label>
+                      <Input
+                        id="nidAut"
+                        value={nidAut}
+                        onChange={e => { setNidAut(e.target.value); setCookieVerified(null); }}
+                        placeholder={t('settings.cookiesPlaceholder')}
+                        className="font-mono text-sm"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="nidSes">NID_SES</Label>
+                      <Input
+                        id="nidSes"
+                        value={nidSes}
+                        onChange={e => { setNidSes(e.target.value); setCookieVerified(null); }}
+                        placeholder={t('settings.cookiesPlaceholder')}
+                        className="font-mono text-sm"
+                      />
+                    </div>
+
+                    {/* Verification status */}
+                    {cookieVerified !== null && (
+                      <div className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium ${cookieVerified.valid
+                        ? 'bg-green-500/10 text-green-600 border border-green-500/20'
+                        : 'bg-red-500/10 text-red-500 border border-red-500/20'
+                        }`}>
+                        {cookieVerified.valid ? (
+                          <>
+                            <UserCheck className="h-4 w-4" />
+                            {t('settings.cookiesVerifiedSuccess', { name: cookieVerified.nickname || '' })}
+                          </>
+                        ) : (
+                          <>
+                            <ShieldQuestion className="h-4 w-4" />
+                            {t('settings.cookiesVerifiedFailed')}
+                          </>
+                        )}
+                      </div>
+                    )}
+
+                    <div className="flex flex-wrap gap-2 pt-2">
+                      <Button type="button" onClick={handleSaveCookiesSubmit} disabled={cookieSaveLoading}>
+                        {cookieSaveLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                        {t('settings.save')}
+                      </Button>
+                      <Button type="button" variant="outline" onClick={handleVerifyCookies} disabled={cookieLoading}>
+                        {cookieLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ShieldCheck className="mr-2 h-4 w-4" />}
+                        {t('settings.verifyCookies')}
+                      </Button>
+                      <Button type="button" variant="ghost" onClick={() => setShowCookieInputs(false)}>
+                        {t('settings.cancel')}
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
 
@@ -758,6 +858,11 @@ export const Settings = () => {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <MonitorPlay className="h-5 w-5" /> {t('settings.youtubeAutoUpload')}
+                  {youtubeConnected && (
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-medium bg-green-500/10 text-green-500 border border-green-500/20">
+                      <CheckCircle2 className="h-3 w-3" /> {language === 'ko' ? '연동됨' : 'Connected'}
+                    </span>
+                  )}
                 </CardTitle>
                 <CardDescription>{t('settings.youtubeAutoUploadDesc')}</CardDescription>
               </CardHeader>
@@ -787,67 +892,116 @@ export const Settings = () => {
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="youtubeClientId">{t('settings.clientId')}</Label>
-                  <Input
-                    id="youtubeClientId"
-                    value={youtubeClientId}
-                    onChange={e => setYoutubeClientId(e.target.value)}
-                    onBlur={e => handleSaveUserSettings({ youtube_client_id: e.target.value })}
-                    placeholder={t('settings.clientId')}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="youtubeClientSecret">{t('settings.clientSecret')}</Label>
-                  <div className="relative">
-                    <Input
-                      id="youtubeClientSecret"
-                      value={youtubeClientSecret}
-                      onChange={e => setYoutubeClientSecret(e.target.value)}
-                      onBlur={e => handleSaveUserSettings({ youtube_client_secret: e.target.value })}
-                      placeholder={t('settings.clientSecret')}
-                      type={showYoutubeClientSecret ? 'text' : 'password'}
-                    />
-                    <button
-                      type="button"
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                      onClick={() => setShowYoutubeClientSecret(v => !v)}
-                    >
-                      {showYoutubeClientSecret ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                    </button>
-                  </div>
-                  <br />
-                  <div className="text-xs text-muted-foreground mt-2 mb-2 p-3 bg-muted rounded-md space-y-2">
-                    <p className="font-semibold text-foreground">
-                      💡 {language === 'ko' ? '자동 업로드 가이드 및 오류 해결' : 'Auto Upload Guide & Troubleshooting'}
-                    </p>
-                    <p>
-                      {language === 'ko' ? (
-                        <>
-                          API 키 발급 절차 및 연동 중 발생하는 오류(403 access_denied 등) 해결 방법은 상세한 가이드가 준비되어 있는{' '}
-                          <a href="https://github.com/k-atusa/zkzzk/wiki/ZKZZK-Settings-Guide" target="_blank" rel="noreferrer" className="text-primary hover:underline font-semibold">
-                            ZKZZK 설정 가이드 (Wiki)
-                          </a>
-                          를 참고해 주세요.
-                        </>
-                      ) : (
-                        <>
-                          For instructions on issuing API keys and resolving authentication errors (e.g., 403 access_denied), please refer to the detailed{' '}
-                          <a href="https://github.com/k-atusa/zkzzk/wiki/en/ZKZZK-Settings-Guide" target="_blank" rel="noreferrer" className="text-primary hover:underline font-semibold">
-                            ZKZZK Settings Guide (Wiki)
-                          </a>.
-                        </>
+                {!showYoutubeInputs ? (
+                  <div className="space-y-4">
+                    {youtubeConnected ? (
+                      <div className="p-4 rounded-lg bg-green-500/10 border border-green-500/20 space-y-1">
+                        <div className="flex items-center gap-2 text-green-600 font-semibold text-sm">
+                          <CheckCircle2 className="h-4 w-4" />
+                          <span>{language === 'ko' ? '유튜브 채널이 연동되었습니다.' : 'YouTube channel is connected.'}</span>
+                        </div>
+                        {youtubeChannelTitle && (
+                          <p className="text-xs text-muted-foreground pl-6 font-medium">
+                            {language === 'ko' ? `유튜브 닉네임: ${youtubeChannelTitle}` : `YouTube Nickname: ${youtubeChannelTitle}`}
+                          </p>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="p-4 rounded-lg bg-muted/40 border border-border">
+                        <p className="text-sm text-muted-foreground">
+                          {t('settings.youtubeNotConnected')}
+                        </p>
+                      </div>
+                    )}
+
+                    <div className="flex flex-wrap gap-2">
+                      <Button type="button" variant="outline" onClick={() => setShowYoutubeInputs(true)}>
+                        <KeyRound className="mr-2 h-4 w-4" />
+                        {youtubeConnected ? t('settings.editChannelBtn') : t('settings.connectChannelBtn')}
+                      </Button>
+                      {youtubeConnected && (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          className="text-red-500 border-red-500/50 hover:bg-red-500/10 hover:text-red-600"
+                          onClick={handleDisconnectYoutube}
+                        >
+                          {t('settings.disconnectChannel')}
+                        </Button>
                       )}
-                    </p>
+                    </div>
                   </div>
-                </div>
-                <div className="flex gap-2">
-                  {youtubeClientId && youtubeClientSecret && (
-                    <Button variant={youtubeConnected ? "secondary" : "default"} onClick={handleYouTubeAuth}>
-                      {youtubeConnected ? t('settings.connectChannel') : t('settings.connectChannel')}
-                    </Button>
-                  )}
-                </div>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="youtubeClientId">{t('settings.clientId')}</Label>
+                      <Input
+                        id="youtubeClientId"
+                        value={youtubeClientId}
+                        onChange={e => setYoutubeClientId(e.target.value)}
+                        placeholder={t('settings.clientId')}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="youtubeClientSecret">{t('settings.clientSecret')}</Label>
+                      <div className="relative">
+                        <Input
+                          id="youtubeClientSecret"
+                          value={youtubeClientSecret}
+                          onChange={e => setYoutubeClientSecret(e.target.value)}
+                          placeholder={t('settings.clientSecret')}
+                          type={showYoutubeClientSecret ? 'text' : 'password'}
+                        />
+                        <button
+                          type="button"
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                          onClick={() => setShowYoutubeClientSecret(v => !v)}
+                        >
+                          {showYoutubeClientSecret ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Guide Box displayed ONLY during value input */}
+                    <div className="text-xs text-muted-foreground mt-2 mb-2 p-3 bg-muted rounded-md space-y-2">
+                      <p className="font-semibold text-foreground">
+                        💡 {language === 'ko' ? '자동 업로드 가이드 및 오류 해결' : 'Auto Upload Guide & Troubleshooting'}
+                      </p>
+                      <p>
+                        {language === 'ko' ? (
+                          <>
+                            API 키 발급 절차 및 연동 중 발생하는 오류(403 access_denied 등) 해결 방법은 상세한 가이드가 준비되어 있는{' '}
+                            <a href="https://github.com/k-atusa/zkzzk/wiki/ZKZZK-Settings-Guide" target="_blank" rel="noreferrer" className="text-primary hover:underline font-semibold">
+                              ZKZZK 설정 가이드 (Wiki)
+                            </a>
+                            를 참고해 주세요.
+                          </>
+                        ) : (
+                          <>
+                            For instructions on issuing API keys and resolving authentication errors (e.g., 403 access_denied), please refer to the detailed{' '}
+                            <a href="https://github.com/k-atusa/zkzzk/wiki/en/ZKZZK-Settings-Guide" target="_blank" rel="noreferrer" className="text-primary hover:underline font-semibold">
+                              ZKZZK Settings Guide (Wiki)
+                            </a>.
+                          </>
+                        )}
+                      </p>
+                    </div>
+
+                    <div className="flex flex-wrap gap-2 pt-2">
+                      <Button type="button" onClick={handleSaveYoutubeSettingsSubmit}>
+                        {t('settings.save')}
+                      </Button>
+                      {youtubeClientId && youtubeClientSecret && (
+                        <Button type="button" variant="secondary" onClick={handleYouTubeAuth}>
+                          {t('settings.connectChannel')}
+                        </Button>
+                      )}
+                      <Button type="button" variant="ghost" onClick={() => setShowYoutubeInputs(false)}>
+                        {t('settings.cancel')}
+                      </Button>
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>
