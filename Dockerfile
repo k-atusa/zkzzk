@@ -13,6 +13,7 @@ RUN npm run build
 # Stage 3: Build Backend
 FROM base AS backend-builder
 WORKDIR /app/backend
+ENV DATABASE_URL="file:/app/backend/data/database.db"
 COPY backend/package*.json ./
 # Install build tools for better-sqlite3
 RUN apt-get update && apt-get install -y make g++ && rm -rf /var/lib/apt/lists/*
