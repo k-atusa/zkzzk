@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { PrismaService } from '../prisma/prisma.service';
 import { extractChannelId } from '../utils/chzzk.utils';
@@ -9,13 +9,47 @@ import axios from 'axios';
 import { YoutubeService } from '../youtube/youtube.service';
 
 @Injectable()
-export class TasksService {
+export class TasksService implements OnModuleInit {
   private readonly logger = new Logger(TasksService.name);
 
   constructor(
     private prisma: PrismaService,
     private youtubeService: YoutubeService
   ) { }
+
+  async onModuleInit() {
+    this.logger.log('TasksService initialized. Cleaning up orphan recording states & performing initial live check...');
+    try {
+      const recordingStreamers = await this.prisma.streamer.findMany({ where: { is_recording: true } });
+      for (const streamer of recordingStreamers) {
+        let isRunning = false;
+        if (streamer.process_id) {
+          try {
+            isRunning = process.kill(streamer.process_id, 0);
+          } catch (e) {
+            isRunning = false;
+          }
+        }
+        if (!isRunning) {
+          this.logger.log(`Resetting orphan recording status for streamer ${streamer.nickname} (pid: ${streamer.process_id})`);
+          await this.prisma.streamer.update({
+            where: { id: streamer.id },
+            data: { is_recording: false, process_id: null }
+          });
+        }
+      }
+      await this.prisma.recording.updateMany({
+        where: { is_recording: true },
+        data: { is_recording: false }
+      });
+    } catch (err: any) {
+      this.logger.error('Failed to cleanup orphan recording states during initialization:', err.message);
+    }
+
+    this.handleCron().catch(err => {
+      this.logger.error('Error during initial handleCron check', err);
+    });
+  }
 
   private async sendDiscordWebhook(userId: string, embed: any) {
     try {
@@ -53,18 +87,40 @@ export class TasksService {
     const channelId = extractChannelId(streamer.channel_url);
     if (!channelId) return;
 
+    if (streamer.is_recording && streamer.process_id) {
+      let isRunning = false;
+      try {
+        isRunning = process.kill(streamer.process_id, 0);
+      } catch (e) {
+        isRunning = false;
+      }
+      if (!isRunning) {
+        this.logger.warn(`Streamer ${streamer.nickname} was marked as recording (pid ${streamer.process_id}), but process is not alive. Resetting status.`);
+        streamer.is_recording = false;
+        await this.prisma.streamer.updateMany({
+          where: { id: streamer.id },
+          data: { is_recording: false, process_id: null }
+        });
+      }
+    }
+
     try {
       const cookieUserId = streamer.cookie_user_id || streamer.user_id;
-      const cookieUser = await this.prisma.user.findUnique({ where: { id: cookieUserId } });
-      if (!cookieUser || !cookieUser.nid_aut || !cookieUser.nid_ses) return;
+      const cookieUser = cookieUserId 
+        ? await this.prisma.user.findUnique({ where: { id: cookieUserId } })
+        : null;
+
+      const headers: Record<string, string> = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
+        'Accept': 'application/json',
+      };
+
+      if (cookieUser?.nid_aut && cookieUser?.nid_ses) {
+        headers['Cookie'] = `NID_AUT=${cookieUser.nid_aut}; NID_SES=${cookieUser.nid_ses}`;
+      }
 
       const url = `https://api.chzzk.naver.com/service/v3/channels/${channelId}/live-detail`;
-      const response = await axios.get(url, {
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
-          'Accept': 'application/json',
-        }
-      });
+      const response = await axios.get(url, { headers });
 
       if (response.data?.code === 200 && response.data?.content) {
         const isLive = response.data.content.status === 'OPEN';
@@ -127,8 +183,9 @@ export class TasksService {
       const filepath = path.join(streamerDir, filename);
 
       const cookieUserId = streamer.cookie_user_id || streamer.user_id;
-      if (!cookieUserId) return;
-      const cookieUser = await this.prisma.user.findUnique({ where: { id: cookieUserId } });
+      const cookieUser = cookieUserId
+        ? await this.prisma.user.findUnique({ where: { id: cookieUserId } })
+        : null;
 
       const streamUrl = `https://chzzk.naver.com/live/${channelId}`;
       let command = 'streamlink';
@@ -149,12 +206,14 @@ export class TasksService {
       const args = [
         '--ffmpeg-copyts',
         '--progress', 'no',
-        '--http-cookie', `NID_AUT=${cookieUser?.nid_aut}`,
-        '--http-cookie', `NID_SES=${cookieUser?.nid_ses}`,
-        streamUrl,
-        formatString,
-        '--output', filepath
       ];
+
+      if (cookieUser?.nid_aut && cookieUser?.nid_ses) {
+        args.push('--http-cookie', `NID_AUT=${cookieUser.nid_aut}`);
+        args.push('--http-cookie', `NID_SES=${cookieUser.nid_ses}`);
+      }
+
+      args.push(streamUrl, formatString, '--output', filepath);
 
       const recording = await this.prisma.recording.create({
         data: {
