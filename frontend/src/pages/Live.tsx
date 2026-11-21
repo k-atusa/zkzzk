@@ -186,147 +186,143 @@ export const Live = () => {
         </Button>
       </div>
 
-      <Card className="!overflow-visible">
-        <CardHeader>
-          <CardTitle>{t('live.addNewStreamer')}</CardTitle>
-        </CardHeader>
-        <CardContent className="!overflow-visible">
-          <form onSubmit={handleAdd} className="flex flex-col sm:flex-row gap-2">
-            <div className="relative flex-1">
-              <Input
-                ref={inputRef}
-                value={newUrl}
-                onChange={e => setNewUrl(e.target.value)}
-                onFocus={handleInputFocus}
-                placeholder="https://chzzk.naver.com/..."
-                required
-                autoComplete="off"
-              />
+      <div className="space-y-2">
+        <p className="text-sm font-medium text-muted-foreground">{t('live.addNewStreamer')}</p>
+        <form onSubmit={handleAdd} className="flex flex-col sm:flex-row gap-2">
+          <div className="relative flex-1">
+            <Input
+              ref={inputRef}
+              value={newUrl}
+              onChange={e => setNewUrl(e.target.value)}
+              onFocus={handleInputFocus}
+              placeholder="https://chzzk.naver.com/..."
+              required
+              autoComplete="off"
+            />
 
-              {/* Following Dropdown */}
-              {showFollowDropdown && hasCookies && (
-                <div
-                  ref={dropdownRef}
-                  className="absolute top-full left-0 right-0 mt-1 z-50 bg-popover border border-border rounded-lg shadow-lg overflow-hidden"
-                >
-                  {followLoading ? (
-                    <div className="flex items-center justify-center py-6 text-muted-foreground text-sm gap-2">
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      {t('live.loadingFollowing')}
+            {/* Following Dropdown */}
+            {showFollowDropdown && hasCookies && (
+              <div
+                ref={dropdownRef}
+                className="absolute top-full left-0 right-0 mt-1 z-50 bg-popover border border-border rounded-lg shadow-lg overflow-hidden"
+              >
+                {followLoading ? (
+                  <div className="flex items-center justify-center py-6 text-muted-foreground text-sm gap-2">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    {t('live.loadingFollowing')}
+                  </div>
+                ) : filteredFollowed.length === 0 ? (
+                  <div className="py-4 px-3 text-center text-sm text-muted-foreground">
+                    {newUrl ? t('live.searchNoResults') : t('live.noFollowedStreamers')}
+                  </div>
+                ) : (
+                  <div className="max-h-[320px] sm:max-h-[480px] overflow-y-auto">
+                    <div className="px-3 py-2 text-xs text-muted-foreground font-medium border-b border-border bg-muted/30">
+                      {t('live.followedChannels', { count: filteredFollowed.length })}
                     </div>
-                  ) : filteredFollowed.length === 0 ? (
-                    <div className="py-4 px-3 text-center text-sm text-muted-foreground">
-                      {newUrl ? t('live.searchNoResults') : t('live.noFollowedStreamers')}
-                    </div>
-                  ) : (
-                    <div className="max-h-[320px] sm:max-h-[480px] overflow-y-auto">
-                      <div className="px-3 py-2 text-xs text-muted-foreground font-medium border-b border-border bg-muted/30">
-                        {t('live.followedChannels', { count: filteredFollowed.length })}
-                      </div>
-                      {filteredFollowed.map((ch) => {
-                        const isAdded = addedUrls.has(ch.channel_url);
-                        const isAdding = addingId === ch.channelId;
-                        return (
-                          <button
-                            key={ch.channelId}
-                            type="button"
-                            disabled={isAdded || isAdding}
-                            onClick={() => !isAdded && handleAddFromFollowing(ch)}
-                            className={`w-full flex items-center gap-3 px-3 py-2.5 text-left transition-colors ${isAdded
-                              ? 'opacity-50 cursor-not-allowed'
-                              : 'hover:bg-accent hover:text-accent-foreground cursor-pointer'
-                              }`}
-                          >
-                            {ch.channelImageUrl ? (
-                              <img
-                                src={ch.channelImageUrl}
-                                alt={ch.channelName}
-                                className="h-7 w-7 rounded-full object-cover flex-shrink-0"
-                              />
-                            ) : (
-                              <div className="h-7 w-7 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 text-xs font-bold text-primary">
-                                {ch.channelName?.charAt(0)}
-                              </div>
-                            )}
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-1">
-                                <p className="text-sm font-medium truncate">{ch.channelName}</p>
-                                {ch.verifiedMark && (
-                                  <span className="inline-flex h-3.5 w-3.5 items-center justify-center rounded-full bg-blue-500 flex-shrink-0">
-                                    <svg className="h-2 w-2 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round">
-                                      <polyline points="20 6 9 17 4 12" />
-                                    </svg>
-                                  </span>
-                                )}
-                              </div>
-                              {ch.openLive && ch.liveTitle && (
-                                <p className="text-xs text-muted-foreground truncate">{ch.liveTitle}</p>
-                              )}
-                              {ch.openLive && (ch.liveCategoryValue || (ch.tags && ch.tags.length > 0)) && (
-                                <div className="flex flex-wrap items-center gap-1.5 mt-1">
-                                  {ch.liveCategoryValue && (
-                                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-primary/10 text-primary">
-                                      {ch.liveCategoryValue}
-                                    </span>
-                                  )}
-                                  {ch.tags && ch.tags.slice(0, 3).map((tag: string, idx: number) => (
-                                    <span key={idx} className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-muted text-muted-foreground">
-                                      #{tag}
-                                    </span>
-                                  ))}
-                                </div>
-                              )}
+                    {filteredFollowed.map((ch) => {
+                      const isAdded = addedUrls.has(ch.channel_url);
+                      const isAdding = addingId === ch.channelId;
+                      return (
+                        <button
+                          key={ch.channelId}
+                          type="button"
+                          disabled={isAdded || isAdding}
+                          onClick={() => !isAdded && handleAddFromFollowing(ch)}
+                          className={`w-full flex items-center gap-3 px-3 py-2.5 text-left transition-colors ${isAdded
+                            ? 'opacity-50 cursor-not-allowed'
+                            : 'hover:bg-accent hover:text-accent-foreground cursor-pointer'
+                            }`}
+                        >
+                          {ch.channelImageUrl ? (
+                            <img
+                              src={ch.channelImageUrl}
+                              alt={ch.channelName}
+                              className="h-7 w-7 rounded-full object-cover flex-shrink-0"
+                            />
+                          ) : (
+                            <div className="h-7 w-7 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 text-xs font-bold text-primary">
+                              {ch.channelName?.charAt(0)}
                             </div>
-                            <div className="flex items-center gap-1.5 flex-shrink-0">
-                              {ch.openLive && (
-                                <span className="inline-flex items-center gap-1 text-xs font-medium text-red-500">
-                                  <Radio className="h-3 w-3" />
-                                  {(ch.concurrentUserCount ?? 0).toLocaleString()}
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-1">
+                              <p className="text-sm font-medium truncate">{ch.channelName}</p>
+                              {ch.verifiedMark && (
+                                <span className="inline-flex h-3.5 w-3.5 items-center justify-center rounded-full bg-blue-500 flex-shrink-0">
+                                  <svg className="h-2 w-2 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round">
+                                    <polyline points="20 6 9 17 4 12" />
+                                  </svg>
                                 </span>
                               )}
-                              {isAdding ? (
-                                <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-                              ) : isAdded ? (
-                                <span className="text-xs text-muted-foreground">{t('live.addedLabel')}</span>
-                              ) : null}
                             </div>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-            <Button type="submit" className="w-full sm:w-auto shrink-0">
-              <Plus className="mr-2 h-4 w-4" /> {t('live.addBtn')}
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
+                            {ch.openLive && ch.liveTitle && (
+                              <p className="text-xs text-muted-foreground truncate">{ch.liveTitle}</p>
+                            )}
+                            {ch.openLive && (ch.liveCategoryValue || (ch.tags && ch.tags.length > 0)) && (
+                              <div className="flex flex-wrap items-center gap-1.5 mt-1">
+                                {ch.liveCategoryValue && (
+                                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-primary/10 text-primary">
+                                    {ch.liveCategoryValue}
+                                  </span>
+                                )}
+                                {ch.tags && ch.tags.slice(0, 3).map((tag: string, idx: number) => (
+                                  <span key={idx} className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-muted text-muted-foreground">
+                                    #{tag}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-1.5 flex-shrink-0">
+                            {ch.openLive && (
+                              <span className="inline-flex items-center gap-1 text-xs font-medium text-red-500">
+                                <Radio className="h-3 w-3" />
+                                {(ch.concurrentUserCount ?? 0).toLocaleString()}
+                              </span>
+                            )}
+                            {isAdding ? (
+                              <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                            ) : isAdded ? (
+                              <span className="text-xs text-muted-foreground">{t('live.addedLabel')}</span>
+                            ) : null}
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+          <Button type="submit" className="w-full sm:w-auto shrink-0">
+            <Plus className="mr-2 h-4 w-4" /> {t('live.addBtn')}
+          </Button>
+        </form>
+      </div>
 
-      <Card>
-        <CardHeader>
+      <Card className="overflow-hidden py-0 gap-0">
+        <CardHeader className="border-b border-border/50 py-4 px-5">
           <CardTitle>{t('live.registeredStreamers')}</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-0">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>{t('live.nickname')}</TableHead>
+                <TableHead className="pl-5">{t('live.nickname')}</TableHead>
                 <TableHead>{t('live.status')}</TableHead>
                 <TableHead>{t('live.broadcastInfo')}</TableHead>
-                <TableHead className="text-right">{t('common.actions')}</TableHead>
+                <TableHead className="text-right pr-5">{t('common.actions')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {streamers.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={4} className="text-center py-6 text-muted-foreground">{t('live.noStreamers')}</TableCell>
+                  <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">{t('live.noStreamers')}</TableCell>
                 </TableRow>
               ) : streamers.map((s) => (
                 <TableRow key={s.id}>
-                  <TableCell className="font-medium">
+                  <TableCell className="pl-5 font-medium">
                     <a href={s.channel_url} target="_blank" rel="noreferrer" className="hover:underline">{s.nickname}</a>
                   </TableCell>
                   <TableCell>
@@ -370,7 +366,7 @@ export const Live = () => {
                       <span className="text-muted-foreground">-</span>
                     )}
                   </TableCell>
-                  <TableCell className="text-right space-x-2">
+                  <TableCell className="text-right pr-5 space-x-2">
                     {s.is_paused ? (
                       <Button
                         variant="outline"

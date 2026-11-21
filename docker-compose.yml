@@ -7,7 +7,6 @@ services:
       - "5001:5001"
     environment:
       - TZ=Asia/Seoul
-      - DATABASE_URL=file:/app/backend/data/database.db
     volumes:
-      - ./data:/app/backend/data
+      - ./data:/app/backend
       - ./downloads:/app/downloads

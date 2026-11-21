@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
-import { Trash2, Video, Film, FileText, MonitorPlay, Play, AlertCircle, CheckCircle2, Loader2, Upload, AlertTriangle, Search, X } from 'lucide-react';
+import { Trash2, Video, Film, FileText, MonitorPlay, Play, AlertCircle, CheckCircle2, Loader2, Upload, Search, X } from 'lucide-react';
 import api from '@/api';
 import { format } from 'date-fns';
 import { ko, enUS } from 'date-fns/locale';
@@ -112,6 +112,7 @@ export const Recordings = () => {
   const [recordings, setRecordings] = useState<Record<string, any[]>>({});
   const [activeTab, setActiveTab] = useState<'live' | 'vod' | 'other'>('live');
   const [playingVideo, setPlayingVideo] = useState<{ filename: string; title: string } | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
 
   const [uploadConfig, setUploadConfig] = useState<{
     id: string;
@@ -284,36 +285,20 @@ export const Recordings = () => {
   }, [recordings, totalOtherCount]);
 
   const handleDelete = (filename: string) => {
-    toast.custom((tActive) => (
-      <div className="flex flex-col gap-3 w-full bg-background border border-border p-4 rounded-lg shadow-lg">
-        <div className="flex items-start gap-3">
-          <AlertTriangle className="h-5 w-5 text-red-500 mt-0.5 shrink-0" />
-          <div className="flex flex-col gap-1">
-            <span className="font-semibold text-foreground text-sm">{t('recordings.deleteConfirmTitle')}</span>
-            <span className="text-xs text-muted-foreground leading-relaxed">
-              {t('recordings.deleteConfirmDesc')}
-            </span>
-          </div>
-        </div>
-        <div className="flex justify-end gap-2 mt-1">
-          <Button size="sm" variant="outline" onClick={() => toast.dismiss(tActive)}>
-            {t('common.cancel')}
-          </Button>
-          <Button size="sm" variant="destructive" onClick={async () => {
-            toast.dismiss(tActive);
-            try {
-              await api.post('/recordings/delete', { filename });
-              toast.success(t('live.deleteSuccess'));
-              fetchRecordings();
-            } catch (error: any) {
-              toast.error(error.response?.data?.message || t('recordings.deleteFailed'));
-            }
-          }}>
-            {t('recordings.deleteBtn')}
-          </Button>
-        </div>
-      </div>
-    ), { duration: Number.POSITIVE_INFINITY, id: 'confirm-toast' });
+    setDeleteTarget(filename);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
+    const filename = deleteTarget;
+    setDeleteTarget(null);
+    try {
+      await api.post('/recordings/delete', { filename });
+      toast.success(t('live.deleteSuccess'));
+      fetchRecordings();
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || t('recordings.deleteFailed'));
+    }
   };
 
   const handleYoutubeUploadClick = (id: string, filename: string) => {
@@ -450,36 +435,34 @@ export const Recordings = () => {
 
       {/* Recordings List */}
       {!hasRecordingsInActiveTab ? (
-        <Card className="border-dashed">
-          <CardContent className="py-16 text-center text-muted-foreground flex flex-col items-center justify-center gap-3">
-            <MonitorPlay className="h-10 w-10 text-muted-foreground/50" />
-            {searchQuery.trim() ? (
-              <p>{t('recordings.searchNoResults')}</p>
-            ) : (
-              <p>{t('recordings.noRecordings')}</p>
-            )}
-          </CardContent>
-        </Card>
+        <div className="py-16 text-center text-muted-foreground flex flex-col items-center justify-center gap-3">
+          <MonitorPlay className="h-10 w-10 text-muted-foreground/50" />
+          {searchQuery.trim() ? (
+            <p>{t('recordings.searchNoResults')}</p>
+          ) : (
+            <p>{t('recordings.noRecordings')}</p>
+          )}
+        </div>
       ) : (
         Object.entries(currentCategoryRecordings).map(([streamerName, recs]) => (
-          <Card key={streamerName} className="overflow-hidden pt-0">
-            <CardHeader className="bg-muted/10 border-b border-border/50 py-4">
+          <Card key={streamerName} className="overflow-hidden py-0 gap-0">
+            <CardHeader className="border-b border-border/50 py-4 px-5">
               <CardTitle className="text-lg font-bold text-foreground">{streamerName}</CardTitle>
             </CardHeader>
             <CardContent className="p-0">
               <Table>
-                <TableHeader className="bg-muted/5">
+                <TableHeader>
                   <TableRow>
-                    <TableHead className="pl-6 py-3">{t('recordings.broadcastInfo')}</TableHead>
+                    <TableHead className="pl-5 py-3">{t('recordings.broadcastInfo')}</TableHead>
                     <TableHead className="w-28 py-3">{t('recordings.fileSize')}</TableHead>
                     <TableHead className="w-48 py-3">{t('recordings.dateRecorded')}</TableHead>
-                    <TableHead className="text-right pr-6 py-3 w-40">{t('recordings.actions')}</TableHead>
+                    <TableHead className="text-right pr-5 py-3 w-40">{t('recordings.actions')}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {recs.map((r, i) => (
-                    <TableRow key={i} className="hover:bg-muted/10 transition-colors">
-                      <TableCell className="pl-6 py-4 font-medium">
+                    <TableRow key={i} className="hover:bg-muted/30 transition-colors">
+                      <TableCell className="pl-5 py-4 font-medium">
                         <div className="flex flex-col gap-1">
                           <div
                             className="font-semibold text-foreground text-sm line-clamp-1 cursor-pointer hover:underline hover:text-primary transition-colors"
@@ -527,7 +510,7 @@ export const Recordings = () => {
                       <TableCell className="text-muted-foreground text-sm">
                         {format(new Date(r.created_at), 'PPP pp', { locale: language === 'ko' ? ko : enUS })}
                       </TableCell>
-                      <TableCell className="text-right pr-6 py-4 flex justify-end gap-2">
+                      <TableCell className="text-right pr-5 py-4 flex justify-end gap-2">
                         {!r.is_recording && r.youtube_status !== 'UPLOADING' && r.youtube_status !== 'UPLOADED' && (
                           <Button variant="outline" size="sm" onClick={() => handleYoutubeUploadClick(r.id || '', r.filename)} className="h-8 w-8 p-0 bg-transparent hover:bg-primary/10 border-border/50 hover:border-primary/50 transition-colors" title={t('recordings.uploadToYoutube')}>
                             <Upload className="h-5 w-5 text-foreground" />
@@ -555,11 +538,29 @@ export const Recordings = () => {
               {playingVideo?.title}
             </DialogTitle>
           </DialogHeader>
-          <div className="relative aspect-video w-full overflow-hidden rounded-lg bg-black flex items-center justify-center shadow-inner ring-1 ring-white/5 max-h-[78vh]">
+          <div className="relative aspect-video w-full overflow-hidden rounded-md bg-black flex items-center justify-center max-h-[78vh]">
             {playingVideo && (
               <VideoPlayer filename={playingVideo.filename} />
             )}
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Modal */}
+      <Dialog open={!!deleteTarget} onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{t('recordings.deleteConfirmTitle')}</DialogTitle>
+            <DialogDescription>{t('recordings.deleteConfirmDesc')}</DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex justify-end gap-2 mt-4">
+            <Button variant="outline" onClick={() => setDeleteTarget(null)}>
+              {t('common.cancel')}
+            </Button>
+            <Button variant="destructive" onClick={confirmDelete}>
+              {t('recordings.deleteBtn')}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 

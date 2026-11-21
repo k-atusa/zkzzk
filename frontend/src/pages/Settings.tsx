@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -378,662 +377,633 @@ export const Settings = () => {
       </div>
 
       {/* 1. 계정 및 보안 */}
-      <section className="space-y-4">
-        <div className="flex items-center gap-2 pb-2 border-b border-border">
+      <section className="space-y-1">
+        <div className="flex items-center gap-2 pb-2.5 border-b border-border">
           <Lock className="h-5 w-5 text-primary" />
           <h3 className="text-xl font-semibold">{t('settings.secAccount')}</h3>
         </div>
-        <div className="grid grid-cols-1 min-[1101px]:grid-cols-2 gap-6 pt-2">
-          {/* Password Change Card */}
-          <Card className="shadow-xs border-border/80">
-            <CardHeader className={showPasswordForm ? "pb-2" : "pb-0"}>
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div>
-                  <CardTitle className="flex items-center gap-2">
-                    <Lock className="h-5 w-5" />
-                    {t('settings.changePassword')}
-                  </CardTitle>
-                  <CardDescription className="text-xs mt-1">{t('settings.changePasswordDesc')}</CardDescription>
+
+        <div className="divide-y divide-border/60">
+          {/* Password Change */}
+          <div className="py-5 space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <h4 className="text-base font-medium flex items-center gap-2 text-foreground">
+                  <Lock className="h-4 w-4 text-muted-foreground" />
+                  {t('settings.changePassword')}
+                </h4>
+                <p className="text-xs text-muted-foreground mt-1">{t('settings.changePasswordDesc')}</p>
+              </div>
+              {!showPasswordForm && (
+                <Button
+                  type="button"
+                  onClick={() => setShowPasswordForm(true)}
+                  className="shrink-0 px-4"
+                >
+                  <Lock className="h-4 w-4 mr-1.5" />
+                  {t('settings.changePasswordBtn')}
+                </Button>
+              )}
+            </div>
+
+            {showPasswordForm && (
+              <form onSubmit={handleChangePassword} className="space-y-4 max-w-lg pt-1 animate-in fade-in-50 duration-200">
+                <div className="space-y-1.5">
+                  <Label htmlFor="currentPassword" className="text-xs font-medium">{t('settings.currentPassword')}</Label>
+                  <div className="relative">
+                    <Input
+                      id="currentPassword"
+                      type={showCurrentPw ? 'text' : 'password'}
+                      value={currentPassword}
+                      onChange={e => setCurrentPassword(e.target.value)}
+                      placeholder={t('settings.currentPasswordPlaceholder')}
+                      required
+                      className="pr-10 bg-background"
+                    />
+                    <button
+                      type="button"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-1 transition-colors"
+                      onClick={() => setShowCurrentPw(v => !v)}
+                    >
+                      {showCurrentPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
                 </div>
-                {!showPasswordForm && (
-                  <Button
-                    type="button"
-                    onClick={() => setShowPasswordForm(true)}
-                    className="shrink-0 px-4"
-                  >
-                    <Lock className="h-4 w-4 mr-1.5" />
+
+                <div className="space-y-1.5">
+                  <Label htmlFor="newPassword" className="text-xs font-medium">{t('settings.newPassword')}</Label>
+                  <div className="relative">
+                    <Input
+                      id="newPassword"
+                      type={showNewPw ? 'text' : 'password'}
+                      value={newPassword}
+                      onChange={e => setNewPassword(e.target.value)}
+                      placeholder={t('settings.newPasswordPlaceholder')}
+                      required
+                      className="pr-10 bg-background"
+                    />
+                    <button
+                      type="button"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-1 transition-colors"
+                      onClick={() => setShowNewPw(v => !v)}
+                    >
+                      {showNewPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label htmlFor="confirmPassword" className="text-xs font-medium">{t('settings.newPasswordConfirm')}</Label>
+                  <Input
+                    id="confirmPassword"
+                    type="password"
+                    value={confirmPassword}
+                    onChange={e => setConfirmPassword(e.target.value)}
+                    placeholder={t('settings.newPasswordConfirmPlaceholder')}
+                    required
+                    className="bg-background"
+                  />
+                  {confirmPassword && (
+                    <div className="pt-1">
+                      {newPassword !== confirmPassword ? (
+                        <p className="text-xs text-destructive flex items-center gap-1">
+                          <XCircle className="h-3.5 w-3.5" />
+                          {language === 'ko' ? '비밀번호가 일치하지 않습니다.' : 'Passwords do not match.'}
+                        </p>
+                      ) : (
+                        <p className="text-xs text-green-600 dark:text-green-500 flex items-center gap-1">
+                          <CheckCircle2 className="h-3.5 w-3.5" />
+                          {language === 'ko' ? '비밀번호가 일치합니다.' : 'Passwords match.'}
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex items-center justify-end gap-2 pt-1">
+                  <Button type="button" variant="outline" onClick={() => setShowPasswordForm(false)}>
+                    {t('common.cancel')}
+                  </Button>
+                  <Button type="submit" disabled={pwLoading}>
+                    {pwLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Lock className="mr-2 h-4 w-4" />}
                     {t('settings.changePasswordBtn')}
                   </Button>
-                )}
-              </div>
-            </CardHeader>
-            {showPasswordForm && (
-              <CardContent className="space-y-4 animate-in fade-in-50 duration-200">
-                <form onSubmit={handleChangePassword} className="space-y-4 pt-1">
-                  <div className="space-y-1.5">
-                    <Label htmlFor="currentPassword" className="text-xs font-medium">{t('settings.currentPassword')}</Label>
-                    <div className="relative">
-                      <Input
-                        id="currentPassword"
-                        type={showCurrentPw ? 'text' : 'password'}
-                        value={currentPassword}
-                        onChange={e => setCurrentPassword(e.target.value)}
-                        placeholder={t('settings.currentPasswordPlaceholder')}
-                        required
-                        className="pr-10 bg-background"
-                      />
-                      <button
-                        type="button"
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-1 transition-colors"
-                        onClick={() => setShowCurrentPw(v => !v)}
-                      >
-                        {showCurrentPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <Label htmlFor="newPassword" className="text-xs font-medium">{t('settings.newPassword')}</Label>
-                    <div className="relative">
-                      <Input
-                        id="newPassword"
-                        type={showNewPw ? 'text' : 'password'}
-                        value={newPassword}
-                        onChange={e => setNewPassword(e.target.value)}
-                        placeholder={t('settings.newPasswordPlaceholder')}
-                        required
-                        className="pr-10 bg-background"
-                      />
-                      <button
-                        type="button"
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground p-1 transition-colors"
-                        onClick={() => setShowNewPw(v => !v)}
-                      >
-                        {showNewPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <Label htmlFor="confirmPassword" className="text-xs font-medium">{t('settings.newPasswordConfirm')}</Label>
-                    <Input
-                      id="confirmPassword"
-                      type="password"
-                      value={confirmPassword}
-                      onChange={e => setConfirmPassword(e.target.value)}
-                      placeholder={t('settings.newPasswordConfirmPlaceholder')}
-                      required
-                      className="bg-background"
-                    />
-                    {confirmPassword && (
-                      <div className="pt-1">
-                        {newPassword !== confirmPassword ? (
-                          <p className="text-xs text-destructive flex items-center gap-1">
-                            <XCircle className="h-3.5 w-3.5" />
-                            {language === 'ko' ? '비밀번호가 일치하지 않습니다.' : 'Passwords do not match.'}
-                          </p>
-                        ) : (
-                          <p className="text-xs text-green-600 dark:text-green-500 flex items-center gap-1">
-                            <CheckCircle2 className="h-3.5 w-3.5" />
-                            {language === 'ko' ? '비밀번호가 일치합니다.' : 'Passwords match.'}
-                          </p>
-                        )}
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="flex items-center justify-end gap-2 pt-1">
-                    <Button type="button" variant="outline" onClick={() => setShowPasswordForm(false)}>
-                      {t('common.cancel')}
-                    </Button>
-                    <Button type="submit" disabled={pwLoading}>
-                      {pwLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Lock className="mr-2 h-4 w-4" />}
-                      {t('settings.changePasswordBtn')}
-                    </Button>
-                  </div>
-                </form>
-              </CardContent>
-            )}
-          </Card>
-
-          {/* 2FA Card */}
-          <Card className="shadow-xs border-border/80">
-            <CardHeader className={showSetup ? "pb-2" : "pb-0"}>
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <CardTitle className="flex items-center gap-2">
-                      <KeyRound className="h-5 w-5" />
-                      {t('settings.twoFactorAuth')}
-                    </CardTitle>
-                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase ${user?.totp_enabled
-                      ? 'bg-green-500/20 text-green-700 dark:text-green-300'
-                      : 'bg-amber-500/20 text-amber-700 dark:text-amber-300'
-                      }`}>
-                      {user?.totp_enabled ? (language === 'ko' ? '보호 중' : 'Protected') : (language === 'ko' ? '미설정' : 'Unset')}
-                    </span>
-                  </div>
-                  <CardDescription className="text-xs mt-1">{t('settings.twoFactorAuthDesc')}</CardDescription>
                 </div>
-                {!showSetup && (
-                  <Button
-                    variant={user?.totp_enabled ? 'outline' : 'default'}
-                    onClick={() => user?.totp_enabled ? handleDisable2FA() : handleSetup2FA()}
-                    className={user?.totp_enabled ? 'text-destructive border-destructive/50 hover:bg-destructive/10 shrink-0 px-4' : 'shrink-0 px-4'}
-                  >
-                    <KeyRound className="h-4 w-4 mr-1.5" />
-                    {user?.totp_enabled ? (language === 'ko' ? '2차 인증 해제' : 'Disable 2FA') : (language === 'ko' ? '2차 인증 설정' : 'Setup 2FA')}
-                  </Button>
-                )}
+              </form>
+            )}
+          </div>
+
+          {/* 2FA */}
+          <div className="py-5 space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <div className="flex items-center gap-2">
+                  <h4 className="text-base font-medium flex items-center gap-2 text-foreground">
+                    <KeyRound className="h-4 w-4 text-muted-foreground" />
+                    {t('settings.twoFactorAuth')}
+                  </h4>
+                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase ${user?.totp_enabled
+                    ? 'bg-green-500/20 text-green-700 dark:text-green-300'
+                    : 'bg-amber-500/20 text-amber-700 dark:text-amber-300'
+                    }`}>
+                    {user?.totp_enabled ? (language === 'ko' ? '보호 중' : 'Protected') : (language === 'ko' ? '미설정' : 'Unset')}
+                  </span>
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">{t('settings.twoFactorAuthDesc')}</p>
               </div>
-            </CardHeader>
+              {!showSetup && (
+                <Button
+                  variant={user?.totp_enabled ? 'outline' : 'default'}
+                  onClick={() => user?.totp_enabled ? handleDisable2FA() : handleSetup2FA()}
+                  className={user?.totp_enabled ? 'text-destructive border-destructive/50 hover:bg-destructive/10 shrink-0 px-4' : 'shrink-0 px-4'}
+                >
+                  <KeyRound className="h-4 w-4 mr-1.5" />
+                  {user?.totp_enabled ? (language === 'ko' ? '2차 인증 해제' : 'Disable 2FA') : (language === 'ko' ? '2차 인증 설정' : 'Setup 2FA')}
+                </Button>
+              )}
+            </div>
 
             {showSetup && (
-              <CardContent className="space-y-4 animate-in fade-in-50 duration-200">
-                <div className="flex flex-col sm:flex-row gap-5 items-center sm:items-start pt-1">
-                  <div className="bg-white p-2 rounded-lg border border-border shadow-xs shrink-0 text-center">
-                    <img src={qrCode} alt="QR Code" className="w-36 h-36 mx-auto" />
-                    <p className="text-[11px] text-zinc-500 font-mono mt-1">Scan QR Code</p>
-                  </div>
-
-                  <div className="flex-1 w-full space-y-4">
-                    <div className="space-y-1">
-                      <p className="text-xs font-semibold text-foreground">
-                        {language === 'ko' ? '1. QR 코드 스캔' : '1. Scan QR Code'}
-                      </p>
-                      <p className="text-xs text-muted-foreground leading-relaxed">
-                        {t('settings.otpSetupModalDesc')}
-                      </p>
-                    </div>
-
-                    <form onSubmit={handleVerify2FA} className="space-y-3">
-                      <div className="space-y-1.5">
-                        <Label htmlFor="otp" className="text-xs font-semibold text-foreground">
-                          {language === 'ko' ? `2. ${t('login.otpCode')} 입력` : `2. Enter ${t('login.otpCode')}`}
-                        </Label>
-                        <Input
-                          id="otp"
-                          value={otp}
-                          onChange={e => setOtp(e.target.value)}
-                          placeholder="000000"
-                          required
-                          maxLength={6}
-                          className="h-10 text-center font-mono text-lg font-bold tracking-[0.4em] bg-background"
-                        />
-                      </div>
-                      <div className="flex items-center justify-end gap-2 pt-1">
-                        <Button type="button" variant="outline" onClick={() => setShowSetup(false)}>
-                          {t('common.cancel')}
-                        </Button>
-                        <Button type="submit">
-                          <ShieldCheck className="h-4 w-4 mr-1.5" />
-                          {t('settings.verifyBtn')}
-                        </Button>
-                      </div>
-                    </form>
-                  </div>
+              <div className="flex flex-col sm:flex-row gap-5 items-center sm:items-start pt-1 max-w-xl animate-in fade-in-50 duration-200">
+                <div className="bg-white p-2 rounded-md shrink-0 text-center">
+                  <img src={qrCode} alt="QR Code" className="w-36 h-36 mx-auto" />
+                  <p className="text-[11px] text-zinc-500 font-mono mt-1">Scan QR Code</p>
                 </div>
-              </CardContent>
+
+                <div className="flex-1 w-full space-y-4">
+                  <div className="space-y-1">
+                    <p className="text-xs font-semibold text-foreground">
+                      {language === 'ko' ? '1. QR 코드 스캔' : '1. Scan QR Code'}
+                    </p>
+                    <p className="text-xs text-muted-foreground leading-relaxed">
+                      {t('settings.otpSetupModalDesc')}
+                    </p>
+                  </div>
+
+                  <form onSubmit={handleVerify2FA} className="space-y-3">
+                    <div className="space-y-1.5">
+                      <Label htmlFor="otp" className="text-xs font-semibold text-foreground">
+                        {language === 'ko' ? `2. ${t('login.otpCode')} 입력` : `2. Enter ${t('login.otpCode')}`}
+                      </Label>
+                      <Input
+                        id="otp"
+                        value={otp}
+                        onChange={e => setOtp(e.target.value)}
+                        placeholder="000000"
+                        required
+                        maxLength={6}
+                        className="h-10 text-center font-mono text-lg font-bold tracking-[0.4em] bg-background"
+                      />
+                    </div>
+                    <div className="flex items-center justify-end gap-2 pt-1">
+                      <Button type="button" variant="outline" onClick={() => setShowSetup(false)}>
+                        {t('common.cancel')}
+                      </Button>
+                      <Button type="submit">
+                        <ShieldCheck className="h-4 w-4 mr-1.5" />
+                        {t('settings.verifyBtn')}
+                      </Button>
+                    </div>
+                  </form>
+                </div>
+              </div>
             )}
-          </Card>
+          </div>
         </div>
       </section>
 
       {/* 2. 화면 및 시스템 설정 */}
-      <section className="space-y-4">
-        <div className="flex items-center gap-2 pb-2 border-b border-border">
+      <section className="space-y-1">
+        <div className="flex items-center gap-2 pb-2.5 border-b border-border">
           <MonitorPlay className="h-5 w-5 text-primary" />
           <h3 className="text-xl font-semibold">{t('settings.secScreen')}</h3>
         </div>
-        <div className="grid grid-cols-1 min-[1101px]:grid-cols-2 gap-6 pt-2">
-          {/* 화면 배율 설정 Card */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <ZoomIn className="h-5 w-5" /> {t('settings.uiScale')}
-              </CardTitle>
-              <CardDescription>
-                {t('settings.uiScaleDesc')}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex flex-wrap items-center gap-2">
-                {[90, 100, 110, 120, 130].map((s) => (
-                  <Button
-                    key={s}
-                    variant={scale === s ? 'default' : 'outline'}
-                    onClick={() => handleScaleChange(s)}
-                    className="min-w-20"
-                  >
-                    {s}%
-                  </Button>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
 
-          {/* Download Resolution Settings Card */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <MonitorPlay className="h-5 w-5" /> {t('settings.downloadResolution')}
-              </CardTitle>
-              <CardDescription>{t('settings.downloadResolutionDesc')}</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-2xl">
-                <div className="space-y-2">
-                  <Label htmlFor="liveResolution">{t('settings.liveResolution')}</Label>
-                  <select
-                    id="liveResolution"
-                    value={liveResolution}
-                    onChange={(e) => { setLiveResolution(e.target.value); handleSaveUserSettings({ live_resolution: e.target.value }); }}
-                    className="flex h-9 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-                  >
-                    <option value="1080p">1080p ({language === 'ko' ? '기본' : 'Default'})</option>
-                    <option value="720p">720p</option>
-                    <option value="360p">360p</option>
-                    <option value="144p">144p</option>
-                  </select>
-                  <p className="text-xs text-muted-foreground mt-1">{t('settings.resolutionNotice')}</p>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="vodResolution">{t('settings.vodResolution')}</Label>
-                  <select
-                    id="vodResolution"
-                    value={vodResolution}
-                    onChange={(e) => { setVodResolution(e.target.value); handleSaveUserSettings({ vod_resolution: e.target.value }); }}
-                    className="flex h-9 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-                  >
-                    <option value="ask">{t('settings.vodAskEveryTime')}</option>
-                    <option value="1080p">1080p ({language === 'ko' ? '기본' : 'Default'})</option>
-                    <option value="720p">720p</option>
-                    <option value="360p">360p</option>
-                    <option value="144p">144p</option>
-                  </select>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+        <div className="divide-y divide-border/60">
+          {/* 화면 배율 설정 */}
+          <div className="py-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h4 className="text-base font-medium flex items-center gap-2 text-foreground">
+                <ZoomIn className="h-4 w-4 text-muted-foreground" /> {t('settings.uiScale')}
+              </h4>
+              <p className="text-xs text-muted-foreground mt-1">{t('settings.uiScaleDesc')}</p>
+            </div>
+            <div className="flex flex-wrap items-center gap-2 shrink-0">
+              {[90, 100, 110, 120, 130].map((s) => (
+                <Button
+                  key={s}
+                  variant={scale === s ? 'default' : 'outline'}
+                  onClick={() => handleScaleChange(s)}
+                  className="min-w-16"
+                >
+                  {s}%
+                </Button>
+              ))}
+            </div>
+          </div>
 
-          {/* Language Settings Card */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Globe className="h-5 w-5" /> {t('settings.language')}
-              </CardTitle>
-              <CardDescription>
-                {t('settings.languageDesc')}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant={language === 'en' ? 'default' : 'outline'}
-                  onClick={() => { setLanguage('en'); toast.success(t('settings.languageSuccess')); }}
-                  className="min-w-24"
+          {/* 언어 설정 */}
+          <div className="py-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h4 className="text-base font-medium flex items-center gap-2 text-foreground">
+                <Globe className="h-4 w-4 text-muted-foreground" /> {t('settings.language')}
+              </h4>
+              <p className="text-xs text-muted-foreground mt-1">{t('settings.languageDesc')}</p>
+            </div>
+            <div className="flex items-center gap-2 shrink-0">
+              <Button
+                variant={language === 'en' ? 'default' : 'outline'}
+                onClick={() => { setLanguage('en'); toast.success(t('settings.languageSuccess')); }}
+                className="min-w-24"
+              >
+                English
+              </Button>
+              <Button
+                variant={language === 'ko' ? 'default' : 'outline'}
+                onClick={() => { setLanguage('ko'); toast.success(t('settings.languageSuccess')); }}
+                className="min-w-24"
+              >
+                한국어
+              </Button>
+            </div>
+          </div>
+
+          {/* Download Resolution Settings */}
+          <div className="py-5 space-y-4">
+            <div>
+              <h4 className="text-base font-medium flex items-center gap-2 text-foreground">
+                <MonitorPlay className="h-4 w-4 text-muted-foreground" /> {t('settings.downloadResolution')}
+              </h4>
+              <p className="text-xs text-muted-foreground mt-1">{t('settings.downloadResolutionDesc')}</p>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-2xl">
+              <div className="space-y-2">
+                <Label htmlFor="liveResolution">{t('settings.liveResolution')}</Label>
+                <select
+                  id="liveResolution"
+                  value={liveResolution}
+                  onChange={(e) => { setLiveResolution(e.target.value); handleSaveUserSettings({ live_resolution: e.target.value }); }}
+                  className="flex h-9 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
                 >
-                  English
-                </Button>
-                <Button
-                  variant={language === 'ko' ? 'default' : 'outline'}
-                  onClick={() => { setLanguage('ko'); toast.success(t('settings.languageSuccess')); }}
-                  className="min-w-24"
-                >
-                  한국어
-                </Button>
+                  <option value="1080p">1080p ({language === 'ko' ? '기본' : 'Default'})</option>
+                  <option value="720p">720p</option>
+                  <option value="360p">360p</option>
+                  <option value="144p">144p</option>
+                </select>
+                <p className="text-xs text-muted-foreground mt-1">{t('settings.resolutionNotice')}</p>
               </div>
-            </CardContent>
-          </Card>
+              <div className="space-y-2">
+                <Label htmlFor="vodResolution">{t('settings.vodResolution')}</Label>
+                <select
+                  id="vodResolution"
+                  value={vodResolution}
+                  onChange={(e) => { setVodResolution(e.target.value); handleSaveUserSettings({ vod_resolution: e.target.value }); }}
+                  className="flex h-9 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                >
+                  <option value="ask">{t('settings.vodAskEveryTime')}</option>
+                  <option value="1080p">1080p ({language === 'ko' ? '기본' : 'Default'})</option>
+                  <option value="720p">720p</option>
+                  <option value="360p">360p</option>
+                  <option value="144p">144p</option>
+                </select>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
       {/* 3. 외부 서비스 연동 */}
-      <section className="space-y-4">
-        <div className="flex items-center gap-2 pb-2 border-b border-border">
+      <section className="space-y-1">
+        <div className="flex items-center gap-2 pb-2.5 border-b border-border">
           <Bell className="h-5 w-5 text-primary" />
           <h3 className="text-xl font-semibold">{t('settings.secExternal')}</h3>
         </div>
-        <div className="grid grid-cols-1 min-[1101px]:grid-cols-2 gap-6 pt-2 items-start">
-          <div className="space-y-6">
 
-            {/* Chzzk Cookie Card */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Cookie className="h-5 w-5" />
-                  {t('settings.chzzkCookies')}
-                </CardTitle>
-                <CardDescription>
-                  {t('settings.chzzkCookiesDesc')}
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {!showCookieInputs ? (
-                  <div className="space-y-4 max-w-lg">
-                    {user.has_cookies ? (
-                      <div className="p-4 rounded-lg bg-green-500/10 border border-green-500/20 space-y-1">
-                        <div className="flex items-center gap-2 text-green-600 font-semibold text-sm">
-                          <CheckCircle2 className="h-4 w-4" />
-                          <span>{language === 'ko' ? '치지직 계정이 연동되었습니다.' : 'Chzzk account is connected.'}</span>
-                        </div>
-                        {chzzkNickname && (
-                          <p className="text-xs text-muted-foreground pl-6 font-medium">
-                            {language === 'ko' ? `치지직 닉네임: ${chzzkNickname}` : `Chzzk Nickname: ${chzzkNickname}`}
-                          </p>
-                        )}
-                      </div>
-                    ) : (
-                      <div className="p-4 rounded-lg bg-muted/40 border border-border">
-                        <p className="text-sm text-muted-foreground">
-                          {t('settings.chzzkNotConnected')}
-                        </p>
-                      </div>
-                    )}
+        <div className="divide-y divide-border/60">
+          {/* Chzzk Cookies */}
+          <div className="py-5 space-y-4">
+            <div>
+              <h4 className="text-base font-medium flex items-center gap-2 text-foreground">
+                <Cookie className="h-4 w-4 text-muted-foreground" />
+                {t('settings.chzzkCookies')}
+              </h4>
+              <p className="text-xs text-muted-foreground mt-1">{t('settings.chzzkCookiesDesc')}</p>
+            </div>
 
-                    <div className="flex flex-wrap gap-2">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => setShowCookieInputs(true)}
-                        className="px-4"
-                      >
-                        <KeyRound className="mr-2 h-4 w-4" />
-                        {user.has_cookies ? t('settings.editCookieValues') : t('settings.enterCookieValues')}
-                      </Button>
-                      {user.has_cookies && (
-                        <Button
-                          type="button"
-                          variant="outline"
-                          className="text-red-500 border-red-500/50 hover:bg-red-500/10 hover:text-red-600 px-4"
-                          onClick={handleClearCookies}
-                          disabled={cookieSaveLoading}
-                        >
-                          {t('settings.clearCookies')}
-                        </Button>
-                      )}
+            {!showCookieInputs ? (
+              <div className="space-y-3 max-w-lg">
+                {user.has_cookies ? (
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2 text-green-600 dark:text-green-400 font-semibold text-sm">
+                      <CheckCircle2 className="h-4 w-4 shrink-0" />
+                      <span>{language === 'ko' ? '치지직 계정이 연동되었습니다.' : 'Chzzk account is connected.'}</span>
                     </div>
+                    {chzzkNickname && (
+                      <p className="text-xs text-muted-foreground pl-6 font-medium">
+                        {language === 'ko' ? `치지직 닉네임: ${chzzkNickname}` : `Chzzk Nickname: ${chzzkNickname}`}
+                      </p>
+                    )}
                   </div>
                 ) : (
-                  <div className="space-y-4 max-w-lg">
-                    <div className="space-y-2">
-                      <Label htmlFor="nidAut">NID_AUT</Label>
-                      <Input
-                        id="nidAut"
-                        value={nidAut}
-                        onChange={e => { setNidAut(e.target.value); setCookieVerified(null); }}
-                        placeholder={t('settings.cookiesPlaceholder')}
-                        className="font-mono text-sm"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="nidSes">NID_SES</Label>
-                      <Input
-                        id="nidSes"
-                        value={nidSes}
-                        onChange={e => { setNidSes(e.target.value); setCookieVerified(null); }}
-                        placeholder={t('settings.cookiesPlaceholder')}
-                        className="font-mono text-sm"
-                      />
-                    </div>
-
-                    {/* Verification status */}
-                    {cookieVerified !== null && (
-                      <div className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium ${cookieVerified.valid
-                        ? 'bg-green-500/10 text-green-600 border border-green-500/20'
-                        : 'bg-red-500/10 text-red-500 border border-red-500/20'
-                        }`}>
-                        {cookieVerified.valid ? (
-                          <>
-                            <UserCheck className="h-4 w-4" />
-                            {t('settings.cookiesVerifiedSuccess', { name: cookieVerified.nickname || '' })}
-                          </>
-                        ) : (
-                          <>
-                            <ShieldQuestion className="h-4 w-4" />
-                            {t('settings.cookiesVerifiedFailed')}
-                          </>
-                        )}
-                      </div>
-                    )}
-
-                    <div className="flex flex-wrap gap-2 pt-2">
-                      <Button type="button" onClick={handleSaveCookiesSubmit} disabled={cookieSaveLoading}>
-                        {cookieSaveLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                        {t('settings.save')}
-                      </Button>
-                      <Button type="button" variant="ghost" onClick={() => setShowCookieInputs(false)}>
-                        {t('settings.cancel')}
-                      </Button>
-                    </div>
-                  </div>
+                  <p className="text-sm text-muted-foreground">
+                    {t('settings.chzzkNotConnected')}
+                  </p>
                 )}
-              </CardContent>
-            </Card>
 
-            {/* YouTube Auto Upload Card */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <MonitorPlay className="h-5 w-5" /> {t('settings.youtubeAutoUpload')}
-                </CardTitle>
-                <CardDescription>{t('settings.youtubeAutoUploadDesc')}</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-1 gap-6 mb-4">
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5 pr-4">
-                      <Label htmlFor="youtubeAutoUpload" className="text-sm font-medium cursor-pointer">{t('settings.autoUploadEnable')}</Label>
-                      <p className="text-xs text-muted-foreground">{t('settings.youtubeAutoUploadDesc')}</p>
-                    </div>
-                    <Switch
-                      id="youtubeAutoUpload"
-                      checked={youtubeAutoUpload}
-                      onCheckedChange={(val) => { setYoutubeAutoUpload(val); handleSaveUserSettings({ youtube_auto_upload: val }); }}
-                    />
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-0.5 pr-4">
-                      <Label htmlFor="deleteAfterUpload" className="text-sm font-medium cursor-pointer">{t('settings.deleteAfterUpload')}</Label>
-                      <p className="text-xs text-muted-foreground">{t('settings.deleteAfterUploadDesc')}</p>
-                    </div>
-                    <Switch
-                      id="deleteAfterUpload"
-                      checked={deleteAfterUpload}
-                      onCheckedChange={(val) => { setDeleteAfterUpload(val); handleSaveUserSettings({ delete_after_upload: val }); }}
-                    />
-                  </div>
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setShowCookieInputs(true)}
+                    className="px-4"
+                  >
+                    <KeyRound className="mr-2 h-4 w-4" />
+                    {user.has_cookies ? t('settings.editCookieValues') : t('settings.enterCookieValues')}
+                  </Button>
+                  {user.has_cookies && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="text-red-500 border-red-500/50 hover:bg-red-500/10 hover:text-red-600 px-4"
+                      onClick={handleClearCookies}
+                      disabled={cookieSaveLoading}
+                    >
+                      {t('settings.clearCookies')}
+                    </Button>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-4 max-w-lg">
+                <div className="space-y-2">
+                  <Label htmlFor="nidAut">NID_AUT</Label>
+                  <Input
+                    id="nidAut"
+                    value={nidAut}
+                    onChange={e => { setNidAut(e.target.value); setCookieVerified(null); }}
+                    placeholder={t('settings.cookiesPlaceholder')}
+                    className="font-mono text-sm"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="nidSes">NID_SES</Label>
+                  <Input
+                    id="nidSes"
+                    value={nidSes}
+                    onChange={e => { setNidSes(e.target.value); setCookieVerified(null); }}
+                    placeholder={t('settings.cookiesPlaceholder')}
+                    className="font-mono text-sm"
+                  />
                 </div>
 
-                {!showYoutubeInputs ? (
-                  <div className="space-y-4">
-                    {youtubeConnected ? (
-                      <div className="p-4 rounded-lg bg-green-500/10 border border-green-500/20 space-y-1">
-                        <div className="flex items-center gap-2 text-green-600 font-semibold text-sm">
-                          <CheckCircle2 className="h-4 w-4" />
-                          <span>{language === 'ko' ? '유튜브 채널이 연동되었습니다.' : 'YouTube channel is connected.'}</span>
-                        </div>
-                        {youtubeChannelTitle && (
-                          <p className="text-xs text-muted-foreground pl-6 font-medium">
-                            {language === 'ko' ? `유튜브 닉네임: ${youtubeChannelTitle}` : `YouTube Nickname: ${youtubeChannelTitle}`}
-                          </p>
-                        )}
-                      </div>
+                {cookieVerified !== null && (
+                  <div className={`flex items-center gap-2 text-sm font-medium ${cookieVerified.valid
+                    ? 'text-green-600 dark:text-green-400'
+                    : 'text-red-500'
+                    }`}>
+                    {cookieVerified.valid ? (
+                      <>
+                        <UserCheck className="h-4 w-4 shrink-0" />
+                        {t('settings.cookiesVerifiedSuccess', { name: cookieVerified.nickname || '' })}
+                      </>
                     ) : (
-                      <div className="p-4 rounded-lg bg-muted/40 border border-border">
-                        <p className="text-sm text-muted-foreground">
-                          {t('settings.youtubeNotConnected')}
-                        </p>
-                      </div>
+                      <>
+                        <ShieldQuestion className="h-4 w-4 shrink-0" />
+                        {t('settings.cookiesVerifiedFailed')}
+                      </>
                     )}
-
-                    <div className="flex flex-wrap gap-2">
-                      <Button type="button" variant="outline" onClick={() => setShowYoutubeInputs(true)} className="px-4">
-                        <KeyRound className="mr-2 h-4 w-4" />
-                        {youtubeConnected ? t('settings.editChannelBtn') : t('settings.connectChannelBtn')}
-                      </Button>
-                      {youtubeConnected && (
-                        <Button
-                          type="button"
-                          variant="outline"
-                          className="text-red-500 border-red-500/50 hover:bg-red-500/10 hover:text-red-600 px-4"
-                          onClick={handleDisconnectYoutube}
-                        >
-                          {t('settings.disconnectChannel')}
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="youtubeClientId">{t('settings.clientId')}</Label>
-                      <Input
-                        id="youtubeClientId"
-                        value={youtubeClientId}
-                        onChange={e => setYoutubeClientId(e.target.value)}
-                        placeholder={t('settings.clientId')}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="youtubeClientSecret">{t('settings.clientSecret')}</Label>
-                      <div className="relative">
-                        <Input
-                          id="youtubeClientSecret"
-                          value={youtubeClientSecret}
-                          onChange={e => setYoutubeClientSecret(e.target.value)}
-                          placeholder={t('settings.clientSecret')}
-                          type={showYoutubeClientSecret ? 'text' : 'password'}
-                        />
-                        <button
-                          type="button"
-                          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                          onClick={() => setShowYoutubeClientSecret(v => !v)}
-                        >
-                          {showYoutubeClientSecret ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Guide Box displayed ONLY during value input */}
-                    <div className="text-xs text-muted-foreground mt-2 mb-2 p-3 bg-muted rounded-md space-y-2">
-                      <p className="font-semibold text-foreground">
-                        💡 {language === 'ko' ? '자동 업로드 가이드 및 오류 해결' : 'Auto Upload Guide & Troubleshooting'}
-                      </p>
-                      <p>
-                        {language === 'ko' ? (
-                          <>
-                            API 키 발급 절차 및 연동 중 발생하는 오류(403 access_denied 등) 해결 방법은 상세한 가이드가 준비되어 있는{' '}
-                            <a href="https://github.com/k-atusa/zkzzk/wiki/ZKZZK-Settings-Guide" target="_blank" rel="noreferrer" className="text-primary hover:underline font-semibold">
-                              ZKZZK 설정 가이드 (Wiki)
-                            </a>
-                            를 참고해 주세요.
-                          </>
-                        ) : (
-                          <>
-                            For instructions on issuing API keys and resolving authentication errors (e.g., 403 access_denied), please refer to the detailed{' '}
-                            <a href="https://github.com/k-atusa/zkzzk/wiki/en/ZKZZK-Settings-Guide" target="_blank" rel="noreferrer" className="text-primary hover:underline font-semibold">
-                              ZKZZK Settings Guide (Wiki)
-                            </a>.
-                          </>
-                        )}
-                      </p>
-                    </div>
-
-                    <div className="flex flex-wrap gap-2 pt-2">
-                      <Button type="button" onClick={handleSaveYoutubeSettingsSubmit}>
-                        {t('settings.save')}
-                      </Button>
-                      <Button type="button" variant="ghost" onClick={() => setShowYoutubeInputs(false)}>
-                        {t('settings.cancel')}
-                      </Button>
-                    </div>
                   </div>
                 )}
-              </CardContent>
-            </Card>
+
+                <div className="flex flex-wrap gap-2 pt-1">
+                  <Button type="button" onClick={handleSaveCookiesSubmit} disabled={cookieSaveLoading}>
+                    {cookieSaveLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                    {t('settings.save')}
+                  </Button>
+                  <Button type="button" variant="ghost" onClick={() => setShowCookieInputs(false)}>
+                    {t('settings.cancel')}
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
 
-          <div className="space-y-6">
-            {/* Discord Card */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Bell className="h-5 w-5" /> {t('settings.discordWebhook')}
-                </CardTitle>
-                <CardDescription>{t('settings.discordWebhookDesc')}</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="discordWebhookUrl">{t('settings.webhookUrl')}</Label>
-                    <Input
-                      id="discordWebhookUrl"
-                      value={discordWebhookUrl}
-                      onChange={e => setDiscordWebhookUrl(e.target.value)}
-                      onBlur={e => handleSaveUserSettings({ discord_webhook_url: e.target.value })}
-                      placeholder={t('settings.webhookUrlPlaceholder')}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>{language === 'ko' ? '알림 메시지 형태' : 'Notification Format'}</Label>
-                    <div className="flex flex-wrap gap-2">
-                      <Button
-                        type="button"
-                        variant={discordWebhookUseEmbed ? 'default' : 'outline'}
-                        onClick={() => { setDiscordWebhookUseEmbed(true); handleSaveUserSettings({ discord_webhook_use_embed: true }); }}
-                        className="px-4"
-                      >
-                        {language === 'ko' ? '카드 형태 (Embed)' : 'Rich Card (Embed)'}
-                      </Button>
-                      <Button
-                        type="button"
-                        variant={!discordWebhookUseEmbed ? 'default' : 'outline'}
-                        onClick={() => { setDiscordWebhookUseEmbed(false); handleSaveUserSettings({ discord_webhook_use_embed: false }); }}
-                        className="px-4"
-                      >
-                        {language === 'ko' ? '단순 텍스트 형태' : 'Simple Text'}
-                      </Button>
-                    </div>
-                  </div>
+          {/* YouTube Auto Upload */}
+          <div className="py-5 space-y-5">
+            <div>
+              <h4 className="text-base font-medium flex items-center gap-2 text-foreground">
+                <MonitorPlay className="h-4 w-4 text-muted-foreground" /> {t('settings.youtubeAutoUpload')}
+              </h4>
+              <p className="text-xs text-muted-foreground mt-1">{t('settings.youtubeAutoUploadDesc')}</p>
+            </div>
 
-                  {/* 디스코드 알림 미리보기 */}
-                  <div className="mt-4 p-4 bg-[#313338] text-[#dbdee1] rounded-lg font-sans max-w-md shadow-inner text-sm border border-[#1e1f22]">
-                    <p className="text-xs text-[#949ba4] mb-3 uppercase font-bold tracking-wider">{language === 'ko' ? '미리보기' : 'Preview'}</p>
-                    <div className="flex gap-4">
-                      <div className="w-10 h-10 rounded-full bg-[#5865F2] flex-shrink-0 flex items-center justify-center text-white font-bold text-lg">
-                        Z
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="font-medium text-white text-[15px]">ZKZZK Bot</span>
-                          <span className="text-[10px] bg-[#5865F2] text-white px-1 py-[1px] rounded leading-none flex items-center justify-center uppercase font-bold">Bot</span>
-                          <span className="text-xs text-[#949ba4] font-medium ml-1">{language === 'ko' ? '오늘 오후 3:00' : 'Today at 3:00 PM'}</span>
-                        </div>
-                        {discordWebhookUseEmbed ? (
-                          <div className="bg-[#2b2d31] border-l-4 border-blue-500 rounded p-3 mt-1.5 inline-block min-w-[250px]">
-                            <p className="font-bold text-white text-base mb-1.5">🎥 {language === 'ko' ? '업로드 완료' : 'Upload Complete'}</p>
-                            <div className="text-[13px] space-y-1">
-                              <p>{language === 'ko' ? 'XXX님의 영상이 성공적으로 업로드되었습니다.' : "XXX's video has been successfully uploaded."}</p>
-                              <p className="pt-1.5"><strong>{language === 'ko' ? '제목' : 'Title'}:</strong> {language === 'ko' ? '테스트 영상' : 'Test Video'}</p>
-                              <p><strong>URL:</strong> <span className="text-[#00a8fc] cursor-pointer hover:underline">https://youtu.be/test</span></p>
-                            </div>
-                          </div>
-                        ) : (
-                          <div className="whitespace-pre-wrap text-[15px] leading-relaxed mt-0.5">
-                            <span className="font-bold">🎥 {language === 'ko' ? '업로드 완료' : 'Upload Complete'}</span>{'\n'}
-                            {language === 'ko' ? '**XXX**님의 영상이 성공적으로 업로드되었습니다.' : "**XXX**'s video has been successfully uploaded."}{'\n\n'}
-                            {language === 'ko' ? '제목' : 'Title'}: {language === 'ko' ? '테스트 영상' : 'Test Video'}{'\n'}
-                            URL: <span className="text-[#00a8fc] cursor-pointer hover:underline">https://youtu.be/test</span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
+            <div className="space-y-4 max-w-2xl">
+              <div className="flex items-center justify-between gap-4">
+                <div className="space-y-0.5">
+                  <Label htmlFor="youtubeAutoUpload" className="text-sm font-medium cursor-pointer">{t('settings.autoUploadEnable')}</Label>
+                  <p className="text-xs text-muted-foreground">{t('settings.youtubeAutoUploadDesc')}</p>
                 </div>
-              </CardContent>
-            </Card>
+                <Switch
+                  id="youtubeAutoUpload"
+                  checked={youtubeAutoUpload}
+                  onCheckedChange={(val) => { setYoutubeAutoUpload(val); handleSaveUserSettings({ youtube_auto_upload: val }); }}
+                />
+              </div>
+              <div className="flex items-center justify-between gap-4">
+                <div className="space-y-0.5">
+                  <Label htmlFor="deleteAfterUpload" className="text-sm font-medium cursor-pointer">{t('settings.deleteAfterUpload')}</Label>
+                  <p className="text-xs text-muted-foreground">{t('settings.deleteAfterUploadDesc')}</p>
+                </div>
+                <Switch
+                  id="deleteAfterUpload"
+                  checked={deleteAfterUpload}
+                  onCheckedChange={(val) => { setDeleteAfterUpload(val); handleSaveUserSettings({ delete_after_upload: val }); }}
+                />
+              </div>
+            </div>
+
+            {!showYoutubeInputs ? (
+              <div className="space-y-3 max-w-lg">
+                {youtubeConnected ? (
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2 text-green-600 dark:text-green-400 font-semibold text-sm">
+                      <CheckCircle2 className="h-4 w-4 shrink-0" />
+                      <span>{language === 'ko' ? '유튜브 채널이 연동되었습니다.' : 'YouTube channel is connected.'}</span>
+                    </div>
+                    {youtubeChannelTitle && (
+                      <p className="text-xs text-muted-foreground pl-6 font-medium">
+                        {language === 'ko' ? `유튜브 닉네임: ${youtubeChannelTitle}` : `YouTube Nickname: ${youtubeChannelTitle}`}
+                      </p>
+                    )}
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground">
+                    {t('settings.youtubeNotConnected')}
+                  </p>
+                )}
+
+                <div className="flex flex-wrap gap-2">
+                  <Button type="button" variant="outline" onClick={() => setShowYoutubeInputs(true)} className="px-4">
+                    <KeyRound className="mr-2 h-4 w-4" />
+                    {youtubeConnected ? t('settings.editChannelBtn') : t('settings.connectChannelBtn')}
+                  </Button>
+                  {youtubeConnected && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      className="text-red-500 border-red-500/50 hover:bg-red-500/10 hover:text-red-600 px-4"
+                      onClick={handleDisconnectYoutube}
+                    >
+                      {t('settings.disconnectChannel')}
+                    </Button>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-4 max-w-lg">
+                <div className="space-y-2">
+                  <Label htmlFor="youtubeClientId">{t('settings.clientId')}</Label>
+                  <Input
+                    id="youtubeClientId"
+                    value={youtubeClientId}
+                    onChange={e => setYoutubeClientId(e.target.value)}
+                    placeholder={t('settings.clientId')}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="youtubeClientSecret">{t('settings.clientSecret')}</Label>
+                  <div className="relative">
+                    <Input
+                      id="youtubeClientSecret"
+                      value={youtubeClientSecret}
+                      onChange={e => setYoutubeClientSecret(e.target.value)}
+                      placeholder={t('settings.clientSecret')}
+                      type={showYoutubeClientSecret ? 'text' : 'password'}
+                    />
+                    <button
+                      type="button"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                      onClick={() => setShowYoutubeClientSecret(v => !v)}
+                    >
+                      {showYoutubeClientSecret ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="text-xs text-muted-foreground space-y-1">
+                  <p className="font-semibold text-foreground">
+                    💡 {language === 'ko' ? '자동 업로드 가이드 및 오류 해결' : 'Auto Upload Guide & Troubleshooting'}
+                  </p>
+                  <p>
+                    {language === 'ko' ? (
+                      <>
+                        API 키 발급 절차 및 연동 중 발생하는 오류(403 access_denied 등) 해결 방법은 상세한 가이드가 준비되어 있는{' '}
+                        <a href="https://github.com/k-atusa/zkzzk/wiki/ZKZZK-Settings-Guide" target="_blank" rel="noreferrer" className="text-primary hover:underline font-semibold">
+                          ZKZZK 설정 가이드 (Wiki)
+                        </a>
+                        를 참고해 주세요.
+                      </>
+                    ) : (
+                      <>
+                        For instructions on issuing API keys and resolving authentication errors (e.g., 403 access_denied), please refer to the detailed{' '}
+                        <a href="https://github.com/k-atusa/zkzzk/wiki/en/ZKZZK-Settings-Guide" target="_blank" rel="noreferrer" className="text-primary hover:underline font-semibold">
+                          ZKZZK Settings Guide (Wiki)
+                        </a>.
+                      </>
+                    )}
+                  </p>
+                </div>
+
+                <div className="flex flex-wrap gap-2 pt-1">
+                  <Button type="button" onClick={handleSaveYoutubeSettingsSubmit}>
+                    {t('settings.save')}
+                  </Button>
+                  <Button type="button" variant="ghost" onClick={() => setShowYoutubeInputs(false)}>
+                    {t('settings.cancel')}
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Discord Webhook */}
+          <div className="py-5 space-y-4">
+            <div>
+              <h4 className="text-base font-medium flex items-center gap-2 text-foreground">
+                <Bell className="h-4 w-4 text-muted-foreground" /> {t('settings.discordWebhook')}
+              </h4>
+              <p className="text-xs text-muted-foreground mt-1">{t('settings.discordWebhookDesc')}</p>
+            </div>
+
+            <div className="space-y-4 max-w-2xl">
+              <div className="space-y-2">
+                <Label htmlFor="discordWebhookUrl">{t('settings.webhookUrl')}</Label>
+                <Input
+                  id="discordWebhookUrl"
+                  value={discordWebhookUrl}
+                  onChange={e => setDiscordWebhookUrl(e.target.value)}
+                  onBlur={e => handleSaveUserSettings({ discord_webhook_url: e.target.value })}
+                  placeholder={t('settings.webhookUrlPlaceholder')}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>{language === 'ko' ? '알림 메시지 형태' : 'Notification Format'}</Label>
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    type="button"
+                    variant={discordWebhookUseEmbed ? 'default' : 'outline'}
+                    onClick={() => { setDiscordWebhookUseEmbed(true); handleSaveUserSettings({ discord_webhook_use_embed: true }); }}
+                    className="px-4"
+                  >
+                    {language === 'ko' ? '카드 형태 (Embed)' : 'Rich Card (Embed)'}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={!discordWebhookUseEmbed ? 'default' : 'outline'}
+                    onClick={() => { setDiscordWebhookUseEmbed(false); handleSaveUserSettings({ discord_webhook_use_embed: false }); }}
+                    className="px-4"
+                  >
+                    {language === 'ko' ? '단순 텍스트 형태' : 'Simple Text'}
+                  </Button>
+                </div>
+              </div>
+
+              {/* 디스코드 알림 미리보기 */}
+              <div className="space-y-2 max-w-lg pt-1">
+                <p className="text-xs text-muted-foreground uppercase font-semibold tracking-wider">{language === 'ko' ? '미리보기' : 'Preview'}</p>
+                <div className="p-3.5 bg-[#313338] text-[#dbdee1] rounded-md font-sans text-sm">
+                  <div className="flex gap-3">
+                    <div className="w-9 h-9 rounded-full bg-[#5865F2] flex-shrink-0 flex items-center justify-center text-white font-bold text-base">
+                      Z
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="font-medium text-white text-[15px]">ZKZZK Bot</span>
+                        <span className="text-[10px] bg-[#5865F2] text-white px-1 py-[1px] rounded leading-none flex items-center justify-center uppercase font-bold">Bot</span>
+                        <span className="text-xs text-[#949ba4] font-medium ml-1">{language === 'ko' ? '오늘 오후 3:00' : 'Today at 3:00 PM'}</span>
+                      </div>
+                      {discordWebhookUseEmbed ? (
+                        <div className="border-l-4 border-blue-500 pl-3 py-1 mt-1.5">
+                          <p className="font-bold text-white text-sm mb-1">🎥 {language === 'ko' ? '업로드 완료' : 'Upload Complete'}</p>
+                          <div className="text-[13px] space-y-0.5">
+                            <p>{language === 'ko' ? 'XXX님의 영상이 성공적으로 업로드되었습니다.' : "XXX's video has been successfully uploaded."}</p>
+                            <p className="pt-1"><strong>{language === 'ko' ? '제목' : 'Title'}:</strong> {language === 'ko' ? '테스트 영상' : 'Test Video'}</p>
+                            <p><strong>URL:</strong> <span className="text-[#00a8fc] cursor-pointer hover:underline">https://youtu.be/test</span></p>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="whitespace-pre-wrap text-[14px] leading-relaxed mt-0.5">
+                          <span className="font-bold">🎥 {language === 'ko' ? '업로드 완료' : 'Upload Complete'}</span>{'\n'}
+                          {language === 'ko' ? '**XXX**님의 영상이 성공적으로 업로드되었습니다.' : "**XXX**'s video has been successfully uploaded."}{'\n\n'}
+                          {language === 'ko' ? '제목' : 'Title'}: {language === 'ko' ? '테스트 영상' : 'Test Video'}{'\n'}
+                          URL: <span className="text-[#00a8fc] cursor-pointer hover:underline">https://youtu.be/test</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -1041,154 +1011,139 @@ export const Settings = () => {
       {/* 4. 관리자 메뉴 */}
       {user.is_admin && (
         <section className="space-y-4">
-          <div className="flex items-center gap-2 pb-2 border-b border-border">
-            <Users className="h-5 w-5 text-primary" />
-            <h3 className="text-xl font-semibold">{t('settings.userManagement')}</h3>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2.5 border-b border-border">
+            <div className="flex items-center gap-2">
+              <Users className="h-5 w-5 text-primary" />
+              <h3 className="text-xl font-semibold">{t('settings.userManagement')}</h3>
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full uppercase bg-amber-500/20 text-amber-700 dark:text-amber-300">{language === 'ko' ? '관리자 전용' : 'Admin Only'}</span>
+            </div>
+            {!showAddUserForm && (
+              <Button
+                type="button"
+                onClick={() => setShowAddUserForm(true)}
+                className="shrink-0 px-4"
+              >
+                <Plus className="h-4 w-4 mr-1.5" />
+                {t('settings.addUser')}
+              </Button>
+            )}
           </div>
-          <div className="grid grid-cols-1 gap-6 pt-2">
 
-            {/* User Management Card (Admin only) */}
-            <Card className="shadow-xs border-border/80">
-              <CardHeader className="pb-4">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <CardTitle className="flex items-center gap-2">
-                        <Users className="h-5 w-5" />
-                        {language === 'ko' ? '사용자 추가/제거' : 'Add / Remove Users'}
-                      </CardTitle>
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full uppercase bg-amber-500/20 text-amber-700 dark:text-amber-300">{language === 'ko' ? '관리자 전용' : 'Admin Only'}</span>
-                    </div>
-                    <CardDescription className="text-xs mt-1">{t('settings.userManagementDesc')}</CardDescription>
+          <p className="text-xs text-muted-foreground">{t('settings.userManagementDesc')}</p>
+
+          {/* Add User Form */}
+          {showAddUserForm && (
+            <div className="pb-5 border-b border-border/60 space-y-4 max-w-2xl animate-in fade-in-50 duration-200">
+              <div className="flex items-center justify-between">
+                <h4 className="font-semibold text-sm flex items-center gap-2 text-foreground">
+                  <UserCheck className="h-4 w-4 text-primary" />
+                  {t('settings.addUser')}
+                </h4>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setShowAddUserForm(false)}
+                  className="text-muted-foreground hover:text-foreground h-8 w-8"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+
+              <form onSubmit={handleCreateUser} className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="newUsername" className="text-xs font-medium">{t('login.username')}</Label>
+                    <Input
+                      id="newUsername"
+                      value={newUsername}
+                      onChange={e => setNewUsername(e.target.value)}
+                      placeholder={t('login.username')}
+                      required
+                      className="h-9 bg-background"
+                    />
                   </div>
-
-                  {!showAddUserForm && (
-                    <Button
-                      type="button"
-                      onClick={() => setShowAddUserForm(true)}
-                      className="shrink-0 px-4"
-                    >
-                      <Plus className="h-4 w-4 mr-1.5" />
-                      {t('settings.addUser')}
+                  <div className="space-y-1.5">
+                    <Label htmlFor="newUserPass" className="text-xs font-medium">{t('login.password')}</Label>
+                    <Input
+                      id="newUserPass"
+                      type="password"
+                      value={newUserPass}
+                      onChange={e => setNewUserPass(e.target.value)}
+                      placeholder={t('settings.newPasswordPlaceholder')}
+                      required
+                      className="h-9 bg-background"
+                    />
+                  </div>
+                </div>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
+                  <div className="flex items-center gap-2">
+                    <Switch
+                      id="newUserIsAdmin"
+                      checked={newUserIsAdmin}
+                      onCheckedChange={setNewUserIsAdmin}
+                    />
+                    <Label htmlFor="newUserIsAdmin" className="text-sm cursor-pointer select-none font-medium">{t('layout.admin')}</Label>
+                  </div>
+                  <div className="flex items-center gap-2 justify-end">
+                    <Button type="button" variant="outline" onClick={() => setShowAddUserForm(false)}>
+                      {t('common.cancel')}
                     </Button>
-                  )}
+                    <Button type="submit" disabled={userLoading}>
+                      {userLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4 mr-1.5" />}
+                      {t('settings.addUserBtn')}
+                    </Button>
+                  </div>
                 </div>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                {/* Add User Form (Collapsible, Direct Rendering) */}
-                {showAddUserForm && (
-                  <div className="pb-4 border-b border-border space-y-4 animate-in fade-in-50 duration-200">
-                    <div className="flex items-center justify-between">
-                      <h4 className="font-semibold text-sm flex items-center gap-2 text-foreground">
-                        <UserCheck className="h-4 w-4 text-primary" />
-                        {t('settings.addUser')}
-                      </h4>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => setShowAddUserForm(false)}
-                        className="text-muted-foreground hover:text-foreground h-8 w-8"
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
+              </form>
+            </div>
+          )}
+
+          {/* User List */}
+          <div className="space-y-1">
+            <div className="text-xs text-muted-foreground font-medium pb-2 border-b border-border/60 flex justify-between items-center">
+              <span>{language === 'ko' ? `등록된 사용자 (${users.length}명)` : `Registered Users (${users.length})`}</span>
+            </div>
+            {users.length === 0 ? (
+              <p className="text-center py-6 text-muted-foreground text-sm">{t('common.loading')}</p>
+            ) : (
+              <div className="divide-y divide-border/60">
+                {users.map((u) => (
+                  <div key={u.id} className="flex items-center justify-between py-3 px-2 -mx-2 rounded-md hover:bg-muted/30 transition-colors">
+                    <div className="flex items-center gap-3">
+                      <div className="h-8 w-8 rounded-full bg-primary/10 text-primary flex items-center justify-center text-sm font-bold">
+                        {u.username.charAt(0).toUpperCase()}
+                      </div>
+                      <div>
+                        <p className="font-medium text-sm text-foreground">{u.username}</p>
+                        <div className="flex items-center gap-1.5 mt-0.5">
+                          {u.is_admin && (
+                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full uppercase bg-amber-500/20 text-amber-700 dark:text-amber-300">{t('layout.admin')}</span>
+                          )}
+                          <span className="text-[11px] text-muted-foreground">
+                            {u.created_at ? new Date(u.created_at).toLocaleDateString(language === 'ko' ? 'ko-KR' : 'en-US') : ''}
+                          </span>
+                        </div>
+                      </div>
                     </div>
-
-                    <form onSubmit={handleCreateUser} className="space-y-4">
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <div className="space-y-1.5">
-                          <Label htmlFor="newUsername" className="text-xs font-medium">{t('login.username')}</Label>
-                          <Input
-                            id="newUsername"
-                            value={newUsername}
-                            onChange={e => setNewUsername(e.target.value)}
-                            placeholder={t('login.username')}
-                            required
-                            className="h-9 bg-background"
-                          />
-                        </div>
-                        <div className="space-y-1.5">
-                          <Label htmlFor="newUserPass" className="text-xs font-medium">{t('login.password')}</Label>
-                          <Input
-                            id="newUserPass"
-                            type="password"
-                            value={newUserPass}
-                            onChange={e => setNewUserPass(e.target.value)}
-                            placeholder={t('settings.newPasswordPlaceholder')}
-                            required
-                            className="h-9 bg-background"
-                          />
-                        </div>
-                      </div>
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
-                        <div className="flex items-center gap-2">
-                          <Switch
-                            id="newUserIsAdmin"
-                            checked={newUserIsAdmin}
-                            onCheckedChange={setNewUserIsAdmin}
-                          />
-                          <Label htmlFor="newUserIsAdmin" className="text-sm cursor-pointer select-none font-medium">{t('layout.admin')}</Label>
-                        </div>
-                        <div className="flex items-center gap-2 justify-end">
-                          <Button type="button" variant="outline" onClick={() => setShowAddUserForm(false)}>
-                            {t('common.cancel')}
-                          </Button>
-                          <Button type="submit" disabled={userLoading}>
-                            {userLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4 mr-1.5" />}
-                            {t('settings.addUserBtn')}
-                          </Button>
-                        </div>
-                      </div>
-                    </form>
+                    {u.id !== user.id && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-destructive hover:text-destructive hover:bg-destructive/10 h-8 w-8 p-0"
+                        onClick={() => handleDeleteUser(u.id, u.username)}
+                        title={t('common.delete')}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    )}
+                    {u.id === user.id && (
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full uppercase bg-muted text-muted-foreground">{language === 'ko' ? '나' : 'Me'}</span>
+                    )}
                   </div>
-                )}
-
-                {/* User List */}
-                <div className="space-y-2">
-                  <div className="text-xs text-muted-foreground font-medium pb-1 flex justify-between items-center">
-                    <span>{language === 'ko' ? `등록된 사용자 (${users.length}명)` : `Registered Users (${users.length})`}</span>
-                  </div>
-                  {users.length === 0 ? (
-                    <p className="text-center py-6 text-muted-foreground text-sm">{t('common.loading')}</p>
-                  ) : (
-                    users.map((u) => (
-                      <div key={u.id} className="flex items-center justify-between p-3 border border-border rounded-lg hover:bg-muted/30 transition-colors">
-                        <div className="flex items-center gap-3">
-                          <div className="h-8 w-8 rounded-full bg-primary/10 text-primary flex items-center justify-center text-sm font-bold">
-                            {u.username.charAt(0).toUpperCase()}
-                          </div>
-                          <div>
-                            <p className="font-medium text-sm text-foreground">{u.username}</p>
-                            <div className="flex items-center gap-1.5 mt-0.5">
-                              {u.is_admin && (
-                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full uppercase bg-amber-500/20 text-amber-700 dark:text-amber-300">{t('layout.admin')}</span>
-                              )}
-                              <span className="text-[11px] text-muted-foreground">
-                                {u.created_at ? new Date(u.created_at).toLocaleDateString(language === 'ko' ? 'ko-KR' : 'en-US') : ''}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                        {u.id !== user.id && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="text-destructive hover:text-destructive hover:bg-destructive/10 h-8 w-8 p-0"
-                            onClick={() => handleDeleteUser(u.id, u.username)}
-                            title={t('common.delete')}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        )}
-                        {u.id === user.id && (
-                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full uppercase bg-muted text-muted-foreground">{language === 'ko' ? '나' : 'Me'}</span>
-                        )}
-                      </div>
-                    ))
-                  )}
-                </div>
-              </CardContent>
-            </Card>
+                ))}
+              </div>
+            )}
           </div>
         </section>
       )}
