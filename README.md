@@ -1,10 +1,11 @@
 <div align="center">
-  <h1><img src="./frontend/public/favicon.svg" height="40" alt="zkzzk favicon" align="center" /> zkzzk (Chzzk Video Manager)</h1>
+  <img src="./frontend/public/favicon.svg" alt="zkzzk favicon" width="128" />
+  <h1>zkzzk (Chzzk Video Manager)</h1>
   <p><strong>The Ultimate Automated Recording & Management Solution for Naver Chzzk</strong></p>
 
   <p>
-    <a href="https://github.com/k-atusa/zkzzk/releases"><img src="https://img.shields.io/github/v/release/k-atusa/zkzzk?style=for-the-badge&color=00e676" alt="Release"></a> 
-    <a href="https://github.com/k-atusa/zkzzk/blob/main/LICENSE"><img src="https://img.shields.io/github/license/k-atusa/zkzzk?style=for-the-badge&color=00e676" alt="License"></a> 
+    <a href="https://github.com/k-atusa/zkzzk/releases"><img src="https://img.shields.io/github/v/release/k-atusa/zkzzk?style=for-the-badge&color=30b065" alt="Release"></a> 
+    <a href="https://github.com/k-atusa/zkzzk/blob/main/LICENSE"><img src="https://img.shields.io/github/license/k-atusa/zkzzk?style=for-the-badge&color=b0305f" alt="License"></a> 
     <a href="https://hub.docker.com/r/d3vle0/zkzzk"><img src="https://img.shields.io/docker/pulls/d3vle0/zkzzk?style=for-the-badge&color=00a8fc" alt="Docker Pulls"></a> 
     <a href="https://github.com/k-atusa/zkzzk/stargazers"><img src="https://img.shields.io/github/stars/k-atusa/zkzzk?style=for-the-badge&color=ffd700" alt="Stars"></a> 
   </p>
@@ -13,8 +14,6 @@
     <a href="README.md">🇺🇸 English</a> | <a href="README-ko.md">🇰🇷 한국어</a>
   </p>
 </div>
-
-<hr>
 
 ## 🤔 What is zkzzk?
 
@@ -35,9 +34,7 @@
 
 ## 🚀 Quick Start
 
-### Docker (Recommended)
-
-The fastest way to get zkzzk up and running is via Docker.
+Run zkzzk immediately with Docker (`FFmpeg` and `Streamlink` included):
 
 ```bash
 docker run -d \
@@ -50,50 +47,20 @@ docker run -d \
   d3vle0/zkzzk:latest
 ```
 
-Alternatively, you can use **Docker Compose**:
-
-Create a `docker-compose.yml` file:
-```yaml
-services:
-  zkzzk-app:
-    image: d3vle0/zkzzk:latest
-    container_name: zkzzk-app
-    restart: unless-stopped
-    ports:
-      - "5001:5001"
-    environment:
-      - TZ=Asia/Seoul
-    volumes:
-      - ./data:/app/backend
-      - ./downloads:/app/downloads
-```
-
-Then start it with:
-```bash
-docker compose up -d
-```
-
-### Standalone Binary
-
-You can also download a pre-built single binary (with the web UI embedded) for **Windows (`amd64`, `arm64`)**, **Linux (`amd64`, `arm64`)**, or **macOS (`arm64`)** from **[GitHub Releases](https://github.com/k-atusa/zkzzk/releases)** and run it directly (requires `ffmpeg` and `streamlink` installed on your system):
-
-```bash
-./zkzzk
-```
-
-Once running, simply navigate to `http://localhost:5001` to access your dashboard.
+Then open `http://localhost:5001` in your browser.  
+For **Docker Compose**, **Standalone Binary** (Windows / Linux / macOS), or **building from source**, see the guides below.
 
 <br>
 
 ## 📚 Documentation & Installation
 
-For comprehensive instructions on how to set up, configure, and secure your zkzzk instance, please refer to our **[Documentation](./docs/en/Home.md)**.
+For comprehensive instructions on how to set up, configure, and secure your zkzzk instance, please refer to our **[Documentation](./docs/Home.md)**.
 
 The documentation covers:
-- 🐳 **[Docker Setup](./docs/en/Docker-Setup.md)** (Recommended)
-- 💻 **[Manual Setup](./docs/en/Manual-Setup.md)** (Standalone binary / build from source)
-- 🔒 **[Reverse Proxy Configuration](./docs/en/Reverse-Proxy-Configuration.md)** (Nginx / Nginx Proxy Manager)
-- 🔑 **[Settings & YouTube API Integration Guide](./docs/en/Settings-Guide.md)**
+- 🐳 **[Docker Setup](./docs/Docker-Setup.md)** (Recommended)
+- 💻 **[Manual Setup](./docs/Manual-Setup.md)** (Standalone binary / build from source)
+- 🔒 **[Reverse Proxy Configuration](./docs/Reverse-Proxy-Configuration.md)** (Nginx / Nginx Proxy Manager)
+- 🔑 **[Settings & YouTube API Integration Guide](./docs/Settings-Guide.md)**
 
 <br>
 

@@ -1,99 +1,99 @@
-# ⚙️ ZKZZK 설정 가이드 (Settings Guide)
+# ⚙️ ZKZZK Settings Guide
 
-ZKZZK의 **설정(Settings)** 탭에서는 시스템의 강력한 부가 기능들을 활성화할 수 있습니다. 각 설정 항목이 어떤 역할을 하는지, 그리고 어떻게 값을 얻을 수 있는지 자세히 설명해 드립니다.
-
----
-
-## 1. 치지직(Naver) 쿠키 설정 (`NID_AUT`, `NID_SES`)
-
-치지직의 특정 방송들은 네이버 로그인이 필수적으로 요구됩니다. 로그인 정보(쿠키)를 ZKZZK에 제공하면 아래와 같은 이점을 얻을 수 있습니다.
-
-- **1080p (원본 해상도) 시청 및 녹화**: 일부 스트리머의 1080p 화질은 로그인한 사용자에게만 제공됩니다.
-- **연령 제한 방송 녹화**: 성인 인증이 완료된 네이버 계정의 쿠키를 넣으면 연령 제한 방송도 문제없이 녹화할 수 있습니다.
-
-### 📌 쿠키 추출하는 방법
-1. 웹 브라우저(크롬, 엣지 등)를 열고 [치지직](https://chzzk.naver.com)에 로그인합니다.
-2. `F12` 키를 눌러 **개발자 도구(Developer Tools)** 를 엽니다.
-3. 상단 탭에서 **Application(애플리케이션)** (또는 저장소) 탭을 클릭합니다.
-4. 좌측 메뉴의 **Cookies(쿠키)** 아래에 있는 `https://chzzk.naver.com` 을 클릭합니다.
-5. 우측 목록에서 Name이 **`NID_AUT`** 와 **`NID_SES`** 인 항목을 찾습니다.
-6. 각각의 Value 값을 복사하여 ZKZZK 설정 화면의 해당 칸에 붙여넣고 **[저장]**합니다.
+The **Settings** tab in ZKZZK allows you to activate powerful additional features of the system. We explain in detail what role each setting plays and how to obtain its value.
 
 ---
 
-## 2. YouTube API 설정 (자동 업로드)
+## 1. Chzzk (Naver) Cookie Settings (`NID_AUT`, `NID_SES`)
 
-녹화가 끝난 영상이나 다운로드된 VOD를 내 유튜브 채널에 **자동으로 업로드**하기 위해서는 구글 클라우드에서 발급받은 유튜브 API 키가 필요합니다.
+Certain broadcasts on Chzzk require a Naver login. Providing your login information (cookies) to ZKZZK gives you the following benefits.
 
-설정 화면에서 다음 옵션들도 함께 조정할 수 있습니다:
-- **자동 업로드 활성화**: 라이브 녹화 및 MP4 변환 완료 시 자동으로 업로드합니다.
-- **업로드 성공 시 서버 파일 삭제**: 업로드가 완료되면 서버의 원본 녹화 파일을 자동 삭제해 저장 공간을 확보합니다.
-- **업로드 공개 설정**: 업로드되는 영상의 기본 공개 범위를 **공개(`public`)**, **링크 공개(`unlisted`, 기본값)**, **비공개(`private`)** 중에서 선택할 수 있습니다.
+- **1080p (Source Resolution) Viewing and Recording**: 1080p quality for some streamers is only provided to logged-in users.
+- **Age-Restricted Broadcast Recording**: By entering the cookies of an adult-verified Naver account, you can record age-restricted broadcasts without any issues.
 
-### 📌 발급 및 연동 방법
+### 📌 How to Extract Cookies
+1. Open a web browser (Chrome, Edge, etc.) and log in to [Chzzk](https://chzzk.naver.com).
+2. Press the `F12` key to open **Developer Tools**.
+3. Click on the **Application** (or Storage) tab at the top.
+4. Click on `https://chzzk.naver.com` under **Cookies** in the left menu.
+5. In the list on the right, find the items where the Name is **`NID_AUT`** and **`NID_SES`**.
+6. Copy the Value of each and paste it into the corresponding field in the ZKZZK settings screen, then click **[Save]**.
 
-#### 1. Google Cloud Console 접속 및 프로젝트 생성
-1. [Google Cloud Console](https://console.cloud.google.com/) 웹사이트에 접속하여 구글 계정으로 로그인합니다.
-2. 상단의 **[프로젝트 선택]** 혹은 **[새 프로젝트]**를 클릭합니다.
-3. 프로젝트 이름(예: `zkzzk-youtube-uploader`)을 적고 **만들기** 버튼을 누릅니다.
+---
 
-#### 2. YouTube Data API v3 활성화
-1. 좌측 메뉴 햄버거 아이콘(☰)을 누르고 **[API 및 서비스] -> [라이브러리]** 로 이동합니다.
-2. 검색창에 **`YouTube Data API v3`** 를 검색하여 클릭합니다.
-3. 파란색 **[사용]** 버튼을 클릭하여 활성화합니다.
+## 2. YouTube API Settings (Auto Upload)
 
-#### 3. OAuth 동의 화면 구성
-1. 좌측 메뉴에서 **[API 및 서비스] -> [OAuth 동의 화면]** 으로 이동합니다.
-2. `Google 인증 플랫폼이 아직 구성되지 않음` 밑의 파란색 **[시작하기]** 버튼을 클릭합니다.
-3. 앱 정보에 다음 내용들을 채워 넣습니다:
-   - 앱 이름: `zkzzk uploader`
-   - 사용자 지원 이메일: 본인 이메일 (이 계정에 영상이 업로드 됩니다.)
-4. **User Type**을 **`외부(External)`** 로 선택합니다.
-5. 연락처 정보에 본인 이메일을 입력합니다.
-6. `Google API 서비스: 사용자 데이터 정책 에 동의합니다.` 에 체크하고 파란색 **[만들기]** 버튼을 클릭합니다.
+This setting is for **automatically uploading** finished recordings or downloaded VODs to your YouTube channel. To do this, you need a YouTube OAuth client issued from Google Cloud.
 
-#### 4. 사용자 인증 정보(Client ID / Secret) 발급
-1. 좌측 메뉴에서 **[API 및 서비스] -> [사용자 인증 정보]** 로 이동합니다.
-2. 상단 중앙의 **[+ 사용자 인증 정보 만들기]** 를 클릭하고 **`OAuth 클라이언트 ID`** 를 선택합니다.
-3. 애플리케이션 유형을 **`웹 애플리케이션`** 으로 선택합니다.
-4. 이름은 원하는 대로 작성합니다 (예: `zkzzk-web`).
-5. **승인된 리디렉션 URI**에는 zkzzk 서버의 콜백 주소를 정확히 추가해야 합니다.
-   - 로컬에서 접속 중이라면: `http://localhost:5001/api/youtube/callback`
-   - 리버스 프록시(Nginx 등)를 세팅하여 접속 중이라면 해당 도메인 주소(예: `https://zkzzk.mydomain.com/api/youtube/callback`)를 추가해 주세요.
-6. **[만들기]** 버튼을 누릅니다.
-이제 클라이언트 ID와 클라이언트 보안 비밀번호(Secret)가 생성됩니다.
+In the Settings screen, you can also configure:
+- **Auto upload completed recordings**: Automatically uploads live recordings once MP4 conversion finishes.
+- **Delete file from server after successful upload**: Deletes the local recording file automatically after a successful upload to save disk space.
+- **Upload Visibility**: Choose the default visibility for uploaded videos—**Public (`public`)**, **Unlisted (`unlisted`, default)**, or **Private (`private`)**.
 
-#### 5. ZKZZK 설정에 입력 및 계정 연동
-1. 좌측 메뉴에서 **[API 및 서비스] -> [사용자 인증 정보]** 로 이동합니다.
-2. `OAuth 2.0 클라이언트 ID` 항목에서 방금 생성한 클라이언트를 클릭해 **클라이언트 ID**와 **클라이언트 보안 비밀번호**를 복사합니다.
-3. zkzzk 웹 대시보드 **설정(Settings)** 탭의 유튜브 연동 섹션에서 **[채널 연동]**을 누르고 **`클라이언트 ID`**와 **`클라이언트 보안 비밀번호`**를 붙여넣은 뒤 **[저장]**을 누릅니다.
-4. 자동으로 이동하는 Google 로그인 및 권한 동의 화면을 완료하면 계정이 연동됩니다!
+### 📌 Issuance and Integration Method
+
+#### 1. Access Google Cloud Console and Create a Project
+1. Visit the [Google Cloud Console](https://console.cloud.google.com/) website and log in with your Google account.
+2. Click on **[Select a project]** or **[New Project]** at the top.
+3. Enter a project name (e.g., `zkzzk-youtube-uploader`) and click the **Create** button.
+
+#### 2. Enable YouTube Data API v3
+1. Click the hamburger icon (☰) on the left menu and go to **[APIs & Services] -> [Library]**.
+2. Search for **`YouTube Data API v3`** in the search bar and click it.
+3. Click the blue **[Enable]** button to activate it.
+
+#### 3. Configure OAuth Consent Screen
+1. From the left menu, go to **[APIs & Services] -> [OAuth consent screen]**.
+2. Click the blue **[Get Started]** button under `Google Auth Platform is not yet configured`.
+3. Fill in the following app information:
+   - App name: `zkzzk uploader`
+   - User support email: Your email (Videos will be uploaded to this account.)
+4. Select **`External`** for the **User Type**.
+5. Enter your email in the Developer contact information.
+6. Check `I agree to the Google API Services: User Data Policy` and click the blue **[Create]** button.
+
+#### 4. Issue Credentials (Client ID / Secret)
+1. From the left menu, go to **[APIs & Services] -> [Credentials]**.
+2. Click **[+ CREATE CREDENTIALS]** at the top center and select **`OAuth client ID`**.
+3. Select **`Web application`** as the Application type.
+4. Name it whatever you like (e.g., `zkzzk-web`).
+5. You must accurately add the callback address of your ZKZZK server to the **Authorized redirect URIs**.
+   - If accessing locally: `http://localhost:5001/api/youtube/callback`
+   - If accessing via a reverse proxy (Nginx, etc.), add that domain address (e.g., `https://zkzzk.mydomain.com/api/youtube/callback`).
+6. Click the **[Create]** button.
+Now your Client ID and Client Secret have been generated.
+
+#### 5. Enter in ZKZZK Settings and Link Account
+1. From the left menu, go to **[APIs & Services] -> [Credentials]**.
+2. Under `OAuth 2.0 Client IDs`, click the client item you just created and copy the **Client ID** and **Client Secret**.
+3. In the ZKZZK web dashboard **Settings** tab, click **[Connect Channel]** under the YouTube Auto Upload section, paste the **`Client ID`** and **`Client Secret`**, and click **[Save]**.
+4. Complete the Google sign-in and consent screen you are redirected to, and your YouTube channel will be linked!
 
 > [!IMPORTANT]
-> ### 7일마다 유튜브 인증이 풀리는 현상 방지 (앱 게시 권장)
-> Google OAuth 정책상 앱 게시 상태가 **'테스트 중(Testing)'**으로 남아 있으면 발급된 Refresh Token이 **7일 뒤 자동으로 만료**되어 자동 업로드가 중단됩니다.
+> ### Prevent 7-Day Token Expiration (Publish App Recommended)
+> Under Google OAuth policy, if your app's publishing status remains in **'Testing'**, issued Refresh Tokens **automatically expire after 7 days**, causing automatic uploads to fail until you re-authenticate.
 >
-> 1. Google Cloud Console의 **[API 및 서비스] -> [OAuth 동의 화면] -> [대상(Audience)]** 으로 이동합니다.
-> 2. **[앱 게시 (Publish App)]** 버튼을 눌러 상태를 **`프로덕션(In production)`** 으로 전환합니다.
-> 3. 본인 계정으로만 사용하는 경우 별도의 Google 앱 심사 없이도 프로덕션으로 전환할 수 있으며(인증 화면에서 `고급 -> ...로 이동` 클릭), 전환 후 ZKZZK에서 한 번 더 인증을 완료하면 7일 만료 제한 없이 유지됩니다.
+> 1. In Google Cloud Console, go to **[APIs & Services] -> [OAuth consent screen] -> [Audience]**.
+> 2. Click **[Publish App]** to switch the status to **`In production`**.
+> 3. For personal use on your own channel, Google app verification is not required (simply click `Advanced -> Go to ...` on the unverified app warning). After switching to production, re-authenticate once in ZKZZK to keep your connection active without the 7-day limit.
 
 > [!WARNING]
-> ### '403 access_denied' (인증 절차 미완료) 오류 해결 방법
-> 만약 연동 중 `403 access_denied` 오류가 발생한다면 다음을 확인해 주세요.
+> ### '403 access_denied' (Authentication Incomplete) Error
+> If you encounter a `403 access_denied` error during authentication, check the following:
 >
-> 1. 위 안내대로 **[앱 게시 (Publish App)]** 를 눌러 프로덕션으로 전환하거나,
-> 2. 테스트 상태를 유지하는 경우 **[OAuth 동의 화면] -> 테스트 사용자(Test users)** 항목의 **[+ ADD USERS]** 에서 인증하려는 Google 계정을 등록한 뒤 다시 시도해 주세요.
-> 3. 발급받은 OAuth 클라이언트의 소유자 계정과 유튜브 인증을 진행하는 로그인 계정이 일치하는지도 확인해 주세요.
+> 1. Click **[Publish App]** as described above to switch to production, or
+> 2. If staying in Testing mode, add your Google account under **[OAuth consent screen] -> Test users -> [+ ADD USERS]** and try again.
+> 3. Verify that the Google account used for YouTube authentication matches the account authorized for your OAuth client.
 
 ---
 
-## 3. Discord Webhook 설정 (알림 봇)
+## 3. Discord Webhook Settings (Notification Bot)
 
-지정한 스트리머가 방송을 켜거나 껐을 때, MP4 변환 또는 유튜브 업로드가 완료되었을 때 디스코드 채널로 실시간 알림을 보내주는 기능입니다. 설정 화면에서 **카드 형태(Embed)** 또는 **단순 텍스트 형태**를 선택할 수 있습니다.
+This feature sends real-time notifications to your Discord channel when a monitored streamer starts or stops streaming, finishes MP4 conversion, or completes a YouTube upload. You can choose between **Rich Card (Embed)** and **Simple Text** in Settings.
 
-### 📌 디스코드 웹훅 URL 발급 방법
-1. 알림을 받을 디스코드 채널명 우측의 톱니바퀴(⚙️ 채널 편집) 아이콘을 클릭합니다.
-2. 좌측 메뉴에서 **연동(Integrations)** 을 클릭하고 **웹훅(Webhooks)** 메뉴로 들어갑니다.
-3. **[새 웹훅]** 버튼을 누르고 이름과 프로필 사진을 취향껏 설정합니다.
-4. **웹훅 URL 복사** 버튼을 눌러 복사합니다.
-5. 복사한 URL을 zkzzk 설정의 `Webhook URL` 칸에 붙여넣습니다.
+### 📌 How to Issue a Discord Webhook URL
+1. Click the gear icon (⚙️ Edit Channel) to the right of the Discord channel name where you want to receive notifications.
+2. Click **Integrations** in the left menu and go to the **Webhooks** menu.
+3. Click the **[New Webhook]** button and set the name and profile picture to your liking.
+4. Click the **Copy Webhook URL** button to copy it.
+5. Paste the copied URL into the `Webhook URL` field in the ZKZZK settings.
