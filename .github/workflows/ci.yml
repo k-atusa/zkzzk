@@ -1,0 +1,90 @@
+name: CI Build & Test
+
+on:
+  push:
+    branches:
+      - develop
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  test-and-build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Build frontend
+        working-directory: frontend
+        run: |
+          npm ci
+          npm run build
+
+      - name: Sync frontend assets into backend/public
+        run: |
+          rm -rf backend/public
+          mkdir -p backend/public
+          cp -R frontend/dist/* backend/public/
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: backend/go.mod
+          cache-dependency-path: backend/go.sum
+
+      - name: Run Go tests
+        working-directory: backend
+        run: go test -count=1 -v ./...
+
+      - name: Cross-compile Go binaries
+        working-directory: backend
+        run: |
+          mkdir -p ../dist-binaries
+          targets=(
+            "windows amd64 zkzzk-windows-amd64.exe"
+            "windows arm64 zkzzk-windows-arm64.exe"
+            "linux amd64 zkzzk-linux-amd64"
+            "linux arm64 zkzzk-linux-arm64"
+            "darwin arm64 zkzzk-darwin-arm64"
+          )
+          for entry in "${targets[@]}"; do
+            read -r goos goarch out <<< "$entry"
+            echo "Building $out ($goos/$goarch)..."
+            CGO_ENABLED=0 GOOS="$goos" GOARCH="$goarch" \
+              go build -trimpath -ldflags="-s -w" -o "../dist-binaries/$out" .
+          done
+          ls -lh ../dist-binaries
+
+      - name: Upload built binaries as test artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: zkzzk-binaries-${{ github.sha }}
+          path: dist-binaries/*
+          retention-days: 7
+
+  docker-build-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Test Docker build
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          push: false
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
