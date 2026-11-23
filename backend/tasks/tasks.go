@@ -13,7 +13,6 @@ import (
 	"path/filepath"
 	"strings"
 	"sync"
-	"syscall"
 	"time"
 
 	"github.com/k-atusa/zkzzk/backend/chzzk"
@@ -444,11 +443,11 @@ func (s *Service) KillStreamerProcess(streamerID string, pid *int) {
 	s.mu.Unlock()
 
 	if cmd != nil && cmd.Process != nil {
-		_ = cmd.Process.Signal(syscall.SIGTERM)
+		terminateProcess(cmd.Process)
 		return
 	}
 	if pid != nil && *pid > 0 {
-		_ = syscall.Kill(*pid, syscall.SIGTERM)
+		terminatePID(*pid)
 	}
 }
 
@@ -463,12 +462,4 @@ func resolutionToStreamlinkFormat(res string) string {
 	default:
 		return "1080p60,1080p,best"
 	}
-}
-
-func isProcessAlive(pid int) bool {
-	if pid <= 0 {
-		return false
-	}
-	err := syscall.Kill(pid, 0)
-	return err == nil || errors.Is(err, syscall.EPERM)
 }

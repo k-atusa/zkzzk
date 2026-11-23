@@ -492,6 +492,7 @@ func (s *Service) UploadVideo(
 	})
 
 	res, err := call.Do()
+	_ = f.Close()
 	if err != nil {
 		failUpload(err)
 		return

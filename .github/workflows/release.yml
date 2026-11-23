@@ -1,0 +1,96 @@
+name: Build and Release Binaries
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release tag name (e.g. v3.1.2)'
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Determine release tag and version
+        id: meta
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            TAG="${{ inputs.tag }}"
+          else
+            TAG="${GITHUB_REF_NAME}"
+          fi
+          VERSION="${TAG#v}"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Build frontend
+        working-directory: frontend
+        run: |
+          npm ci
+          npm run build
+
+      - name: Sync frontend assets into backend/public
+        run: |
+          rm -rf backend/public
+          mkdir -p backend/public
+          cp -R frontend/dist/* backend/public/
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: backend/go.mod
+          cache-dependency-path: backend/go.sum
+
+      - name: Run Go tests
+        working-directory: backend
+        run: go test -count=1 ./...
+
+      - name: Build release binaries
+        working-directory: backend
+        env:
+          APP_VERSION: ${{ steps.meta.outputs.version }}
+          RELEASE_TAG: ${{ steps.meta.outputs.tag }}
+        run: |
+          mkdir -p ../release-assets
+          targets=(
+            "windows amd64 zkzzk-${RELEASE_TAG}-windows-amd64.exe"
+            "windows arm64 zkzzk-${RELEASE_TAG}-windows-arm64.exe"
+            "linux amd64 zkzzk-${RELEASE_TAG}-linux-amd64"
+            "linux arm64 zkzzk-${RELEASE_TAG}-linux-arm64"
+            "darwin arm64 zkzzk-${RELEASE_TAG}-darwin-arm64"
+          )
+          for entry in "${targets[@]}"; do
+            read -r goos goarch out <<< "$entry"
+            echo "Building $out ($goos/$goarch, v$APP_VERSION)..."
+            CGO_ENABLED=0 GOOS="$goos" GOARCH="$goarch" \
+              go build -trimpath \
+              -ldflags="-s -w -X github.com/k-atusa/zkzzk/backend/config.AppVersion=${APP_VERSION}" \
+              -o "../release-assets/$out" .
+          done
+          (cd ../release-assets && sha256sum * > checksums.txt)
+          ls -lh ../release-assets
+
+      - name: Publish GitHub Release with binaries
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.meta.outputs.tag }}
+          generate_release_notes: true
+          files: |
+            release-assets/*
