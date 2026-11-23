@@ -375,8 +375,7 @@ export const Settings = () => {
   return (
     <div className="space-y-10 pb-10">
       <div>
-        <h2 className="text-2xl sm:text-3xl font-bold tracking-tight mb-2">{t('settings.title')}</h2>
-        <p className="text-muted-foreground">{t('settings.subtitle')}</p>
+        <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">{t('settings.title')}</h2>
       </div>
 
       {/* 1. 계정 및 보안 */}
@@ -390,13 +389,10 @@ export const Settings = () => {
           {/* Password Change */}
           <div className="py-5 space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <div>
-                <h4 className="text-base font-medium flex items-center gap-2 text-foreground">
-                  <Lock className="h-4 w-4 text-muted-foreground" />
-                  {t('settings.changePassword')}
-                </h4>
-                <p className="text-xs text-muted-foreground mt-1">{t('settings.changePasswordDesc')}</p>
-              </div>
+              <h4 className="text-base font-medium flex items-center gap-2 text-foreground">
+                <Lock className="h-4 w-4 text-muted-foreground" />
+                {t('settings.changePassword')}
+              </h4>
               {!showPasswordForm && (
                 <Button
                   type="button"
@@ -499,20 +495,17 @@ export const Settings = () => {
           {/* 2FA */}
           <div className="py-5 space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <div>
-                <div className="flex items-center gap-2">
-                  <h4 className="text-base font-medium flex items-center gap-2 text-foreground">
-                    <KeyRound className="h-4 w-4 text-muted-foreground" />
-                    {t('settings.twoFactorAuth')}
-                  </h4>
-                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase ${user?.totp_enabled
-                    ? 'bg-green-500/20 text-green-700 dark:text-green-300'
-                    : 'bg-amber-500/20 text-amber-700 dark:text-amber-300'
-                    }`}>
-                    {user?.totp_enabled ? (language === 'ko' ? '보호 중' : 'Protected') : (language === 'ko' ? '미설정' : 'Unset')}
-                  </span>
-                </div>
-                <p className="text-xs text-muted-foreground mt-1">{t('settings.twoFactorAuthDesc')}</p>
+              <div className="flex items-center gap-2">
+                <h4 className="text-base font-medium flex items-center gap-2 text-foreground">
+                  <KeyRound className="h-4 w-4 text-muted-foreground" />
+                  {t('settings.twoFactorAuth')}
+                </h4>
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase ${user?.totp_enabled
+                  ? 'bg-green-500/20 text-green-700 dark:text-green-300'
+                  : 'bg-amber-500/20 text-amber-700 dark:text-amber-300'
+                  }`}>
+                  {user?.totp_enabled ? (language === 'ko' ? '보호 중' : 'Protected') : (language === 'ko' ? '미설정' : 'Unset')}
+                </span>
               </div>
               {!showSetup && (
                 <Button
@@ -528,20 +521,14 @@ export const Settings = () => {
 
             {showSetup && (
               <div className="flex flex-col sm:flex-row gap-5 items-center sm:items-start pt-1 max-w-xl animate-in fade-in-50 duration-200">
-                <div className="bg-white p-2 rounded-md shrink-0 text-center">
+                <div className="bg-white p-2 rounded-md shrink-0">
                   <img src={qrCode} alt="QR Code" className="w-36 h-36 mx-auto" />
-                  <p className="text-[11px] text-zinc-500 font-mono mt-1">Scan QR Code</p>
                 </div>
 
                 <div className="flex-1 w-full space-y-4">
-                  <div className="space-y-1">
-                    <p className="text-xs font-semibold text-foreground">
-                      {language === 'ko' ? '1. QR 코드 스캔' : '1. Scan QR Code'}
-                    </p>
-                    <p className="text-xs text-muted-foreground leading-relaxed">
-                      {t('settings.otpSetupModalDesc')}
-                    </p>
-                  </div>
+                  <p className="text-xs font-semibold text-foreground">
+                    {language === 'ko' ? '1. QR 코드 스캔' : '1. Scan QR Code'}
+                  </p>
 
                   <form onSubmit={handleVerify2FA} className="space-y-3">
                     <div className="space-y-1.5">
@@ -585,12 +572,9 @@ export const Settings = () => {
         <div className="divide-y divide-border/60">
           {/* 화면 배율 설정 */}
           <div className="py-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div>
-              <h4 className="text-base font-medium flex items-center gap-2 text-foreground">
-                <ZoomIn className="h-4 w-4 text-muted-foreground" /> {t('settings.uiScale')}
-              </h4>
-              <p className="text-xs text-muted-foreground mt-1">{t('settings.uiScaleDesc')}</p>
-            </div>
+            <h4 className="text-base font-medium flex items-center gap-2 text-foreground">
+              <ZoomIn className="h-4 w-4 text-muted-foreground" /> {t('settings.uiScale')}
+            </h4>
             <div className="flex flex-wrap items-center gap-2 shrink-0">
               {[90, 100, 110, 120, 130].map((s) => (
                 <Button
@@ -607,12 +591,9 @@ export const Settings = () => {
 
           {/* 언어 설정 */}
           <div className="py-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div>
-              <h4 className="text-base font-medium flex items-center gap-2 text-foreground">
-                <Globe className="h-4 w-4 text-muted-foreground" /> {t('settings.language')}
-              </h4>
-              <p className="text-xs text-muted-foreground mt-1">{t('settings.languageDesc')}</p>
-            </div>
+            <h4 className="text-base font-medium flex items-center gap-2 text-foreground">
+              <Globe className="h-4 w-4 text-muted-foreground" /> {t('settings.language')}
+            </h4>
             <div className="flex items-center gap-2 shrink-0">
               <Button
                 variant={language === 'en' ? 'default' : 'outline'}
@@ -633,12 +614,9 @@ export const Settings = () => {
 
           {/* Download Resolution Settings */}
           <div className="py-5 space-y-4">
-            <div>
-              <h4 className="text-base font-medium flex items-center gap-2 text-foreground">
-                <MonitorPlay className="h-4 w-4 text-muted-foreground" /> {t('settings.downloadResolution')}
-              </h4>
-              <p className="text-xs text-muted-foreground mt-1">{t('settings.downloadResolutionDesc')}</p>
-            </div>
+            <h4 className="text-base font-medium flex items-center gap-2 text-foreground">
+              <MonitorPlay className="h-4 w-4 text-muted-foreground" /> {t('settings.downloadResolution')}
+            </h4>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-2xl">
               <div className="space-y-2">
                 <Label htmlFor="liveResolution">{t('settings.liveResolution')}</Label>
@@ -653,7 +631,6 @@ export const Settings = () => {
                   <option value="360p">360p</option>
                   <option value="144p">144p</option>
                 </select>
-                <p className="text-xs text-muted-foreground mt-1">{t('settings.resolutionNotice')}</p>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="vodResolution">{t('settings.vodResolution')}</Label>
@@ -685,13 +662,10 @@ export const Settings = () => {
         <div className="divide-y divide-border/60">
           {/* Chzzk Cookies */}
           <div className="py-5 space-y-4">
-            <div>
-              <h4 className="text-base font-medium flex items-center gap-2 text-foreground">
-                <Cookie className="h-4 w-4 text-muted-foreground" />
-                {t('settings.chzzkCookies')}
-              </h4>
-              <p className="text-xs text-muted-foreground mt-1">{t('settings.chzzkCookiesDesc')}</p>
-            </div>
+            <h4 className="text-base font-medium flex items-center gap-2 text-foreground">
+              <Cookie className="h-4 w-4 text-muted-foreground" />
+              {t('settings.chzzkCookies')}
+            </h4>
 
             {!showCookieInputs ? (
               <div className="space-y-3 max-w-lg">
@@ -793,19 +767,13 @@ export const Settings = () => {
 
           {/* YouTube Auto Upload */}
           <div className="py-5 space-y-5">
-            <div>
-              <h4 className="text-base font-medium flex items-center gap-2 text-foreground">
-                <MonitorPlay className="h-4 w-4 text-muted-foreground" /> {t('settings.youtubeAutoUpload')}
-              </h4>
-              <p className="text-xs text-muted-foreground mt-1">{t('settings.youtubeAutoUploadDesc')}</p>
-            </div>
+            <h4 className="text-base font-medium flex items-center gap-2 text-foreground">
+              <MonitorPlay className="h-4 w-4 text-muted-foreground" /> {t('settings.youtubeAutoUpload')}
+            </h4>
 
             <div className="space-y-4 max-w-2xl">
               <div className="flex items-center justify-between gap-4">
-                <div className="space-y-0.5">
-                  <Label htmlFor="youtubeAutoUpload" className="text-sm font-medium cursor-pointer">{t('settings.autoUploadEnable')}</Label>
-                  <p className="text-xs text-muted-foreground">{t('settings.youtubeAutoUploadDesc')}</p>
-                </div>
+                <Label htmlFor="youtubeAutoUpload" className="text-sm font-medium cursor-pointer">{t('settings.autoUploadEnable')}</Label>
                 <Switch
                   id="youtubeAutoUpload"
                   checked={youtubeAutoUpload}
@@ -813,10 +781,7 @@ export const Settings = () => {
                 />
               </div>
               <div className="flex items-center justify-between gap-4">
-                <div className="space-y-0.5">
-                  <Label htmlFor="deleteAfterUpload" className="text-sm font-medium cursor-pointer">{t('settings.deleteAfterUpload')}</Label>
-                  <p className="text-xs text-muted-foreground">{t('settings.deleteAfterUploadDesc')}</p>
-                </div>
+                <Label htmlFor="deleteAfterUpload" className="text-sm font-medium cursor-pointer">{t('settings.deleteAfterUpload')}</Label>
                 <Switch
                   id="deleteAfterUpload"
                   checked={deleteAfterUpload}
@@ -824,10 +789,7 @@ export const Settings = () => {
                 />
               </div>
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
-                <div className="space-y-0.5">
-                  <Label className="text-sm font-medium">{t('settings.youtubePrivacy')}</Label>
-                  <p className="text-xs text-muted-foreground">{t('settings.youtubePrivacyDesc')}</p>
-                </div>
+                <Label className="text-sm font-medium">{t('settings.youtubePrivacy')}</Label>
                 <div className="flex flex-wrap items-center gap-2 shrink-0">
                   {([
                     { value: 'public', label: t('settings.privacyPublic') },
@@ -919,30 +881,6 @@ export const Settings = () => {
                   </div>
                 </div>
 
-                <div className="text-xs text-muted-foreground space-y-1">
-                  <p className="font-semibold text-foreground">
-                    💡 {language === 'ko' ? '자동 업로드 가이드 및 오류 해결' : 'Auto Upload Guide & Troubleshooting'}
-                  </p>
-                  <p>
-                    {language === 'ko' ? (
-                      <>
-                        API 키 발급 절차 및 연동 중 발생하는 오류(403 access_denied 등) 해결 방법은 상세한 가이드가 준비되어 있는{' '}
-                        <a href="https://github.com/k-atusa/zkzzk/wiki/ZKZZK-Settings-Guide" target="_blank" rel="noreferrer" className="text-primary hover:underline font-semibold">
-                          ZKZZK 설정 가이드 (Wiki)
-                        </a>
-                        를 참고해 주세요.
-                      </>
-                    ) : (
-                      <>
-                        For instructions on issuing API keys and resolving authentication errors (e.g., 403 access_denied), please refer to the detailed{' '}
-                        <a href="https://github.com/k-atusa/zkzzk/wiki/en/ZKZZK-Settings-Guide" target="_blank" rel="noreferrer" className="text-primary hover:underline font-semibold">
-                          ZKZZK Settings Guide (Wiki)
-                        </a>.
-                      </>
-                    )}
-                  </p>
-                </div>
-
                 <div className="flex flex-wrap gap-2 pt-1">
                   <Button type="button" onClick={handleSaveYoutubeSettingsSubmit}>
                     {t('settings.save')}
@@ -957,12 +895,9 @@ export const Settings = () => {
 
           {/* Discord Webhook */}
           <div className="py-5 space-y-4">
-            <div>
-              <h4 className="text-base font-medium flex items-center gap-2 text-foreground">
-                <Bell className="h-4 w-4 text-muted-foreground" /> {t('settings.discordWebhook')}
-              </h4>
-              <p className="text-xs text-muted-foreground mt-1">{t('settings.discordWebhookDesc')}</p>
-            </div>
+            <h4 className="text-base font-medium flex items-center gap-2 text-foreground">
+              <Bell className="h-4 w-4 text-muted-foreground" /> {t('settings.discordWebhook')}
+            </h4>
 
             <div className="space-y-4 max-w-2xl">
               <div className="space-y-2">
@@ -1057,8 +992,6 @@ export const Settings = () => {
               </Button>
             )}
           </div>
-
-          <p className="text-xs text-muted-foreground">{t('settings.userManagementDesc')}</p>
 
           {/* Add User Form */}
           {showAddUserForm && (
