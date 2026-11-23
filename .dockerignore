@@ -10,10 +10,9 @@ __pycache__/
 **/dist
 npm-debug.log
 .DS_Store
-.env
-backend/database.db
-backend/database.db-journal
-backend/recordings
+**/.env
+backend/database.db*
 backend/downloads
+backend/public
 wiki/
 zkzzk
