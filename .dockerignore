@@ -14,5 +14,6 @@ npm-debug.log
 backend/database.db*
 backend/downloads
 backend/public
+docs/
 wiki/
 zkzzk

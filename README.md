@@ -26,14 +26,16 @@
 
 - **🔴 Automatic Live Recording**: Add your favorite streamers and let zkzzk automatically capture their live broadcasts in real-time.
 - **📼 VOD Downloader**: Easily search and download past VODs in your preferred resolution.
-- **📺 YouTube Auto Upload**: Seamlessly integrate your Google account to automatically upload recorded videos to YouTube upon completion.
+- **📺 YouTube Auto Upload**: Seamlessly integrate your Google account to automatically upload recorded videos to YouTube.
 - **🔔 Discord Notifications**: Receive real-time rich-card alerts in your Discord server when a stream starts, finishes, or gets uploaded.
 - **🛡️ Secure Web Dashboard**: Fully-featured management dashboard with Multi-user support, Role-based Access (Admin), and 2FA (Two-Factor Authentication).
 - **🌐 Fully Internationalized**: Built-in support for both English and Korean seamlessly out of the box.
 
 <br>
 
-## 🚀 Quick Start (Docker)
+## 🚀 Quick Start
+
+### Docker (Recommended)
 
 The fastest way to get zkzzk up and running is via Docker.
 
@@ -43,8 +45,7 @@ docker run -d \
   --restart unless-stopped \
   -p 5001:5001 \
   -e TZ=Asia/Seoul \
-  -e DATABASE_URL=file:/app/backend/data/database.db \
-  -v $(pwd)/data:/app/backend/data \
+  -v $(pwd)/data:/app/backend \
   -v $(pwd)/downloads:/app/downloads \
   d3vle0/zkzzk:latest
 ```
@@ -62,15 +63,22 @@ services:
       - "5001:5001"
     environment:
       - TZ=Asia/Seoul
-      - DATABASE_URL=file:/app/backend/data/database.db
     volumes:
-      - ./data:/app/backend/data
+      - ./data:/app/backend
       - ./downloads:/app/downloads
 ```
 
 Then start it with:
 ```bash
-docker-compose up -d
+docker compose up -d
+```
+
+### Standalone Binary
+
+You can also download a pre-built single binary (with the web UI embedded) for **Windows (`amd64`, `arm64`)**, **Linux (`amd64`, `arm64`)**, or **macOS (`arm64`)** from **[GitHub Releases](https://github.com/k-atusa/zkzzk/releases)** and run it directly (requires `ffmpeg` and `streamlink` installed on your system):
+
+```bash
+./zkzzk
 ```
 
 Once running, simply navigate to `http://localhost:5001` to access your dashboard.
@@ -79,21 +87,21 @@ Once running, simply navigate to `http://localhost:5001` to access your dashboar
 
 ## 📚 Documentation & Installation
 
-For comprehensive instructions on how to set up, configure, and secure your zkzzk instance, please refer to our **[GitHub Wiki](https://github.com/k-atusa/zkzzk/wiki)**.
+For comprehensive instructions on how to set up, configure, and secure your zkzzk instance, please refer to our **[Documentation](./docs/en/Home.md)**.
 
-The Wiki covers:
-- 🐳 **Docker Setup** (Recommended)
-- 💻 **Manual Node.js Setup** (For developers)
-- 🔒 **Reverse Proxy Configuration** (Nginx / Caddy)
-- 🔑 **YouTube API Integration Guide**
+The documentation covers:
+- 🐳 **[Docker Setup](./docs/en/Docker-Setup.md)** (Recommended)
+- 💻 **[Manual Setup](./docs/en/Manual-Setup.md)** (Standalone binary / build from source)
+- 🔒 **[Reverse Proxy Configuration](./docs/en/Reverse-Proxy-Configuration.md)** (Nginx / Nginx Proxy Manager)
+- 🔑 **[Settings & YouTube API Integration Guide](./docs/en/Settings-Guide.md)**
 
 <br>
 
 ## 🛠️ Tech Stack
 
-- **Frontend**: React, Vite, TailwindCSS, Shadcn UI
-- **Backend**: NestJS, Prisma, SQLite
-- **Core Dependencies**: FFmpeg, Streamlink, Python 3
+- **Frontend**: React, TypeScript, Vite, TailwindCSS, Shadcn UI
+- **Backend**: Go (single binary with embedded frontend), SQLite
+- **Core Dependencies**: FFmpeg, Streamlink
 
 <br>
 

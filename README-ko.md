@@ -26,14 +26,16 @@
 
 - **🔴 라이브 자동 녹화**: 좋아하는 스트리머를 추가해 두면, 방송이 시작될 때 zkzzk가 자동으로 실시간 녹화를 진행합니다.
 - **📼 VOD 다운로더**: 지나간 VOD를 검색하고 원하는 해상도로 쉽게 다운로드할 수 있습니다.
-- **📺 유튜브 자동 업로드**: 구글 계정과 연동하여, 녹화가 완료된 영상을 자동으로 유튜브 채널에 업로드할 수 있습니다.
+- **📺 유튜브 자동 업로드**: 구글 계정과 연동하여, 녹화가 완료된 영상을 원하는 공개 범위(공개, 링크 공개, 비공개)로 자동 업로드할 수 있습니다.
 - **🔔 디스코드 알림**: 방송 시작, 종료, 업로드 완료 등의 상태를 디스코드 웹훅(Rich-card 형태)으로 실시간 알림을 받을 수 있습니다.
 - **🛡️ 안전한 관리자 대시보드**: 다중 사용자 지원, 관리자 권한 및 2FA(이중 인증)를 지원하여 안전하게 시스템을 관리할 수 있습니다.
 - **🌐 다국어 지원**: 한국어와 영어를 모두 기본적으로 완벽하게 지원합니다.
 
 <br>
 
-## 🚀 빠른 시작 (Docker)
+## 🚀 빠른 시작
+
+### Docker 사용 (권장)
 
 가장 빠르고 간편하게 zkzzk를 실행하는 방법은 Docker를 사용하는 것입니다.
 
@@ -43,8 +45,7 @@ docker run -d \
   --restart unless-stopped \
   -p 5001:5001 \
   -e TZ=Asia/Seoul \
-  -e DATABASE_URL=file:/app/backend/data/database.db \
-  -v $(pwd)/data:/app/backend/data \
+  -v $(pwd)/data:/app/backend \
   -v $(pwd)/downloads:/app/downloads \
   d3vle0/zkzzk:latest
 ```
@@ -62,38 +63,45 @@ services:
       - "5001:5001"
     environment:
       - TZ=Asia/Seoul
-      - DATABASE_URL=file:/app/backend/data/database.db
     volumes:
-      - ./data:/app/backend/data
+      - ./data:/app/backend
       - ./downloads:/app/downloads
 ```
 
 그 후 아래 명령어로 실행합니다:
 ```bash
-docker-compose up -d
+docker compose up -d
 ```
 
-컨테이너가 실행되면 `http://localhost:5001`에 접속하여 대시보드를 사용할 수 있습니다.
+### 단일 바이너리 실행
+
+**[GitHub Releases](https://github.com/k-atusa/zkzzk/releases)**에서 프론트엔드가 내장된 단일 실행 바이너리(**Windows `amd64`/`arm64`**, **Linux `amd64`/`arm64`**, **macOS `arm64`**)를 내려받아 별도의 서버 구성 없이 바로 실행할 수도 있습니다. (시스템에 `ffmpeg`와 `streamlink` 설치 필요)
+
+```bash
+./zkzzk
+```
+
+실행이 완료되면 `http://localhost:5001`에 접속하여 대시보드를 사용할 수 있습니다.
 
 <br>
 
 ## 📚 문서 및 설치 가이드
 
-자세한 설치, 환경 설정, 그리고 보안 설정 방법은 **[GitHub Wiki](https://github.com/k-atusa/zkzzk/wiki)**를 참고해 주세요.
+자세한 설치, 환경 설정, 그리고 보안 설정 방법은 **[공식 문서](./docs/Home.md)**를 참고해 주세요.
 
-Wiki 포함 내용:
-- 🐳 **Docker Setup** (권장)
-- 💻 **Manual Node.js Setup** (개발자용)
-- 🔒 **Reverse Proxy Configuration** (Nginx / Caddy)
-- 🔑 **YouTube API 연동 가이드**
+문서 포함 내용:
+- 🐳 **[Docker Setup](./docs/Docker-Setup.md)** (권장)
+- 💻 **[Manual Setup](./docs/Manual-Setup.md)** (단일 바이너리 / 소스 빌드)
+- 🔒 **[Reverse Proxy Configuration](./docs/Reverse-Proxy-Configuration.md)** (Nginx / Nginx Proxy Manager)
+- 🔑 **[설정 및 YouTube API 연동 가이드](./docs/Settings-Guide.md)**
 
 <br>
 
 ## 🛠️ 기술 스택
 
-- **Frontend**: React, Vite, TailwindCSS, Shadcn UI
-- **Backend**: NestJS, Prisma, SQLite
-- **Core Dependencies**: FFmpeg, Streamlink, Python 3
+- **Frontend**: React, TypeScript, Vite, TailwindCSS, Shadcn UI
+- **Backend**: Go (프론트엔드 내장 단일 바이너리), SQLite
+- **Core Dependencies**: FFmpeg, Streamlink
 
 <br>
 
