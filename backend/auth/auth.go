@@ -554,6 +554,7 @@ func (s *Service) HandleGetUserSettings(w http.ResponseWriter, r *http.Request) 
 		"youtube_connected":         user.YoutubeRefreshToken != nil && *user.YoutubeRefreshToken != "",
 		"youtube_channel_title":     user.YoutubeChannelTitle,
 		"youtube_auto_upload":       user.YoutubeAutoUpload,
+		"youtube_privacy_status":    user.YoutubePrivacyStatus,
 		"delete_after_upload":       user.DeleteAfterUpload,
 		"nid_aut":                   user.NidAut,
 		"nid_ses":                   user.NidSes,
@@ -574,6 +575,7 @@ func (s *Service) HandleUpdateUserSettings(w http.ResponseWriter, r *http.Reques
 		NidSes                  httpx.Nullable[string] `json:"nid_ses"`
 		ChzzkNickname           httpx.Nullable[string] `json:"chzzk_nickname"`
 		YoutubeAutoUpload       httpx.Nullable[bool]   `json:"youtube_auto_upload"`
+		YoutubePrivacyStatus    httpx.Nullable[string] `json:"youtube_privacy_status"`
 		DeleteAfterUpload       httpx.Nullable[bool]   `json:"delete_after_upload"`
 		LiveResolution          httpx.Nullable[string] `json:"live_resolution"`
 		VodResolution           httpx.Nullable[string] `json:"vod_resolution"`
@@ -593,6 +595,15 @@ func (s *Service) HandleUpdateUserSettings(w http.ResponseWriter, r *http.Reques
 	applyNullableStr(updates, "nid_ses", body.NidSes)
 	applyNullableStr(updates, "chzzk_nickname", body.ChzzkNickname)
 	applyNullableBool(updates, "youtube_auto_upload", body.YoutubeAutoUpload)
+	if body.YoutubePrivacyStatus.Set && body.YoutubePrivacyStatus.Valid {
+		switch body.YoutubePrivacyStatus.Value {
+		case "public", "unlisted", "private":
+			updates["youtube_privacy_status"] = body.YoutubePrivacyStatus.Value
+		default:
+			httpx.WriteError(w, http.StatusBadRequest, "올바르지 않은 유튜브 공개 설정입니다.")
+			return
+		}
+	}
 	applyNullableBool(updates, "delete_after_upload", body.DeleteAfterUpload)
 	applyNullableStr(updates, "live_resolution", body.LiveResolution)
 	applyNullableStr(updates, "vod_resolution", body.VodResolution)

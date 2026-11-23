@@ -148,6 +148,7 @@ type User struct {
 	YoutubeChannelTitle    *string
 	YoutubeRedirectURI     *string
 	YoutubeAutoUpload      bool
+	YoutubePrivacyStatus   string
 	DeleteAfterUpload      bool
 	LiveResolution         string
 	VodResolution          string

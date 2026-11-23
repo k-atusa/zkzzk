@@ -77,6 +77,7 @@ func (s *Store) InitSchema() error {
 			"youtube_channel_title" TEXT,
 			"youtube_redirect_uri" TEXT,
 			"youtube_auto_upload" BOOLEAN DEFAULT false,
+			"youtube_privacy_status" TEXT DEFAULT 'unlisted',
 			"delete_after_upload" BOOLEAN DEFAULT false,
 			"live_resolution" TEXT DEFAULT '1080p',
 			"vod_resolution" TEXT DEFAULT '1080p'
@@ -143,6 +144,7 @@ func (s *Store) InitSchema() error {
 			{"youtube_channel_title", "TEXT"},
 			{"youtube_redirect_uri", "TEXT"},
 			{"youtube_auto_upload", "BOOLEAN DEFAULT false"},
+			{"youtube_privacy_status", "TEXT DEFAULT 'unlisted'"},
 			{"delete_after_upload", "BOOLEAN DEFAULT false"},
 			{"live_resolution", "TEXT DEFAULT '1080p'"},
 			{"vod_resolution", "TEXT DEFAULT '1080p'"},
@@ -249,7 +251,7 @@ const userSelectCols = `"id", "username", "password_hash", "is_admin", "created_
 	"discord_webhook_url", "discord_webhook_use_embed",
 	"youtube_client_id", "youtube_client_secret", "youtube_refresh_token",
 	"youtube_channel_title", "youtube_redirect_uri", "youtube_auto_upload",
-	"delete_after_upload", "live_resolution", "vod_resolution"`
+	"youtube_privacy_status", "delete_after_upload", "live_resolution", "vod_resolution"`
 
 type rowScanner interface {
 	Scan(dest ...any) error
@@ -273,6 +275,7 @@ func scanUser(rs rowScanner) (*User, error) {
 		ytChannelTitle        sql.NullString
 		ytRedirectURI         sql.NullString
 		ytAutoUpload          FlexBool
+		ytPrivacyStatus       sql.NullString
 		deleteAfterUpload     FlexBool
 		liveRes               sql.NullString
 		vodRes                sql.NullString
@@ -283,7 +286,7 @@ func scanUser(rs rowScanner) (*User, error) {
 		&webhookURL, &webhookEmbed,
 		&ytClientID, &ytClientSecret, &ytRefreshToken,
 		&ytChannelTitle, &ytRedirectURI, &ytAutoUpload,
-		&deleteAfterUpload, &liveRes, &vodRes,
+		&ytPrivacyStatus, &deleteAfterUpload, &liveRes, &vodRes,
 	)
 	if err != nil {
 		return nil, err
@@ -303,6 +306,12 @@ func scanUser(rs rowScanner) (*User, error) {
 	u.YoutubeChannelTitle = nullStrPtr(ytChannelTitle)
 	u.YoutubeRedirectURI = nullStrPtr(ytRedirectURI)
 	u.YoutubeAutoUpload = ytAutoUpload.Valid && ytAutoUpload.Bool
+	switch ytPrivacyStatus.String {
+	case "public", "unlisted", "private":
+		u.YoutubePrivacyStatus = ytPrivacyStatus.String
+	default:
+		u.YoutubePrivacyStatus = "unlisted"
+	}
 	u.DeleteAfterUpload = deleteAfterUpload.Valid && deleteAfterUpload.Bool
 	if liveRes.Valid && liveRes.String != "" {
 		u.LiveResolution = liveRes.String
@@ -416,6 +425,7 @@ var allowedAccountSettingCols = map[string]bool{
 	"youtube_channel_title":     true,
 	"youtube_redirect_uri":      true,
 	"youtube_auto_upload":       true,
+	"youtube_privacy_status":    true,
 	"delete_after_upload":       true,
 	"nid_aut":                   true,
 	"nid_ses":                   true,

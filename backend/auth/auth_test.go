@@ -155,8 +155,27 @@ func TestAuthFlowAndTriStateSettings(t *testing.T) {
 	rr = doReq(t, app.Handler, "GET", "/api/auth/user-settings", nil, cookies...)
 	var us map[string]any
 	_ = json.Unmarshal(rr.Body.Bytes(), &us)
-	if us["discord_webhook_url"] != "https://discord.com/api/webhooks/test" || us["live_resolution"] != "720p" || us["vod_resolution"] != "360p" {
+	if us["discord_webhook_url"] != "https://discord.com/api/webhooks/test" || us["live_resolution"] != "720p" || us["vod_resolution"] != "360p" || us["youtube_privacy_status"] != "unlisted" {
 		t.Fatalf("unexpected settings after partial update: %+v", us)
+	}
+
+	// Update youtube_privacy_status to private and verify persistence + validation
+	rr = doReq(t, app.Handler, "POST", "/api/auth/user-settings", map[string]any{
+		"youtube_privacy_status": "private",
+	}, cookies...)
+	if rr.Code != http.StatusOK {
+		t.Fatalf("update youtube_privacy_status failed: %d", rr.Code)
+	}
+	rr = doReq(t, app.Handler, "GET", "/api/auth/user-settings", nil, cookies...)
+	_ = json.Unmarshal(rr.Body.Bytes(), &us)
+	if us["youtube_privacy_status"] != "private" {
+		t.Fatalf("expected youtube_privacy_status=private, got: %+v", us["youtube_privacy_status"])
+	}
+	rr = doReq(t, app.Handler, "POST", "/api/auth/user-settings", map[string]any{
+		"youtube_privacy_status": "invalid_value",
+	}, cookies...)
+	if rr.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400 for invalid youtube_privacy_status, got %d", rr.Code)
 	}
 
 	// Disconnect youtube clears client_id & secret

@@ -36,6 +36,7 @@ export const Settings = () => {
   const [youtubeChannelTitle, setYoutubeChannelTitle] = useState('');
   const [showYoutubeInputs, setShowYoutubeInputs] = useState(false);
   const [youtubeAutoUpload, setYoutubeAutoUpload] = useState(true);
+  const [youtubePrivacyStatus, setYoutubePrivacyStatus] = useState<'public' | 'unlisted' | 'private'>('unlisted');
   const [deleteAfterUpload, setDeleteAfterUpload] = useState(false);
 
   // Resolution Settings
@@ -107,6 +108,7 @@ export const Settings = () => {
       if (res.data.youtube_connected) setYoutubeConnected(true);
       if (res.data.youtube_channel_title) setYoutubeChannelTitle(res.data.youtube_channel_title);
       if (res.data.youtube_auto_upload !== undefined) setYoutubeAutoUpload(res.data.youtube_auto_upload);
+      if (res.data.youtube_privacy_status) setYoutubePrivacyStatus(res.data.youtube_privacy_status);
       if (res.data.delete_after_upload !== undefined) setDeleteAfterUpload(res.data.delete_after_upload);
       if (res.data.nid_aut) setNidAut(res.data.nid_aut);
       if (res.data.nid_ses) setNidSes(res.data.nid_ses);
@@ -276,6 +278,7 @@ export const Settings = () => {
         youtube_client_id: youtubeClientId.trim(),
         youtube_client_secret: youtubeClientSecret.trim(),
         youtube_auto_upload: youtubeAutoUpload,
+        youtube_privacy_status: youtubePrivacyStatus,
         delete_after_upload: deleteAfterUpload,
         live_resolution: liveResolution,
         vod_resolution: vodResolution,
@@ -819,6 +822,32 @@ export const Settings = () => {
                   checked={deleteAfterUpload}
                   onCheckedChange={(val) => { setDeleteAfterUpload(val); handleSaveUserSettings({ delete_after_upload: val }); }}
                 />
+              </div>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
+                <div className="space-y-0.5">
+                  <Label className="text-sm font-medium">{t('settings.youtubePrivacy')}</Label>
+                  <p className="text-xs text-muted-foreground">{t('settings.youtubePrivacyDesc')}</p>
+                </div>
+                <div className="flex flex-wrap items-center gap-2 shrink-0">
+                  {([
+                    { value: 'public', label: t('settings.privacyPublic') },
+                    { value: 'unlisted', label: t('settings.privacyUnlisted') },
+                    { value: 'private', label: t('settings.privacyPrivate') },
+                  ] as const).map((opt) => (
+                    <Button
+                      key={opt.value}
+                      type="button"
+                      variant={youtubePrivacyStatus === opt.value ? 'default' : 'outline'}
+                      onClick={() => {
+                        setYoutubePrivacyStatus(opt.value);
+                        handleSaveUserSettings({ youtube_privacy_status: opt.value });
+                      }}
+                      className="px-4"
+                    >
+                      {opt.label}
+                    </Button>
+                  ))}
+                </div>
               </div>
             </div>
 

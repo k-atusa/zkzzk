@@ -466,6 +466,14 @@ func (s *Service) UploadVideo(
 		finalCat = "20"
 	}
 
+	privacyStatus := "unlisted"
+	if user, userErr := s.store.GetUserByID(finalUserID); userErr == nil && user != nil {
+		switch user.YoutubePrivacyStatus {
+		case "public", "unlisted", "private":
+			privacyStatus = user.YoutubePrivacyStatus
+		}
+	}
+
 	video := &ytapi.Video{
 		Snippet: &ytapi.VideoSnippet{
 			Title:       cleanTitle,
@@ -474,7 +482,7 @@ func (s *Service) UploadVideo(
 			Tags:        finalTags,
 		},
 		Status: &ytapi.VideoStatus{
-			PrivacyStatus: "unlisted",
+			PrivacyStatus: privacyStatus,
 		},
 	}
 
