@@ -19,8 +19,6 @@
 
 **zkzzk** is a powerful, open-source web application designed to automatically record broadcasts and download VODs from [Naver Chzzk](https://chzzk.naver.com). Built with a modern tech stack and a beautiful premium interface, it provides everything you need to effortlessly archive your favorite streams.
 
-<br>
-
 ## ✨ Key Features
 
 - **🔴 Automatic Live Recording**: Add your favorite streamers and let zkzzk automatically capture their live broadcasts in real-time.
@@ -29,8 +27,6 @@
 - **🔔 Discord Notifications**: Receive real-time rich-card alerts in your Discord server when a stream starts, finishes, or gets uploaded.
 - **🛡️ Secure Web Dashboard**: Fully-featured management dashboard with Multi-user support, Role-based Access (Admin), and 2FA (Two-Factor Authentication).
 - **🌐 Fully Internationalized**: Built-in support for both English and Korean seamlessly out of the box.
-
-<br>
 
 ## 🚀 Quick Start
 
@@ -50,8 +46,6 @@ docker run -d \
 Then open `http://localhost:5001` in your browser.  
 For **Docker Compose**, **Standalone Binary** (Windows / Linux / macOS), or **building from source**, see the guides below.
 
-<br>
-
 ## 📚 Documentation & Installation
 
 For comprehensive instructions on how to set up, configure, and secure your zkzzk instance, please refer to our **[Documentation](./docs/Home.md)**.
@@ -62,15 +56,11 @@ The documentation covers:
 - 🔒 **[Reverse Proxy Configuration](./docs/Reverse-Proxy-Configuration.md)** (Nginx / Nginx Proxy Manager)
 - 🔑 **[Settings & YouTube API Integration Guide](./docs/Settings-Guide.md)**
 
-<br>
-
 ## 🛠️ Tech Stack
 
 - **Frontend**: React, TypeScript, Vite, TailwindCSS, Shadcn UI
 - **Backend**: Go (single binary with embedded frontend), SQLite
 - **Core Dependencies**: FFmpeg, Streamlink
-
-<br>
 
 ## 🤝 Contributing
 
